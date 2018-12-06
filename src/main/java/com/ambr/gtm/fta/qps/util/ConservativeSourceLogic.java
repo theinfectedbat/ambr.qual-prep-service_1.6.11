@@ -91,7 +91,8 @@ public class ConservativeSourceLogic
 			
 			//If the SRC IVA has empty/null decision mark the source as conservative source.
 			if(aSrcIVA.finalDecision == null){
-				conservativeSrcDetails.setConservativeSource(aSrc);
+				aConservativeSource = aSrc;
+				aConservativeSourceIVA = aSrcIVA;
 				foundSrcWithEmptyFinalDecision = true;
 			}
 			
