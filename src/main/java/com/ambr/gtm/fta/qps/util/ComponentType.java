@@ -1,0 +1,41 @@
+package com.ambr.gtm.fta.qps.util;
+
+public class ComponentType {
+	
+	public enum DEFUALT{
+		COMPONENT,
+		EXCLUDE_QUALIFICATION,
+		PACKAGING,
+		PACKING
+	}
+	
+	public enum FABRIC{
+		FABRIC,
+		FABRIC_GRIEGE
+	}
+	
+	public enum HEAVY_AUTOMOBILES{
+		CHASSIS,
+		ENGINE,
+		TRANSMISSION
+	}
+	
+	public enum SEWING_THREAD{
+		EMBROIDERY_THREAD,
+		SEWING_THREAD
+	}
+	
+	public enum TEXTILES{
+		OTHER_TEXTILES_FABRICS,
+		POCKET_BAGS,
+		POCKET_BAG_FABRIC,
+		REMOVABLE_LINING_MATERIAL,
+		VISIBLE_LINING_MATERIAL
+	}
+	
+	public enum YARN{
+		ELASTIC,
+		WOVEN_ELASTIC,
+		YARN
+	}
+}

@@ -1,0 +1,12 @@
+package com.ambr.gtm.fta.qps;
+
+public enum UniverseStatusEnum 
+{
+	PENDING_STARTUP,
+	STARTUP_FAILED,
+	AVAILABLE,
+	PARTITION_FAILED,
+	PARTITION_STOPPED,
+	SHUTDOWN,
+	REFRESH_IN_PROGRESS,
+}
