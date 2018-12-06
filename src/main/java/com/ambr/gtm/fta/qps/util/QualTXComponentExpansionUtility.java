@@ -65,6 +65,7 @@ public class QualTXComponentExpansionUtility
 	{
 		this.bomUniverse = theBOMUniverse;
 		this.qualTX = theQualTX;
+		this.dataExtCfgRepos = theDataExtCfgRepos;
 		this.claimDetailsCache = theClaimDetailsCache;
 		this.ivaCache = theIVACache;
 		this.gpmClassCache = theGPMClassCache;
