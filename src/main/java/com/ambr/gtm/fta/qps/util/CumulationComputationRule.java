@@ -249,7 +249,7 @@ public class CumulationComputationRule
 			if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
 				cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
 
-			qualTXCompDetals.deFieldMap.put(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
+			qualTXCompDetals.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
 
 			Double cumulationValue = calculateCumulationValue	(aQualTXComp, claimdetails);
 
