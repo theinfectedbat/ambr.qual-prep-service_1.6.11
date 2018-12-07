@@ -549,7 +549,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				{
 					Long altkey = ((QualTXComponentDataExtension) newRecord.modifiableRecord).seq_num;
 					BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-					if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY:TEXTILES" , STATE.CREATE);
+					if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES" , STATE.CREATE);
 					compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 					for (DataRecordColumnModification columnMod : newRecord.getColumnModifications())
 					{
