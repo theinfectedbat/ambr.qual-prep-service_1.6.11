@@ -40,8 +40,8 @@ public class QualTXDataExtension
 	@Column(name = "tx_id") 				public String	tx_id;
 	@Column(name = "seq_num") 				public long		seq_num;
 	
-	public HashMap<String, Object>					deFieldMap;
-	public HashMap<String, Timestamp>				deDateFieldMap;
+	private HashMap<String, Object>					deFieldMap;
+	private HashMap<String, Timestamp>				deDateFieldMap;
 	private DataExtensionConfigurationRepository	repos;
 	private transient QualTX						qualTX;
 	
@@ -128,6 +128,11 @@ public class QualTXDataExtension
 			aList.addAll(new DataRecordUtility<>(QualTXDataExtension.class, true).getColumnNames());
 		}
 		
+		HashMap<String, String>	aColumnNameMap = new HashMap<>();
+		aList.forEach(aColumnName->{aColumnNameMap.put(aColumnName.toUpperCase(), aColumnName.toUpperCase());});
+		aList.clear();
+		aList.addAll(aColumnNameMap.values());
+
 		return aList;
 	}
 

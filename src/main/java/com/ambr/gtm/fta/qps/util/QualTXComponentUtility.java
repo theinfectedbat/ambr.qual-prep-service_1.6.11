@@ -190,6 +190,13 @@ public class QualTXComponentUtility
 		throws Exception
 	{
 		for (String aColumnName : theBOMCompDE.getColumnNames()) {
+			if (aColumnName.equalsIgnoreCase("alt_key_bom") ||
+				aColumnName.equalsIgnoreCase("alt_key_comp") ||
+				aColumnName.equalsIgnoreCase("parent_seq_num")) 
+			{
+				continue;
+			}
+			
 			theQualTXCompDE.setValue(aColumnName, theBOMCompDE.getValue(aColumnName));
 		}
 	}

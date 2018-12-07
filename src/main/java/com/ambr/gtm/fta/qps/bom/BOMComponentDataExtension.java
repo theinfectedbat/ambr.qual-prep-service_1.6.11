@@ -34,8 +34,8 @@ public class BOMComponentDataExtension
 	@Column(name = "group_name") 		public String	group_name;
 	@Column(name = "parent_seq_num") 	public long		parent_seq_num;
 	
-	public HashMap<String, Object>					deFieldMap;
-	public HashMap<String, Timestamp>				deDateFieldMap;
+	private HashMap<String, Object>					deFieldMap;
+	private HashMap<String, Timestamp>				deDateFieldMap;
 	private DataExtensionConfigurationRepository	repos;
 	private transient BOMComponent 					bomComp;
 	
@@ -96,6 +96,12 @@ public class BOMComponentDataExtension
 			aList = aCfg.getPhysicalColumnNames();
 			aList.addAll(new DataRecordUtility<BOMComponentDataExtension>(BOMComponentDataExtension.class, true).getColumnNames());
 		}
+		
+		HashMap<String, String>	aColumnNameMap = new HashMap<>();
+		aList.forEach(aColumnName->{aColumnNameMap.put(aColumnName.toUpperCase(), aColumnName.toUpperCase());});
+		aList.clear();
+		aList.addAll(aColumnNameMap.values());
+		
 		return aList;
 	}
 
