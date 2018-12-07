@@ -116,6 +116,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		QualTX qualtx = parentWorkPackage.qualtx;
 		QualTXComponent qualtxComp = compWorkPackage.qualtxComp;
 		BOMComponent bomComp = (parentWorkPackage.bom != null) ? parentWorkPackage.bom.getBOMComponentByAltKey(work.bom_comp_key) : null;
+		boolean isConfigChange = false;
 		if (((QTXCompWorkProducer)(this.producer)).queueUniverse == null) {
 			throw new IllegalStateException("Queue Universe has not been initialized");
 		}
@@ -126,23 +127,23 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		DataExtensionConfigurationRepository aDataExtensionConfigurationRepository = ((QTXCompWorkProducer)(this.producer)).queueUniverse.dataExtCfgRepos;
 		QEConfigCache qeConfigCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.qeConfigCache;
 		GPMClassificationProductContainerCache gpmClassCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.gpmClassCache;
-		QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
-		aQualTXComponentUtility.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+		QualTXComponentUtility aQualTXComponentUtilityforComp = null;
 
 		if(work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_CONFIG_CHANGE) == true)
 		{
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
-			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 
-			try
+			if (qualtxComp == null)
 			{
-				aQualTXComponentUtility.pullComponentData();
+				qualtxComp = qualtx.createComponent();
 
 			}
-			catch (Exception e)
-			{
-				logger.error("Failed pulling GPM data for Config change " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_wid);
-			}
+			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+
+			aQualTXComponentUtilityforComp.pullIVAData();
+			aQualTXComponentUtilityforComp.pullCtryCmplData();
+			isConfigChange = true;
 
 		}
 		
@@ -150,45 +151,41 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 
+			if (qualtxComp == null) {
+			
 			if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && !ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) && !ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type))
 			{
-
-				try
-				{
+				
 					qualtxComp = qualtx.createComponent();
 
-					aQualTXComponentUtility.pullComponentData();
+					// TODO bom_id is not a column on qualtx_comp, may be we need to
+					// set to src_id but it looks like src_id is populting with
+					// numbers as of now.
 
-				}
-				catch (Exception e)
-				{
-					logger.error("Failed creating new component " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_wid);
-				}
+					// TODO review with claude/pavan - can this section be removed
+					// and replaced with routines from prep service?
 
-				// TODO bom_id is not a column on qualtx_comp, may be we need to
-				// set to src_id but it looks like src_id is populting with
-				// numbers as of now.
+//					 qualtxComp.comp_id = (bomComp.comp_num != null) ?
+//					 bomComp.comp_num.toString() : null;
+//					 qualtxComp.cost = bomComp.extended_cost;
+//					 qualtxComp.src_key = bomComp.alt_key_comp;
+//					 qualtxComp.weight_uom = bomComp.weight_uom;
+//					 qualtxComp.component_type = bomComp.component_type;
+//					 qualtxComp.area = bomComp.area;
+//					 qualtxComp.area_uom = bomComp.area_uom;
+//					 qualtxComp.prod_key = bomComp.prod_key;
+//					 qualtxComp.prod_src_key = bomComp.prod_src_key;
+//					 qualtxComp.supplier_key = bomComp.supplier_key;
+//					 qualtxComp.manufacturer_key = bomComp.manufacturer_key;
+//					 qualtxComp.seller_key = bomComp.seller_key;
+//					 qualtxComp.net_weight = bomComp.net_weight;
+//					 qualtxComp.unit_weight = bomComp.unit_weight;
+//					 qualtxComp.qty_per = bomComp.qty_per;
+//					 qualtxComp.unit_cost = bomComp.unit_cost;
+					 aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+					 aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					 aQualTXComponentUtilityforComp.pullComponentData();
 
-				// TODO review with claude/pavan - can this section be removed
-				// and replaced with routines from prep service?
-
-				// qualtxComp.comp_id = (bomComp.comp_num != null) ?
-				// bomComp.comp_num.toString() : null;
-				// qualtxComp.cost = bomComp.extended_cost;
-				// qualtxComp.src_key = bomComp.alt_key_comp;
-				// qualtxComp.weight_uom = bomComp.weight_uom;
-				// qualtxComp.component_type = bomComp.component_type;
-				// qualtxComp.area = bomComp.area;
-				// qualtxComp.area_uom = bomComp.area_uom;
-				// qualtxComp.prod_key = bomComp.prod_key;
-				// qualtxComp.prod_src_key = bomComp.prod_src_key;
-				// qualtxComp.supplier_key = bomComp.supplier_key;
-				// qualtxComp.manufacturer_key = bomComp.manufacturer_key;
-				// qualtxComp.seller_key = bomComp.seller_key;
-				// qualtxComp.net_weight = bomComp.net_weight;
-				// qualtxComp.unit_weight = bomComp.unit_weight;
-				// qualtxComp.qty_per = bomComp.qty_per;
-				// qualtxComp.unit_cost = bomComp.unit_cost;
 				
 				// if the current analysis method is Top-Down mark the
 				// RM_CONSTRUCTION_STATUS as INIT, if a component is added. The
@@ -209,11 +206,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				 * entityMgr.setExistingEntity(qualtxComp);
 				 * compWorkPackage.entityMgr = entityMgr;
 				 */
-			}
+			}}
 		}
-		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_DELETED) == true)
+		boolean isCompDeleted = false;
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_DELETED) == true || isConfigChange)
 		{
+			if (bomComp == null) {
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 			qualtx.removeComponent(qualtxComp);
 			qualtxComp.qualTX = qualtx;
@@ -223,35 +221,57 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 			}
+			isCompDeleted = true;
+			}
+			
 		}
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_MODIFIED) == true)
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_MODIFIED) == true || (isConfigChange && !isCompDeleted))
 		{
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + work.bom_key + ")");
-			
-			qualtxComp.cost = bomComp.extended_cost;
-			qualtxComp.src_key = bomComp.alt_key_comp;
-			qualtxComp.weight_uom = bomComp.weight_uom;
-			qualtxComp.component_type = bomComp.component_type;
-			qualtxComp.area = bomComp.area;
-			qualtxComp.area_uom = bomComp.area_uom;
-			qualtxComp.prod_key = bomComp.prod_key;
-			qualtxComp.prod_src_key = bomComp.prod_src_key;
-			qualtxComp.supplier_key = bomComp.supplier_key;
-			qualtxComp.manufacturer_key = bomComp.manufacturer_key;
-			qualtxComp.seller_key = bomComp.seller_key;
-			qualtxComp.net_weight = bomComp.net_weight;
-			qualtxComp.unit_weight = bomComp.unit_weight;
-			qualtxComp.qty_per = bomComp.qty_per;
-			qualtxComp.unit_cost = bomComp.unit_cost;
-			qualtxComp.qualTX = qualtx;
-//			//if the current analysis method is Top-Down mark the RM_CONSTRUCTION_STATUS as INIT, if a component unit_cost/qty_per is updated. The Preparation Engine will need to re-construct the Qual TX Components.
-//			if(parentWork.details.analysis_method == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS
-//					&& (qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0)
-//					&& (!BOMQualAuditEntity.equal(bomComp.unit_cost, qualtxComp.unit_cost))
-//						|| !BOMQualAuditEntity.equal(bomComp.qty_per, qualtxComp.qty_per))
-//				qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+
+			if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && (ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) || ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type)))
+			{
+				qualtx.removeComponent(qualtxComp);
+				qualtxComp.qualTX = qualtx;
+			}
+			else
+			{
+
+				qualtxComp.cost = bomComp.extended_cost;
+				qualtxComp.src_key = bomComp.alt_key_comp;
+				qualtxComp.weight_uom = bomComp.weight_uom;
+				qualtxComp.component_type = bomComp.component_type;
+				qualtxComp.area = bomComp.area;
+				qualtxComp.area_uom = bomComp.area_uom;
+				qualtxComp.prod_key = bomComp.prod_key;
+				qualtxComp.prod_src_key = bomComp.prod_src_key;
+				qualtxComp.supplier_key = bomComp.supplier_key;
+				qualtxComp.manufacturer_key = bomComp.manufacturer_key;
+				qualtxComp.seller_key = bomComp.seller_key;
+				qualtxComp.net_weight = bomComp.net_weight;
+				qualtxComp.unit_weight = bomComp.unit_weight;
+				qualtxComp.qty_per = bomComp.qty_per;
+				qualtxComp.unit_cost = bomComp.unit_cost;
+				qualtxComp.qualTX = qualtx;
+				// //if the current analysis method is Top-Down mark the
+				// RM_CONSTRUCTION_STATUS as INIT, if a component
+				// unit_cost/qty_per is updated. The Preparation Engine will
+				// need to re-construct the Qual TX Components.
+				// if(parentWork.details.analysis_method ==
+				// TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS
+				// && (qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key
+				// != 0)
+				// && (!BOMQualAuditEntity.equal(bomComp.unit_cost,
+				// qualtxComp.unit_cost))
+				// || !BOMQualAuditEntity.equal(bomComp.qty_per,
+				// qualtxComp.qty_per))
+				// qualtxComp.qualTX.rm_construction_status =
+				// TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+
+			}
+
 		}
 		
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_YARN_DTLS_CHG) == true)
@@ -528,8 +548,9 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				{
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 					if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
-					
-					aQualTXComponentUtility.pullIVAData();
+					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.pullIVAData();
 				}
 			}			
 		}
