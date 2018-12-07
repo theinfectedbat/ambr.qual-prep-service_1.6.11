@@ -407,7 +407,13 @@ public DataExtensionConfigurationRepository getDataExtensionConfigRepos() {
 		{
 			if ("IMPL_BOM_PROD_FAMILY:TEXTILES".equalsIgnoreCase(bomDataExtension.group_name))
 			{
-				if ("Y".equals(bomDataExtension.getValue("KNIT_TO_SHAPE"))) return true;
+				DataExtensionConfiguration aDeCfg = this.dataExtensionConfigRepos.getDataExtensionConfiguration(bomDataExtension.group_name);
+				if (aDeCfg != null)
+				{
+					Map<String, String> deColumnMap = aDeCfg.getFlexColumnMapping();
+					String phyColumnName = deColumnMap.get("KNIT_TO_SHAPE");
+					if ("Y".equals(bomDataExtension.getValue(phyColumnName))) return true;
+				}
 			}
 		}
 
