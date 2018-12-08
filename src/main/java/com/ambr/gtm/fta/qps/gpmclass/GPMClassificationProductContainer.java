@@ -19,6 +19,7 @@ public class GPMClassificationProductContainer
 	
 	public long								prodKey;
 	public ArrayList<GPMClassification>		classificationList;
+	public ArrayList<GPMCountry>			ctryList;
 	
 	@JsonIgnore
 	public HashMap<Long, GPMClassification> ctryCmplKeyIndex;
@@ -33,6 +34,7 @@ public class GPMClassificationProductContainer
 		throws Exception
 	{
 		this.classificationList = new ArrayList<>();
+		this.ctryList = new ArrayList<>();
 	}
 
 	/**
@@ -47,6 +49,23 @@ public class GPMClassificationProductContainer
 		this.classificationList.add(theGPMClass);
 	}
 	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	void add(GPMCountry theGPMCtry)	
+		throws Exception
+	{
+		this.ctryList.add(theGPMCtry);
+	}
+
+	public GPMClassification getGPMClassificationByCtryCmplKey(long theCtryCmplKey)
+	{
+		return this.ctryCmplKeyIndex.get(theCtryCmplKey);
+	}
+
 	public void indexByCtryCmplKey()
 	{
 		this.ctryCmplKeyIndex = new HashMap<Long, GPMClassification>();
@@ -57,10 +76,5 @@ public class GPMClassificationProductContainer
 		{
 			this.ctryCmplKeyIndex.put(gpmClassification.cmplKey, gpmClassification);
 		}
-	}
-	
-	public GPMClassification getGPMClassificationByCtryCmplKey(long theCtryCmplKey)
-	{
-		return this.ctryCmplKeyIndex.get(theCtryCmplKey);
 	}
 }

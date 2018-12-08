@@ -30,7 +30,8 @@ public class GPMSourceIVAUniversePartition
 	private HashMap<Long, GPMSourceIVAProductSourceContainer>	ivaByProdSrcTable;
 	private HashMap<Long, GPMSourceIVAProductContainer>			ivaByProdTable;
 	private ArrayList<GPMSourceIVA>								gpmSrcIVAList;
-	private String												loadSQLText;
+	private String												loadSrcIVASQLText;
+	private String												loadSrcCOOSQLText;
 	private int													partitionNum;
 	private int													fetchSize;
 	int															maxCursorDepth;
@@ -66,15 +67,16 @@ public class GPMSourceIVAUniversePartition
 		String	theFilterOrgCode)
 		throws Exception
 	{
+		ArrayList<String>	aSQLLines = new ArrayList<>();
+		ArrayList<String> aWhereClauseLines = new ArrayList<>();
+
 		this.partitionNum = thePartitionNum;
 		this.partitionCount = thePartitionCount;
 		this.filterOrgCode = theFilterOrgCode;
 		this.gpmSrcIVAList = new ArrayList<>();
 		this.ivaByProdSrcTable = new HashMap<>();
 		this.ivaByProdTable = new HashMap<>();
-		
-		ArrayList<String>	aSQLLines = new ArrayList<>();
-		
+
 		aSQLLines.add("SELECT alt_key_prod, alt_key_src, alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, ctry_of_import, ctry_of_origin, effective_from, effective_to, iva_code"); 
 		aSQLLines.add("FROM mdi_prod_src_iva");
 		aSQLLines.add("WHERE alt_key_src in ");
@@ -87,14 +89,32 @@ public class GPMSourceIVAUniversePartition
 		aSQLLines.add("alt_key_prod in (select prod_key from mdi_bom_comp where prod_src_key = -1)");
 
 		if (this.partitionCount > 1) {
-			aSQLLines.add("and mod(alt_key_iva, ?) = ?");
+			aSQLLines.add("and mod(alt_key_src, ?) = ?");
 		}
 		
 		if (this.filterOrgCode != null) {
 			aSQLLines.add("and org_code = ?");
 		}
 				
-		this.loadSQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		this.loadSrcIVASQLText = StringUtil.join(aSQLLines.toArray(), " ");
+
+		aSQLLines = new ArrayList<>();
+		aSQLLines.add("SELECT alt_key_prod, alt_key_src, ctry_of_origin"); 
+		aSQLLines.add("FROM mdi_prod_src");
+	
+		if (this.partitionCount > 1) {
+			aWhereClauseLines.add("mod(alt_key_src, ?) = ?");
+		}
+		
+		if (this.filterOrgCode != null) {
+			aWhereClauseLines.add("org_code = ?");
+		}
+
+		this.loadSrcCOOSQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		
+		if (aWhereClauseLines.size() > 0) {
+			this.loadSrcCOOSQLText += " where " + StringUtil.join(aWhereClauseLines.toArray(), " and ");
+		}
 		
 		MessageFormatter.info(logger, "constructor", "GPM IVA Universe Partition: Count [{0}] Partition Number [{1}]", this.partitionCount, this.partitionNum);
 	}
@@ -133,6 +153,31 @@ public class GPMSourceIVAUniversePartition
 		aProdContainer.add(aSrcContainer.prodSrcKey);
 	}
 	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theProdKey
+	 * @param	theProdSrcKey
+	 * @param	theCOO
+	 *************************************************************************************
+	 */
+	public void addGPMSourceCOO(Long theProdKey, Long theProdSrcKey, String theCOO)
+		throws Exception
+	{
+		GPMSourceIVAProductSourceContainer		aSrcContainer;
+		
+		aSrcContainer = this.ivaByProdSrcTable.get(theProdSrcKey);
+		if (aSrcContainer == null) {
+			aSrcContainer = new GPMSourceIVAProductSourceContainer();
+			aSrcContainer.prodSrcKey = theProdSrcKey;
+			this.ivaByProdSrcTable.put(aSrcContainer.prodSrcKey, aSrcContainer);
+		}
+		
+		aSrcContainer.ctryOfOrigin = theCOO;
+	}
+
 	/**
      *************************************************************************************
      * <P>
@@ -264,10 +309,12 @@ public class GPMSourceIVAUniversePartition
 				}
 				
 				if (aInputList == null) {
-					theJdbcTemplate.query(this.loadSQLText, new GPMSourceIVARowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadSrcIVASQLText, new GPMSourceIVARowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadSrcCOOSQLText, new GPMSourceCOORowCallbackHandler(this));
 				}
 				else {
-					theJdbcTemplate.query(this.loadSQLText,	aInputList, new GPMSourceIVARowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadSrcIVASQLText, aInputList, new GPMSourceIVARowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadSrcCOOSQLText, aInputList, new GPMSourceCOORowCallbackHandler(this));
 				}
 			}
 			catch (DataAccessException e) {
@@ -309,10 +356,10 @@ public class GPMSourceIVAUniversePartition
 		throws Exception
 	{
 		if (theSqlText != null) {
-			this.loadSQLText = theSqlText;
+			this.loadSrcIVASQLText = theSqlText;
 		}
 		
-		MessageFormatter.info(logger, "setLoadQuery", "Query [{0}]", this.loadSQLText);
+		MessageFormatter.info(logger, "setLoadQuery", "Query [{0}]", this.loadSrcIVASQLText);
 	}
 
 	/**

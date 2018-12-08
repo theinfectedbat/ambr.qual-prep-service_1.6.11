@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.experimental.theories.suppliers.TestedOn;
 import org.springframework.core.GenericTypeResolver;
 
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
@@ -23,7 +24,7 @@ public class MyTest
 {
 	ArrayList<QualTX>	m_list = new ArrayList<QualTX>();
 
-	@Test
+//	@Test
 	public void test1()
 		throws Exception
 	{
@@ -84,7 +85,7 @@ public class MyTest
 		System.out.println();
 	}
 
-	@Test
+//	@Test
 	public void test2()
 		throws Exception
 	{
@@ -116,14 +117,14 @@ public class MyTest
 		}
 	}
 	
-	@Test
+//	@Test
 	public void test3()
 		throws Exception
 	{
 		System.out.println(MessageFormat.format("date [{0,date,yyyy/MM/dd HH:mm:ss}]", new Timestamp(System.currentTimeMillis())));
 	}
 	
-	@Test
+//	@Test
 	public void test4()
 		throws Exception
 	{

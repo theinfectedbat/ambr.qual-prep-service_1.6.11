@@ -19,6 +19,7 @@ public class GPMSourceIVAProductSourceContainer
 	private static final long serialVersionUID = 1L;
 	
 	public long							prodSrcKey;
+	public String						ctryOfOrigin;
 	public ArrayList<GPMSourceIVA>		ivaList;
 	
 	@JsonIgnore
@@ -116,8 +117,9 @@ public class GPMSourceIVAProductSourceContainer
 					&& theEffectiveTo.compareTo(aSrcIVA.effectiveTo) > 0)
 				continue;
 			
-			if(STPDecisionEnum.valueOf("M") != aSrcIVA.systemDecision)
+			if (STPDecisionEnum.M != aSrcIVA.systemDecision) {
 				continue;
+			}
 			
 			return aSrcIVA;
 		}
