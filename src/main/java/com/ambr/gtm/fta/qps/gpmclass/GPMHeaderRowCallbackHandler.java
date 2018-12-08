@@ -43,16 +43,17 @@ public class GPMHeaderRowCallbackHandler
 	public void processRow(ResultSet theResultSet) 
 		throws SQLException 
 	{
-		GPMCountry	aGPMCtry;
+		String		aCtryOfOrigin;
 		Long		aProdKey;
 
 		try {
-			aGPMCtry = new GPMCountry();
 			aProdKey = theResultSet.getLong("alt_key_prod");
-			aGPMCtry.ctryCode = theResultSet.getString("ctry_code");
-			aGPMCtry.ctryOfOrigin = theResultSet.getString("ctry_of_origin");
+			aCtryOfOrigin = theResultSet.getString("ctry_of_origin");
+			if (aCtryOfOrigin == null) {
+				return;
+			}
 			
-			this.partition.addCountry(aProdKey, aGPMCtry);
+			this.partition.addProdCtryOfOrigin(aProdKey, aCtryOfOrigin);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);

@@ -162,6 +162,30 @@ public class GPMClassificationUniversePartition
 	}
 
 	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theProdKey
+	 * @param	theCtryOfOrigin
+	 *************************************************************************************
+	 */
+	public void addProdCtryOfOrigin(Long theProdKey, String theCtryOfOrigin)
+		throws Exception
+	{
+		GPMClassificationProductContainer	aContainer;
+		
+		aContainer = this.classByProdTable.get(theProdKey);
+		if (aContainer == null) {
+			aContainer = new GPMClassificationProductContainer();
+			aContainer.prodKey = theProdKey;
+			this.classByProdTable.put(aContainer.prodKey, aContainer);
+		}
+		
+		aContainer.ctryOfOrigin = theCtryOfOrigin;
+	}
+
+	/**
      *************************************************************************************
      * <P>
      * </P>

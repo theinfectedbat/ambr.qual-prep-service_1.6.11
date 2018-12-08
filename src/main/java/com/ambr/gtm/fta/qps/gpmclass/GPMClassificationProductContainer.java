@@ -18,6 +18,7 @@ public class GPMClassificationProductContainer
 	private static final long serialVersionUID = 1L;
 	
 	public long								prodKey;
+	public String 							ctryOfOrigin;
 	public ArrayList<GPMClassification>		classificationList;
 	public ArrayList<GPMCountry>			ctryList;
 	
