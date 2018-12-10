@@ -199,8 +199,7 @@ public class ApplicationConfiguration
 	@Bean
 	public Env beanEnv() throws Exception
 	{
-		 this.env = new Env(
-				this.dataSrc, 
+		 this.env = new Env(			 
 				this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_SERVICE_URL, ""), 
 				this.propertyResolver.getPropertyValue(QTSProperties.TA_SERVICE_URL, ""));
 		this.env.setSingleton(this.env);
