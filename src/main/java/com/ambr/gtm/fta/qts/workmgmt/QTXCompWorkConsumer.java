@@ -542,6 +542,9 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.supplier_key = null;
 					qualtxComp.manufacturer_key = null;
 					qualtxComp.prod_src_iva_key = null;
+					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.pullIVAData();
 				}
 				
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_ADDED) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_NEW_IVA_IDENTIFED)) 
