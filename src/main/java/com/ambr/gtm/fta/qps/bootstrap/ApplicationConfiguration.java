@@ -592,7 +592,13 @@ public class ApplicationConfiguration
 		return ftaHSListCache;
 	}
 	
-   
+	@Bean
+	public CurrencyExchangeRateManager  beanCurrencyExchangeRateManager () throws Exception
+	{
+		CurrencyExchangeRateManager currencyExchangeRateManager = new CurrencyExchangeRateManager();
+		return currencyExchangeRateManager;
+	}
+	
 	@Bean
 	public QTXWorkProducer beanQTXWorkProducer(
 			@Autowired PlatformTransactionManager txMgr, 
@@ -816,12 +822,11 @@ public class ApplicationConfiguration
 
 	@Bean
 	public QualTXBusinessLogicProcessor beanQtxBusinessLogicProcessor(@Autowired QEConfigCache qeConfigCache, 
-			@Autowired SimplePropertySheetManager propertySheetManager,@Autowired DataExtensionConfigurationRepository theRepos,@Autowired FTAHSListCache ftaHSListCache) throws Exception
+			@Autowired SimplePropertySheetManager propertySheetManager,@Autowired DataExtensionConfigurationRepository theRepos,@Autowired FTAHSListCache ftaHSListCache, @Autowired CurrencyExchangeRateManager beanCurrencyExchangeRateManager) throws Exception
 	{
 		this.qualTXBusinessLogicProcessor = new QualTXBusinessLogicProcessor(qeConfigCache,ftaHSListCache); 
-		CurrencyExchangeRateManager currencyExchangeRateManager = new CurrencyExchangeRateManager();
-		CumulationComputationRule computationRule = new CumulationComputationRule(currencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
-		this.qualTXBusinessLogicProcessor.setCurrencyExchangeRateManager(currencyExchangeRateManager);
+		CumulationComputationRule computationRule = new CumulationComputationRule(beanCurrencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
+		this.qualTXBusinessLogicProcessor.setCurrencyExchangeRateManager(beanCurrencyExchangeRateManager);
 		this.qualTXBusinessLogicProcessor.setCumulationComputationRule(computationRule);
 		this.qualTXBusinessLogicProcessor.setDetermineComponentCOO(new DetermineComponentCOO());
 		this.qualTXBusinessLogicProcessor.setPropertySheetManager(propertySheetManager);
