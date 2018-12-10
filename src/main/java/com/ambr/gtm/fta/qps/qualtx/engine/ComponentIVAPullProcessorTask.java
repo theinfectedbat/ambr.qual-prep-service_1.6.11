@@ -1,14 +1,14 @@
 package com.ambr.gtm.fta.qps.qualtx.engine;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
+import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
+import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.util.CumulationComputationRule;
@@ -31,12 +31,13 @@ public class ComponentIVAPullProcessorTask
 
 	private ComponentIVAPullProcessorQueue			queue;
 	private ComponentBatch							componentBatch;
-	private String 									description;
+	private String									description;
 	private GPMSourceIVAContainerCache				ivaCache;
 	private GPMClaimDetailsCache					claimDetailsCache;
-	private CumulationComputationRule 				cumulationComputationRule;
-	private DetermineComponentCOO 					determineComponentCOO;
-	private QualTXBusinessLogicProcessor 			businessProcessor;
+	private GPMClassificationProductContainerCache	gpmClassCache;
+	private CumulationComputationRule				cumulationComputationRule;
+	private DetermineComponentCOO					determineComponentCOO;
+	private QualTXBusinessLogicProcessor			businessProcessor;
 	/**
      *************************************************************************************
      * <P>
@@ -58,6 +59,7 @@ public class ComponentIVAPullProcessorTask
 		this.businessProcessor = this.queue.queueUniverse.qtxBusinessLogicProcessor;
 		this.determineComponentCOO = this.businessProcessor.determineComponentCOO;
 		this.cumulationComputationRule = this.businessProcessor.cumulationComputationRule;
+		this.gpmClassCache =  this.queue.queueUniverse.gpmClassCache;
 		this.description =
 			"BOM." +
 			this.componentBatch.getBOMKey() +
@@ -83,6 +85,7 @@ public class ComponentIVAPullProcessorTask
 		throws Exception 
 	{
 		GPMSourceIVAProductSourceContainer		aContainer;
+		GPMClassificationProductContainer       aGPMClassContainer;
 		BOMComponent 							aBOMComp;
 		QualTXComponent 						aQualTXComp;
 		try {
@@ -99,9 +102,11 @@ public class ComponentIVAPullProcessorTask
 					aContainer = aQualTXComponentUtility.pullIVAData();
 					
 					String coo = null;
-					if(this.determineComponentCOO != null)
-						coo = determineComponentCOO.determineCOOForComponentSource(aQualTXComp, aBOMComp, aContainer, this.businessProcessor.propertySheetManager);
-					aQualTXComp.ctry_of_origin = coo;
+					if(this.determineComponentCOO != null) {
+						aGPMClassContainer = this.gpmClassCache.getGPMClassificationsByProduct(aBOMComp.prod_key);
+						coo = determineComponentCOO.determineCOOForComponentSource(aQualTXComp, aBOMComp, aContainer, aGPMClassContainer,  this.businessProcessor.propertySheetManager);
+					     aQualTXComp.ctry_of_origin = coo;
+					}
 					
 					if(this.cumulationComputationRule != null)
 						cumulationComputationRule.applyCumulationForComponent(aQualTXComp, aContainer, this.claimDetailsCache,this.queue.queueUniverse.dataExtCfgRepos);

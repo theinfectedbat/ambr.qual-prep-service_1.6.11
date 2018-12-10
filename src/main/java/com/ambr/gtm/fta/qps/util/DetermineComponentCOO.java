@@ -1,15 +1,17 @@
 package com.ambr.gtm.fta.qps.util;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
+import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
+import com.ambr.gtm.fta.qps.gpmclass.GPMCountry;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
-import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheetManager;
 import com.ambr.gtm.utils.legacy.sps.exception.PropertyDoesNotExistException;
@@ -19,7 +21,7 @@ public  class DetermineComponentCOO
 {
 	static Logger		logger = LogManager.getLogger(DetermineComponentCOO.class);
 	
-	public String determineCOOForComponentSource(QualTXComponent qualtxComp,BOMComponent bomComponent, GPMSourceIVAProductSourceContainer prodSourceContainer, SimplePropertySheetManager propertySheetManager) throws Exception
+	public String determineCOOForComponentSource(QualTXComponent qualtxComp,BOMComponent bomComponent, GPMSourceIVAProductSourceContainer prodSourceContainer, GPMClassificationProductContainer gpmClassContainer, SimplePropertySheetManager propertySheetManager) throws Exception
 	{
 		String aCOO = "";
 
@@ -66,7 +68,9 @@ public  class DetermineComponentCOO
 			}
 			else if ("GPM_COO".equals(cooOrder))
 			{
-				aCOO=getGPMCOO(qualtxComp);
+				aCOO = getGPMCOO(qualtxComp, prodSourceContainer, gpmClassContainer);
+				
+				
 				if (!"".equals(aCOO) && aCOO!= null)
 					break;			
 			}
@@ -104,25 +108,39 @@ public  class DetermineComponentCOO
 	{
 		return theBOMComponent.ctry_of_manufacture;
 	}
-	public String getGPMCOO(QualTXComponent qualtxComp) throws Exception
+	public String getGPMCOO(QualTXComponent qualtxComp, GPMSourceIVAProductSourceContainer prodSourceContainer, GPMClassificationProductContainer gpmClassContainer) throws Exception
 	{
-			// Bug Fix - 64834 - Performance - BOM Qualification with 10K
-			// components.
-			// TA-46676 - CLONE - COO determination of the component is not
-			// taken up as per hierarchy when BOM goes thru raw material
-			// approach
-			if (qualtxComp.ctry_of_origin == null || qualtxComp.ctry_of_origin .isEmpty())
-			{
-					return getGPMCOO(qualtxComp.org_code,qualtxComp.prod_key,qualtxComp.prod_src_key,qualtxComp.qualTX.ctry_of_import);
-			}
-			else
-				return qualtxComp.ctry_of_origin;
+		String aGPMCOO = null;
+		//Get COO from Source level
+		if (prodSourceContainer != null)aGPMCOO = prodSourceContainer.ctryOfOrigin;
+
+		if (aGPMCOO == null && gpmClassContainer != null)
+		{
+			//Get COO from country level
+			GPMCountry aGPMCountry = getGPMCountry(gpmClassContainer.ctryList, qualtxComp.qualTX.ctry_of_import);
+			aGPMCOO = aGPMCountry != null ? aGPMCountry.ctryOfOrigin : null;
+			
+			//Get COO at ountry level
+			if (aGPMCOO == null) aGPMCOO = gpmClassContainer.ctryOfOrigin;
+		}
+		return aGPMCOO;
+
 	}
 	
-	public  String getGPMCOO(String org_code,Long prod_key, Long prod_src_key, String ctryOfImport) throws Exception
+	public GPMCountry getGPMCountry(List<GPMCountry> aCtryList, String aCOI)
 	{
-		
-		//TODO Binaya web call is not acceptable in this case.
-		return  Env.getSingleton().getTradeQualtxClient().getGPMCOO(org_code,prod_key, prod_src_key, ctryOfImport);
+		GPMCountry aGPMCountry = null;
+		if (aCtryList != null && aCOI != null)
+		{
+			for (GPMCountry gpmCountry : aCtryList)
+			{
+				if (gpmCountry.ctryCode.equals(aCOI))
+				{
+					aGPMCountry = gpmCountry;
+					break;
+				}
+			}
+		}
+		return aGPMCountry;
 	}
 }
