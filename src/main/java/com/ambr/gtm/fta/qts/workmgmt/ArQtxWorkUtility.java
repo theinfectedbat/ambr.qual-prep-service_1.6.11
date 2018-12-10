@@ -115,6 +115,7 @@ public class ArQtxWorkUtility
 		if (reasonCode == ReQualificationReasonCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_FORCE_QUALIFICATION) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 
 		List<QualTX> list = new ArrayList<QualTX>();
 		
@@ -293,10 +294,11 @@ public class ArQtxWorkUtility
 			work.userId = qtxConsolWork.user_id;
 			
 		}
-		 work.priority = bomUniverse.getPrioritizedBOMSet().getBOMPriority(qualtx.src_key);
+		
+		work.priority = bomUniverse.getPrioritizedBOMSet().getBOMPriority(qualtx.src_key);
 		QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
 		if(QEConfig != null && QEConfig.getAnalysisMethod() != null )
-		{
+		{ 
 			String analysisMethod =  QEConfig.getAnalysisMethod() ;
 			work.details.analysis_method = TrackerCodes.AnalysisMethod.values()[TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal()];
 		}
@@ -385,6 +387,8 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE) workCode = RequalificationWorkCodes.GPM_HEAD_CUMULATION_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE) workCode = RequalificationWorkCodes.GPM_HEAD_TRACE_VALUE_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) workCode = RequalificationWorkCodes.COMP_PRC_CHG;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_FORCE_QUALIFICATION) workCode = RequalificationWorkCodes.COMP_CONFIG_CHANGE;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
 
 		return workCode;
 	}
