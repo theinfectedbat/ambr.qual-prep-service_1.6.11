@@ -29,7 +29,9 @@ public class GPMClassificationUniversePartition
 	int															rowCount;
 	private ArrayList<GPMClassification>						gpmClassList;
 	private HashMap<Long, GPMClassificationProductContainer>	classByProdTable;
-	private String												loadSQLText;
+	private String												loadClassificationSQLText;
+	private String												loadCtrySQLText;
+	private String												loadHeaderSQLText;
 	private int													partitionNum;
 	private int													fetchSize;
 	int															maxCursorDepth;
@@ -64,31 +66,49 @@ public class GPMClassificationUniversePartition
 		String	theFilterOrgCode)
 		throws Exception
 	{
+		ArrayList<String>	aSQLLines = new ArrayList<>();
+		ArrayList<String>	aWhereClauseSQLLines = new ArrayList<>();
+
 		this.partitionNum = thePartitionNum;
 		this.partitionCount = thePartitionCount;
 		this.filterOrgCode = theFilterOrgCode;
 		this.gpmClassList = new ArrayList<>();
 		this.classByProdTable = new HashMap<>();
 		
-		ArrayList<String>	aSQLLines = new ArrayList<>();
-		
 		aSQLLines.add("select alt_key_cmpl, alt_key_prod, alt_key_ctry, ctry_code, effective_from, effective_to, im_hs1, is_active"); 
 		aSQLLines.add("from mdi_prod_ctry_cmpl");
+
 		if (this.partitionCount > 1) {
-			aSQLLines.add("where mod(alt_key_cmpl, ?) = ?");
-
-			if (this.filterOrgCode != null) {
-				aSQLLines.add("and org_code = ?");
-			}
-		}
-		else {
-			if (this.filterOrgCode != null) {
-				aSQLLines.add("where org_code = ?");
-			}
+			aWhereClauseSQLLines.add("mod(alt_key_prod, ?) = ?");
 		}
 
-		this.loadSQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		if (this.filterOrgCode != null) {
+			aWhereClauseSQLLines.add("org_code = ?");
+		}
 
+		this.loadClassificationSQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		if (aWhereClauseSQLLines.size() > 0) {
+			this.loadClassificationSQLText += " where " + StringUtil.join(aWhereClauseSQLLines.toArray(), " and ");
+		}
+
+		aSQLLines.clear();
+		aSQLLines.add("select alt_key_prod, alt_key_ctry, ctry_code, ctry_of_origin"); 
+		aSQLLines.add("from mdi_prod_ctry");
+
+		this.loadCtrySQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		if (aWhereClauseSQLLines.size() > 0) {
+			this.loadCtrySQLText += " where " + StringUtil.join(aWhereClauseSQLLines.toArray(), " and ");
+		}
+
+		aSQLLines.clear();
+		aSQLLines.add("select alt_key_prod, ctry_of_origin"); 
+		aSQLLines.add("from mdi_prod");
+
+		this.loadHeaderSQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		if (aWhereClauseSQLLines.size() > 0) {
+			this.loadHeaderSQLText += " where " + StringUtil.join(aWhereClauseSQLLines.toArray(), " and ");
+		}
+		
 		MessageFormatter.info(logger, "constructor", "GPM Classification Universe Partition: Count [{0}] Partition Number [{1}]", this.partitionCount, this.partitionNum);
 	}
 
@@ -115,6 +135,54 @@ public class GPMClassificationUniversePartition
 		}
 		
 		aContainer.add(theGPMClass);
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theProdKey
+	 * @param	theGPMCtry
+	 *************************************************************************************
+	 */
+	public void addCountry(Long theProdKey, GPMCountry theGPMCtry)
+		throws Exception
+	{
+		GPMClassificationProductContainer	aContainer;
+		
+		aContainer = this.classByProdTable.get(theProdKey);
+		if (aContainer == null) {
+			aContainer = new GPMClassificationProductContainer();
+			aContainer.prodKey = theProdKey;
+			this.classByProdTable.put(aContainer.prodKey, aContainer);
+		}
+		
+		aContainer.add(theGPMCtry);
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theProdKey
+	 * @param	theCtryOfOrigin
+	 *************************************************************************************
+	 */
+	public void addProdCtryOfOrigin(Long theProdKey, String theCtryOfOrigin)
+		throws Exception
+	{
+		GPMClassificationProductContainer	aContainer;
+		
+		aContainer = this.classByProdTable.get(theProdKey);
+		if (aContainer == null) {
+			aContainer = new GPMClassificationProductContainer();
+			aContainer.prodKey = theProdKey;
+			this.classByProdTable.put(aContainer.prodKey, aContainer);
+		}
+		
+		aContainer.ctryOfOrigin = theCtryOfOrigin;
 	}
 
 	/**
@@ -240,10 +308,12 @@ public class GPMClassificationUniversePartition
 				}
 				
 				if (aInputList == null) {
-					theJdbcTemplate.query(this.loadSQLText, new GPMClassificationsRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadClassificationSQLText, new GPMClassificationRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadCtrySQLText, new GPMCountryRowCallbackHandler(this));
 				}
 				else {
-					theJdbcTemplate.query(this.loadSQLText, aInputList,new GPMClassificationsRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadClassificationSQLText, aInputList,new GPMClassificationRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadCtrySQLText, aInputList,new GPMCountryRowCallbackHandler(this));
 				}
 			}
 			catch (DataAccessException e) {
@@ -271,24 +341,6 @@ public class GPMClassificationUniversePartition
 		this.fetchSize = theFetchSize;
 		MessageFormatter.info(logger, "setFetchSize", "Fetch size [{0}]", this.fetchSize);
 		return this;
-	}
-
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 * 
-	 * @param	theSqlText
-	 *************************************************************************************
-	 */
-	public void setLoadQuery(String theSqlText)
-		throws Exception
-	{
-		if (theSqlText != null) {
-			this.loadSQLText = theSqlText;
-		}
-		
-		MessageFormatter.info(logger, "setLoadQuery", "Query [{0}]", this.loadSQLText);
 	}
 
 	/**

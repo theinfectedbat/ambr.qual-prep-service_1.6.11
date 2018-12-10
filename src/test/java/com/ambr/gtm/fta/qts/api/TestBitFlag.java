@@ -55,7 +55,7 @@ public class TestBitFlag {
 		Assert.assertEquals(details.isReasonCodeFlagSet(com.ambr.gtm.fta.qts.RequalificationWorkCodes.BOM_COMP_MODIFIED), true);
 	}
 	
-	@Test
+//	@Test
 	public void testNumber()
 	{
 		Double a = new Double(1.1);

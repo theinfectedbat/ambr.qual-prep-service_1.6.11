@@ -13,7 +13,7 @@ import com.ambr.gtm.fta.qps.exception.MaxRowsReachedException;
  * </P>
  *************************************************************************************
  */
-public class GPMClassificationsRowCallbackHandler
+public class GPMClassificationRowCallbackHandler
 	implements RowCallbackHandler
 {
 	private final GPMClassificationUniversePartition	partition;
@@ -26,7 +26,7 @@ public class GPMClassificationsRowCallbackHandler
 	 * @param	thePartition
 	 *************************************************************************************
 	 */
-	public GPMClassificationsRowCallbackHandler(GPMClassificationUniversePartition thePartition) 
+	public GPMClassificationRowCallbackHandler(GPMClassificationUniversePartition thePartition) 
 	{
 		this.partition = thePartition;
 	}
