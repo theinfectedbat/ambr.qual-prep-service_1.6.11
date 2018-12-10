@@ -243,7 +243,7 @@ public class QTXStageProducer extends QTXProducer
 				
 				this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
 			}
-			else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG)
+			else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION)
 			{
 				List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
 				this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
@@ -649,7 +649,7 @@ public class QTXStageProducer extends QTXProducer
 
 			buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap);
 
-			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
+			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
 			{
 				List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
 				buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap);
@@ -672,15 +672,21 @@ public class QTXStageProducer extends QTXProducer
 					String[] ivaValueArr = iva.split("\\|");
 					String ctryCmplkey = ivaValueArr[1];
 					String ctryCmplCode = ivaValueArr[0];
-					
-					List<QualTX> qualtxList = this.utility.getImpactedQtxCompKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
-					buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap);
+
+					// Processing new country compliance addition in component product.
+					List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
+					buildQtxForNewCtryCmpl(qualtxCompList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, false);
+
+					// Processing new country compliance addition in main product.
+					List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
+					buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, true);
+
 				}
 			}
 		}
 	}
 
-	private void buildQtxForNewCtryCmpl(List<QualTX> qualtxList, String ctryCmplkey, String ctryCmplCode, Map<Long, QTXWork> consolidatedWork, long reasonCode, Map<Long, QTXConsolWork> prodConsolMap) throws Exception
+	private void buildQtxForNewCtryCmpl(List<QualTX> qualtxList, String ctryCmplkey, String ctryCmplCode, Map<Long, QTXWork> consolidatedWork, long reasonCode, Map<Long, QTXConsolWork> prodConsolMap, boolean isHeader) throws Exception
 	{
 		long workCode = this.utility.getQtxWorkReasonCodes(reasonCode);
 		for (QualTX qualtx : qualtxList)
@@ -688,6 +694,8 @@ public class QTXStageProducer extends QTXProducer
 			QTXWork theQtxWork = null;
 			QTXCompWork theQtxCompWork = null;
 			QTXCompWorkHS theQtxCompHsWork = null;
+			QTXWorkHS theQtxHsWork = null;
+
 			boolean isNewComp = false;
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
@@ -695,6 +703,31 @@ public class QTXStageProducer extends QTXProducer
 		    isValQualtx = isValidQualtx(qualtx);
 		    if(!isValQualtx) 
 		    	continue;
+
+			if (isHeader)
+			{
+
+				if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
+				{
+					theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
+
+					theQtxHsWork = this.utility.createQtxHSWorkObj(qualtx, workCode, theQtxWork.qtx_wid);
+					theQtxHsWork.time_stamp = theQtxWork.time_stamp;
+				}
+				else
+				{
+					theQtxWork = this.utility.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtx.prod_key);
+
+					theQtxHsWork = this.utility.createQtxHSWorkObj(qualtx, workCode, theQtxWork.qtx_wid);
+				}
+
+				theQtxHsWork.ctry_cmpl_key = Long.valueOf(ctryCmplkey);
+				theQtxHsWork.target_hs_ctry = ctryCmplCode;
+				theQtxWork.workHSList.add(theQtxHsWork);
+
+			}
+			else
+			{
 
 			QualTXComponent qualtxComp = qualtx.compList.get(0);	//There will always be one QualTXComponent present (as defined by sql that pulled this data
 			if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
@@ -757,6 +790,7 @@ public class QTXStageProducer extends QTXProducer
 					theQtxCompWork.compWorkHSList.add(theQtxCompHsWork);
 				}
 			}
+		  }
 
 			consolidatedWork.put(qualtx.alt_key_qualtx, theQtxWork);
 		}
@@ -958,8 +992,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
 
 			buildCompConfigQtxWorkBean(qualtxCompList, qtxWorkList, stage);
-			
-			
+
 			List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
 			buildheaderConfigQtxWorkBean(qualtxList, qtxWorkList, stage);
 
