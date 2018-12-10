@@ -79,14 +79,17 @@ public class GPMSourceIVAUniversePartition
 
 		aSQLLines.add("SELECT alt_key_prod, alt_key_src, alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, ctry_of_import, ctry_of_origin, effective_from, effective_to, iva_code"); 
 		aSQLLines.add("FROM mdi_prod_src_iva");
-		aSQLLines.add("WHERE alt_key_src in ");
+		aSQLLines.add("WHERE ");
 		aSQLLines.add("(");
-		aSQLLines.add(" (select prod_src_key from mdi_bom)");
-		aSQLLines.add(" union");
-		aSQLLines.add(" (select prod_src_key from mdi_bom_comp)");
+		aSQLLines.add("   alt_key_src in ");
+		aSQLLines.add("   (");
+		aSQLLines.add("     (select prod_src_key from mdi_bom)");
+		aSQLLines.add("     union");
+		aSQLLines.add("     (select prod_src_key from mdi_bom_comp)");
+		aSQLLines.add("   )");
+		aSQLLines.add("   or");
+		aSQLLines.add("   alt_key_prod in (select prod_key from mdi_bom_comp where prod_src_key = -1)");
 		aSQLLines.add(")");
-		aSQLLines.add("or");
-		aSQLLines.add("alt_key_prod in (select prod_key from mdi_bom_comp where prod_src_key = -1)");
 
 		if (this.partitionCount > 1) {
 			aSQLLines.add("and mod(alt_key_src, ?) = ?");
@@ -167,6 +170,7 @@ public class GPMSourceIVAUniversePartition
 		throws Exception
 	{
 		GPMSourceIVAProductSourceContainer		aSrcContainer;
+		GPMSourceIVAProductContainer			aProdContainer;
 		
 		aSrcContainer = this.ivaByProdSrcTable.get(theProdSrcKey);
 		if (aSrcContainer == null) {
@@ -176,6 +180,14 @@ public class GPMSourceIVAUniversePartition
 		}
 		
 		aSrcContainer.ctryOfOrigin = theCOO;
+
+		aProdContainer = this.ivaByProdTable.get(theProdKey);
+		if (aProdContainer == null) {
+			aProdContainer = new GPMSourceIVAProductContainer(theProdKey);
+			this.ivaByProdTable.put(aProdContainer.prodKey, aProdContainer);
+		}
+		
+		aProdContainer.add(aSrcContainer.prodSrcKey);
 	}
 
 	/**
