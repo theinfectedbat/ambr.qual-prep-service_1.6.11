@@ -279,7 +279,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 			qualtxComp.qualTX = qualtx;
-			compWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_DE");
+			parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_DE");
 			
 			ArrayList<BOMComponentDataExtension> bomCompYarnDetailsList = bomComp.getDataExtensionByGroupName("IMPL_BOM_PROD_FAMILY:TEXTILES");
 
