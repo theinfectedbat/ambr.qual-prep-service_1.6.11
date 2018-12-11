@@ -13,6 +13,7 @@ import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMPrice;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassification;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
+import com.ambr.gtm.fta.qps.qualtx.engine.QualTXDataExtension;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXPrice;
 import com.ambr.gtm.fta.qts.QTXWork;
 import com.ambr.gtm.fta.qts.QTXWorkHS;
@@ -56,6 +57,14 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 			throw new Exception("Failed to process work item " + workPackage.work.qtx_wid + " qualtx not found (" + workPackage.work.details.qualtx_key + ")");
 		}
 		
+		
+		for (QualTXDataExtension  qualtxDE :qualtx.deList)
+		{
+			if(qualtxDE.group_name.equalsIgnoreCase("STP:"+qualtx.fta_code_group))
+			{
+				qualtx.deList.remove(qualtxDE);
+			}
+		}
 		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.HEADER_CONFIG_CHANGE) == true)
 		{
 			isConfigChange = true;
