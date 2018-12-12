@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -217,24 +218,39 @@ public class TrackerLoader
 		return this;
 	}
 
-	public void reloadTracker(JdbcTemplate aTemplate,Set<QtxWorkTracker> reloadWorkList) throws Exception
+	public void reloadTracker(JdbcTemplate aTemplate,Set<QtxWorkTracker> reloadWorkTrackerList) throws Exception
 	{
 		Set<Long> aReloadWorkIdSet = new HashSet<>();
 		Set<Long> aReloadQtxKeySet = new HashSet<>();
-		for (QtxWorkTracker aQtxTracker : reloadWorkList)
+		for (QtxWorkTracker aQtxTracker : reloadWorkTrackerList)
 		{
 			aReloadWorkIdSet.add(aQtxTracker.getQualtxWorkId());
 			aReloadQtxKeySet.add(aQtxTracker.getQualtxKey());
 		}
-		removeExistingQtxDetails(reloadWorkList, aReloadQtxKeySet);
-		reloadQtxTracker(aTemplate, reloadWorkList, aReloadWorkIdSet);
+		removeExistingQtxDetails(reloadWorkTrackerList, aReloadQtxKeySet);
+
+		Set<Long> aReloadIdSet = new HashSet<>();
+		Iterator<Long> aWorkIdIterator = aReloadWorkIdSet.iterator();
+		for (int i = 0; aWorkIdIterator.hasNext(); i++)
+		{
+			aReloadIdSet.add(aWorkIdIterator.next());
+			if (i > 0 && i % 10000 == 0)
+			{
+				reloadQtxTracker(aTemplate, aReloadIdSet);
+				aReloadIdSet.clear();
+			}
+		}
+		if (!aReloadIdSet.isEmpty())
+		{
+			reloadQtxTracker(aTemplate, aReloadIdSet);
+		}
 	}
-	public void reloadQtxTracker(JdbcTemplate theJdbcTemplate,Set<QtxWorkTracker> theReloadWorkList,Set<Long> theReloadWorkIdSet) throws Exception
+	
+	public void reloadQtxTracker(JdbcTemplate theJdbcTemplate,Set<Long> theReloadWorkIdSet) throws Exception
 	{
 		try
 		{
-			String aSql = replaceInWhereClause(TrackerLoaderQueries.qtxTrackerReloadQuery, theReloadWorkList.size());
-
+			String aSql = replaceInWhereClause(TrackerLoaderQueries.qtxTrackerReloadQuery, theReloadWorkIdSet.size());
 			if (aSql != null)
 			{
 				theJdbcTemplate.query(aSql, theReloadWorkIdSet.toArray(), new QTXTrackerRowCallbackHandler());
@@ -279,4 +295,5 @@ public class TrackerLoader
 			this.trackerContainer.deleteQtxWorkTrackers(reloadWorkList);
 		}
 	}
+	
 }
