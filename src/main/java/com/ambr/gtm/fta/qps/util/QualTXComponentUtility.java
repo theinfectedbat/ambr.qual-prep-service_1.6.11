@@ -288,7 +288,7 @@ public class QualTXComponentUtility
 			GPMSourceIVA aConservativeSRCIVA = consSrcLogic.conservativeSrcDetails.getConservativeSourceIVA();
 			if(aConservativeSRCIVA != null)
 			{
-				String aQualified= ("Y".equals( aConservativeSRCIVA.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
+				String aQualified= (aConservativeSRCIVA.finalDecision != null && "Y".equals( aConservativeSRCIVA.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
 				
 				this.qualTXComp.qualified_flg = (aConservativeSRCIVA.finalDecision == null)? "" : aQualified;
 				this.qualTXComp.prod_src_iva_key = aConservativeSRCIVA.ivaKey;
