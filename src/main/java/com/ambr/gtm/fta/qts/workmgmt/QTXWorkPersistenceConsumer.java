@@ -318,7 +318,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			{
 				Long altkey = ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).seq_num;
 				BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-				if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY:TEXTILES" , STATE.DELETE);
+				if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES" , STATE.DELETE);
 				compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 				auditMap.put(altkey, compDeAudit);
 				audit.addChildTable(compDeAudit);
@@ -339,19 +339,31 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			
 			else if (modRecord.modifiableRecord instanceof QualTXPrice)
 			{
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID", ((QualTXPrice) modRecord.modifiableRecord).tx_id);
+				rowKeyColumns.put("ORG_CODE", ((QualTXPrice) modRecord.modifiableRecord).org_code);
+				rowKeyColumns.put("PRICE_SEQ_NUM", ((QualTXPrice) modRecord.modifiableRecord).price_seq_num);
+				
 				Long altkey = ((QualTXPrice) modRecord.modifiableRecord).alt_key_price;
 				BOMQualAuditEntity priceAudit = auditMap.get(altkey);
+				
 				if(priceAudit == null) priceAudit = new BOMQualAuditEntity("MDI_QUALTX_PRICE", altkey);
 				for (DataRecordColumnModification columnMod : modRecord.getColumnModifications())
 				{
 					priceAudit.setModifiedColumn(columnMod.getColumnName(), columnMod.getModifiedValue(), columnMod.getOriginalValue());
 				}
+				priceAudit.setRowKeyColumns(rowKeyColumns);
 				priceAudit.setSurrogateKeyColumn("ALT_KEY_PRICE");
 				auditMap.put(altkey, priceAudit);
 				audit.addChildTable(priceAudit);
 			}
 			else if (modRecord.modifiableRecord instanceof QualTXComponent)
 			{
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID", ((QualTXComponent) modRecord.modifiableRecord).tx_id);
+				rowKeyColumns.put("ORG_CODE", ((QualTXComponent) modRecord.modifiableRecord).org_code);
+				rowKeyColumns.put("COMP_ID", ((QualTXComponent) modRecord.modifiableRecord).comp_id);
+				
 				Long altkey = ((QualTXComponent) modRecord.modifiableRecord).alt_key_comp;
 				BOMQualAuditEntity compAudit = auditMap.get(altkey);
 				if(compAudit == null) compAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey);
@@ -361,12 +373,19 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				{
 					compAudit.setModifiedColumn(columnMod.getColumnName(), columnMod.getModifiedValue(), columnMod.getOriginalValue());
 				}
+				compAudit.setRowKeyColumns(rowKeyColumns);
 				auditMap.put(altkey, compAudit);
 				audit.addChildTable(compAudit);
 			}
 			
 			else if (modRecord.modifiableRecord instanceof QualTXComponentPrice)
 			{
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID", ((QualTXComponentPrice) modRecord.modifiableRecord).tx_id);
+				rowKeyColumns.put("ORG_CODE", ((QualTXComponentPrice) modRecord.modifiableRecord).org_code);
+				rowKeyColumns.put("COMP_ID", ((QualTXComponentPrice) modRecord.modifiableRecord).comp_id);
+				rowKeyColumns.put("PRICE_SEQ_NUM", ((QualTXComponentPrice) modRecord.modifiableRecord).price_seq_num);
+				
 				Long altkey = ((QualTXComponentPrice) modRecord.modifiableRecord).alt_key_price;
 				BOMQualAuditEntity compPriceAudit = auditMap.get(altkey);
 				if(compPriceAudit == null) compPriceAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP_PRICE", altkey);
@@ -376,20 +395,28 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				{
 					compPriceAudit.setModifiedColumn(columnMod.getColumnName(), columnMod.getModifiedValue(), columnMod.getOriginalValue());
 				}
+				compPriceAudit.setRowKeyColumns(rowKeyColumns);
 				auditMap.put(altkey, compPriceAudit);
 				audit.addChildTable(compPriceAudit);
 			}
 
 			else if (modRecord.modifiableRecord instanceof QualTXComponentDataExtension)
 			{
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID", ((QualTXComponentDataExtension) modRecord.modifiableRecord).tx_id);
+				rowKeyColumns.put("ORG_CODE", ((QualTXComponentDataExtension) modRecord.modifiableRecord).org_code);
+				rowKeyColumns.put("COMP_ID", ((QualTXComponentDataExtension) modRecord.modifiableRecord).comp_id);
+				rowKeyColumns.put("SEQ_NUM", ((QualTXComponentDataExtension) modRecord.modifiableRecord).seq_num);
+				
 				Long altkey = ((QualTXComponentDataExtension) modRecord.modifiableRecord).seq_num;
 				BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-				if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY:TEXTILES" , STATE.MODIFY);
+				if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES" , STATE.MODIFY);
 				compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 				for (DataRecordColumnModification columnMod : modRecord.getColumnModifications())
 				{
 					compDeAudit.setModifiedColumn(columnMod.getColumnName(), columnMod.getModifiedValue(), columnMod.getOriginalValue());
 				}
+				compDeAudit.setRowKeyColumns(rowKeyColumns);
 				auditMap.put(altkey, compDeAudit);
 				audit.addChildTable(compDeAudit);
 			}
@@ -402,6 +429,10 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			if (newRecord.modifiableRecord instanceof QualTXPrice)
 			{
 				QualTXPrice qualTXPrice = (QualTXPrice) newRecord.modifiableRecord;
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID",qualTXPrice.tx_id);
+				rowKeyColumns.put("ORG_CODE", qualTXPrice.org_code);
+				rowKeyColumns.put("PRICE_SEQ_NUM", qualTXPrice.price_seq_num);
 				Long altkey = qualTXPrice.alt_key_price;
 				BOMQualAuditEntity priceAudit = auditMap.get(altkey); 
 				if(priceAudit == null) priceAudit = new BOMQualAuditEntity("MDI_QUALTX_PRICE", altkey);
@@ -410,12 +441,20 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				priceAudit.setModifiedColumn("price_type", qualTXPrice.price_type, null);
 				priceAudit.setModifiedColumn("price", qualTXPrice.price, null);
 				priceAudit.setModifiedColumn("currency_code", qualTXPrice.currency_code, null);
+				priceAudit.setRowKeyColumns(rowKeyColumns);
+				
 				auditMap.put(altkey, priceAudit);
 				audit.addChildTable(priceAudit);
 			}
 			else if (newRecord.modifiableRecord instanceof QualTXComponent)
 			{
 				QualTXComponent qualTXComponent = (QualTXComponent) newRecord.modifiableRecord;
+				
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID",qualTXComponent.tx_id);
+				rowKeyColumns.put("ORG_CODE", qualTXComponent.org_code);
+				rowKeyColumns.put("COMP_ID", qualTXComponent.comp_id);
+				
 				Long altkey = qualTXComponent.alt_key_comp;
 				BOMQualAuditEntity compAudit = auditMap.get(altkey);
 				if(compAudit == null) compAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey);
@@ -437,6 +476,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				compAudit.setModifiedColumn("unit_weight", qualTXComponent.unit_weight, null);
 				compAudit.setModifiedColumn("qty_per", qualTXComponent.qty_per, null);
 				compAudit.setModifiedColumn("unit_cost", qualTXComponent.unit_cost, null);
+				compAudit.setRowKeyColumns(rowKeyColumns);
 				auditMap.put(altkey, compAudit);
 				audit.addChildTable(compAudit);
 			}
@@ -444,6 +484,12 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			else if (newRecord.modifiableRecord instanceof QualTXComponentPrice)
 			{
 				QualTXComponentPrice qualTXCompPrice = (QualTXComponentPrice) newRecord.modifiableRecord;
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID", qualTXCompPrice.tx_id);
+				rowKeyColumns.put("ORG_CODE", qualTXCompPrice.org_code);
+				rowKeyColumns.put("COMP_ID", qualTXCompPrice.comp_id);
+				rowKeyColumns.put("PRICE_SEQ_NUM", qualTXCompPrice.price_seq_num);
+				
 				Long altkey = qualTXCompPrice.alt_key_price;
 				BOMQualAuditEntity compPriceAudit = auditMap.get(altkey);
 				if(compPriceAudit == null) compPriceAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP_PRICE", altkey);
@@ -451,6 +497,8 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				compPriceAudit.setModifiedColumn("price_type", qualTXCompPrice.price_type, null);
 				compPriceAudit.setModifiedColumn("price", qualTXCompPrice.price, null);
 				compPriceAudit.setModifiedColumn("currency_code", qualTXCompPrice.currency_code, null);
+				compPriceAudit.setRowKeyColumns(rowKeyColumns);
+				
 				compPriceAudit.setState(STATE.CREATE);
 				auditMap.put(altkey, compPriceAudit);
 				audit.addChildTable(compPriceAudit);
@@ -459,9 +507,15 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			else if (newRecord.modifiableRecord instanceof QualTXComponentDataExtension)
 			{
 				QualTXComponentDataExtension qualTXCompDe = (QualTXComponentDataExtension) newRecord.modifiableRecord;
+				HashMap<String,Object> rowKeyColumns = new HashMap<String,Object>();
+				rowKeyColumns.put("TX_ID", qualTXCompDe.tx_id);
+				rowKeyColumns.put("ORG_CODE", qualTXCompDe.org_code);
+				rowKeyColumns.put("COMP_ID", qualTXCompDe.comp_id);
+				rowKeyColumns.put("SEQ_NUM", qualTXCompDe.seq_num);
+				
 				Long altkey = qualTXCompDe.seq_num;
 				BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-				if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY:TEXTILES" , STATE.CREATE);
+				if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES" , STATE.CREATE);
 				compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR1", qualTXCompDe.getValue("FLEXFIELD_VAR1"), null);
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR2", qualTXCompDe.getValue("FLEXFIELD_VAR2"), null);
@@ -471,6 +525,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR6", qualTXCompDe.getValue("FLEXFIELD_VAR6"), null);
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR7", qualTXCompDe.getValue("FLEXFIELD_VAR7"), null);
 				compDeAudit.setModifiedColumn("FLEXFIELD_NUM1", qualTXCompDe.getValue("FLEXFIELD_NUM1"), null);
+				compDeAudit.setRowKeyColumns(rowKeyColumns);
 				auditMap.put(altkey, compDeAudit);
 				audit.addChildTable(compDeAudit);
 			}
@@ -506,7 +561,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				{
 					Long altkey = ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).seq_num;
 					BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-					if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY:TEXTILES" , STATE.DELETE);
+					if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES" , STATE.DELETE);
 					compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 					auditMap.put(altkey, compDeAudit);
 					audit.addChildTable(compDeAudit);
@@ -596,7 +651,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				{
 					Long altkey = ((QualTXComponentDataExtension) modRecord.modifiableRecord).seq_num;
 					BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-					if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY:TEXTILES" , STATE.MODIFY);
+					if(compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES" , STATE.MODIFY);
 					compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 					for (DataRecordColumnModification columnMod : modRecord.getColumnModifications())
 					{
