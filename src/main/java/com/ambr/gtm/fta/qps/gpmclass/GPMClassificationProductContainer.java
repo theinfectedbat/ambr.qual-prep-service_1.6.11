@@ -78,4 +78,23 @@ public class GPMClassificationProductContainer
 			this.ctryCmplKeyIndex.put(gpmClassification.cmplKey, gpmClassification);
 		}
 	}
+
+	/**
+     *************************************************************************************
+     * <P>
+     * </P>
+     * 
+     * @param	thePartitionContainer
+     *************************************************************************************
+     */
+	void merge(GPMClassificationProductContainer thePartitionContainer)
+		throws Exception
+	{
+		if (thePartitionContainer.ctryOfOrigin != null) {
+			this.ctryOfOrigin = thePartitionContainer.ctryOfOrigin;
+		}
+		
+		this.classificationList.addAll(thePartitionContainer.classificationList);
+		this.ctryList.addAll(thePartitionContainer.ctryList);
+	}
 }

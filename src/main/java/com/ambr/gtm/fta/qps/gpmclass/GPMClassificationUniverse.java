@@ -117,7 +117,7 @@ public class GPMClassificationUniverse
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getGPMClassificationsByProduct(theProdKey);
 			if (aPartitionContainer != null) {
-				aUniverseContainer.classificationList.addAll(aPartitionContainer.classificationList);
+				aUniverseContainer.merge(aPartitionContainer);
 			}
 		}
 		else {
@@ -127,7 +127,7 @@ public class GPMClassificationUniverse
 		
 					aPartitionContainer = aAPI.execute(theProdKey);
 					if (aPartitionContainer != null) {
-						aUniverseContainer.classificationList.addAll(aPartitionContainer.classificationList);
+						aUniverseContainer.merge(aPartitionContainer);
 					}
 				}
 				catch (Exception e) {
