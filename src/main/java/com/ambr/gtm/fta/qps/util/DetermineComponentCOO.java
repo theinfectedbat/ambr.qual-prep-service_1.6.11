@@ -120,7 +120,7 @@ public  class DetermineComponentCOO
 			GPMCountry aGPMCountry = getGPMCountry(gpmClassContainer.ctryList, qualtxComp.qualTX.ctry_of_import);
 			aGPMCOO = aGPMCountry != null ? aGPMCountry.ctryOfOrigin : null;
 			
-			//Get COO at ountry level
+			//Get COO at GPM header level
 			if (aGPMCOO == null) aGPMCOO = gpmClassContainer.ctryOfOrigin;
 		}
 		return aGPMCOO;

@@ -207,8 +207,8 @@ public DataExtensionConfigurationRepository getDataExtensionConfigRepos() {
 	
 	public boolean isBOMEligibleforFutureYearQualification(GPMSourceIVA aSrcIVA, BOM theBOM) throws Exception
 	{
-		
-		if (this.checkEligibilityForAnnualQualificationTrigger(theBOM.org_code, aSrcIVA.ftaCode, aSrcIVA.ctryOfImport))
+		//Considering priority not null is BOM has been saved. Priority will be populated either integration or UI
+		if (theBOM.priority != null || this.checkEligibilityForAnnualQualificationTrigger(theBOM.org_code, aSrcIVA.ftaCode, aSrcIVA.ctryOfImport))
 		{
 			Date futureFromDate = this.getFutureQualificationFromDate();
 			Date futureToDate = this.getFutureQualificationToDate();
@@ -377,9 +377,9 @@ public DataExtensionConfigurationRepository getDataExtensionConfigRepos() {
 		if (!dataMap.isEmpty())
 		{
 			aQualTXComp.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
+			if(dataMap.get(PROD_CTRY_CMP_KEY) != null)
+				aQualTXComp.prod_ctry_cmpl_key =  (Long) dataMap.get(PROD_CTRY_CMP_KEY);
 			
-			//TODO sankar, prod_ctry_cmpl_key can now be null, is there a reason to map it to zero?
-			aQualTXComp.prod_ctry_cmpl_key = dataMap.get(PROD_CTRY_CMP_KEY) != null ? (Long) dataMap.get(PROD_CTRY_CMP_KEY) : 0;
 			aQualTXComp.sub_pull_ctry = ctryCode;
 		}
 	}
