@@ -31,6 +31,7 @@ import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.platform.rdbms.orm.EntityManager;
 import com.ambr.platform.rdbms.schema.SchemaDescriptor;
 import com.ambr.platform.uoid.UniversalObjectIDGenerator;
+import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 
 //TODO metrics for each producer/consumer (throughput, remaining items)
@@ -130,15 +131,17 @@ public class QTXWorkUniverse
 		for (WorkPackage workPackage : this.workByQualtxMap.values())
 		{
 			EntityManager<QualTX> qualtxMgr = new EntityManager<QualTX>(QualTX.class, this.txMgr, this.schemaDesc, template);
-			
-			if (null != workPackage.qualtx)
+
+			try
 			{
 				qualtxMgr.setExistingEntity(workPackage.qualtx);
 				workPackage.setEntityManager(qualtxMgr);
+
 			}
-			else
+			catch (Exception e)
 			{
-				logger.error("Work package does not have qualtx assigned to it " + workPackage.work.qtx_wid);
+				MessageFormatter.error(logger, "setupEntityManagers", e, "Work package does not have qualtx assigned for the Ar qtx work Id : [{0}] ", workPackage.work.qtx_wid);
+
 			}
 		}
 	}
