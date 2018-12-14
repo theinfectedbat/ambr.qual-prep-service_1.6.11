@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qps.util;
 
+import java.text.MessageFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -17,15 +18,20 @@ import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
 import com.ambr.gtm.fta.qts.util.TradeLaneData;
+import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
+import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
 
 public class PreviousYearQualificationRule
 {
 	private QEConfigCache				qeConfigCache;
+	private DataExtensionConfigurationRepository dataRepos;
 
-	public PreviousYearQualificationRule(QEConfigCache qeConfigCache)
+	public PreviousYearQualificationRule(QEConfigCache qeConfigCache,DataExtensionConfigurationRepository dataRepos)
 	{
 		this.qeConfigCache = qeConfigCache;
+		this.dataRepos = dataRepos;
+		
 	}
 	public boolean applyPrevYearQualForComponent(BOMComponent aBOMComp,QualTXComponent aQualTXComp, GPMSourceIVAProductSourceContainer prodSourceContainer, GPMClaimDetailsCache claimDetailsCache, DataExtensionConfigurationRepository dataExtRepos) throws Exception
 	{
@@ -89,26 +95,25 @@ public class PreviousYearQualificationRule
 					aQualTXComp.qualified_flg = aQualifiedFlg;
 					//aQualTXComp.prod_src_iva_key =aProdSrcIva.ivaKey;
 				
-					QualTXComponentDataExtension qualTXCompDetals = null;
+					QualTXComponentDataExtension qualTXCompDetails = null;
 					if (aQualTXComp.deList != null && !aQualTXComp.deList.isEmpty())
 					{
 						for (QualTXComponentDataExtension qualTXCompDe : aQualTXComp.deList)
 						{
 							if (qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
 							{
-								qualTXCompDetals = qualTXCompDe;
+								qualTXCompDetails = qualTXCompDe;
 								break;
 							}
 						}
 					}
-					if (qualTXCompDetals == null)
+					if (qualTXCompDetails == null)
 					{
-						qualTXCompDetals = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
+						qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
 					}
 
-					/*Map<String, String> qualtxCOmpDtlflexFieldMap = FlexConfigManager.getInstance().getFlexConfigContainer(aQualTXComp.org_code).getFlexColumn("QUALTX", "COMP_DTLS");
-
-					qualTXCompDetals.deFieldMap.put(qualtxCOmpDtlflexFieldMap.get("PREV_YEAR_QUAL_APPLIED"), "Y");*/
+					Map<String, String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
+					qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("PREV_YEAR_QUAL_APPLIED"), "Y");
 					return true;
 				}
 			}
@@ -130,10 +135,8 @@ public class PreviousYearQualificationRule
 		{
 			if (aBOMDE.group_name.equalsIgnoreCase(aBomStaticDefaultDE))
 			{ 
-				/*Map<String,String> qualtxCOmpDtlflexFieldMap = FlexConfigManager.getInstance().getFlexConfigContainer(aBOMComp.org_code).getFlexColumn("BOM_STATIC","DEFAULT");
-				
-				return "Y".equals(aBOMDE.getValue(qualtxCOmpDtlflexFieldMap.get("USE_PREV_YEAR_QUAL"))) ? true : false;*/
-				return true;
+				Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("BOM_STATIC","DEFAULT");
+				return "Y".equals(aBOMDE.getValue(qualtxCOmpDtlflexFieldMap.get("USE_PREV_YEAR_QUAL"))) ? true : false;
 			}
 		}
 		return false;
@@ -162,6 +165,13 @@ public class PreviousYearQualificationRule
 			if (optTradeLane.isPresent()) return optTradeLane.get();
 		}
 		return null;
+	}
+	
+	public Map<String, String> getFeildMapping(String deName, String ftaCodeGroup) throws Exception
+	{
+		String groupName = MessageFormat.format("{0}{1}{2}", deName, GroupNameSpecification.SEPARATOR, ftaCodeGroup);
+		DataExtensionConfiguration aCfg = this.dataRepos.getDataExtensionConfiguration(groupName);
+		return aCfg.getFlexColumnMapping();
 	}
 
 }

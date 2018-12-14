@@ -11,6 +11,8 @@ import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.util.CumulationComputationRule;
 import com.ambr.gtm.fta.qps.util.DetermineComponentCOO;
 import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;

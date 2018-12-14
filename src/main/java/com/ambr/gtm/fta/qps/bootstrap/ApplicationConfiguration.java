@@ -826,7 +826,7 @@ public class ApplicationConfiguration
 	{
 		this.qualTXBusinessLogicProcessor = new QualTXBusinessLogicProcessor(qeConfigCache,ftaHSListCache); 
 		CumulationComputationRule computationRule = new CumulationComputationRule(beanCurrencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
-		PreviousYearQualificationRule previousYearQualificationRule = new PreviousYearQualificationRule(qeConfigCache);
+		PreviousYearQualificationRule previousYearQualificationRule = new PreviousYearQualificationRule(qeConfigCache,theRepos);
 		this.qualTXBusinessLogicProcessor.setCurrencyExchangeRateManager(beanCurrencyExchangeRateManager);
 		this.qualTXBusinessLogicProcessor.setCumulationComputationRule(computationRule);
 		this.qualTXBusinessLogicProcessor.setDetermineComponentCOO(new DetermineComponentCOO());
