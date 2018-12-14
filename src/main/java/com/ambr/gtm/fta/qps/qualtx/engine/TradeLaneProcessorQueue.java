@@ -86,7 +86,7 @@ public class TradeLaneProcessorQueue
 		
 		this.targetDEMap = new HashMap<>();
 		
-		aSpec = new GroupNameSpecification("IMPL_BOM_PROD_FAMILY:TEXTTILES");
+		aSpec = new GroupNameSpecification("IMPL_BOM_PROD_FAMILY:TEXTILES");
 		this.targetDEMap.put(aSpec.groupName, aSpec);
 
 		aSpec = new GroupNameSpecification("IMPL_BOM_PROD_FAMILY:AUTOMOBILE");
