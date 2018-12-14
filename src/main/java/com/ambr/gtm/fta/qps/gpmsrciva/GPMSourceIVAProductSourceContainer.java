@@ -126,4 +126,22 @@ public class GPMSourceIVAProductSourceContainer
 		
 		return null;
 	}
+
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     * 
+     * @param	thePartitionContainer
+     *************************************************************************************
+     */
+	void merge(GPMSourceIVAProductSourceContainer thePartitionContainer)
+		throws Exception
+	{
+		if (thePartitionContainer.ctryOfOrigin != null) {
+			this.ctryOfOrigin = thePartitionContainer.ctryOfOrigin;
+		}
+		
+		this.ivaList.addAll(thePartitionContainer.ivaList);
+	}
 }

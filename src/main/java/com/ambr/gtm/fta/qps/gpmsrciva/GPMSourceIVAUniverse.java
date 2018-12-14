@@ -231,7 +231,7 @@ public class GPMSourceIVAUniverse
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getSourceIVABySource(theProdSrcKey);
 			if (aPartitionContainer != null) {
-				aUniverseContainer.ivaList.addAll(aPartitionContainer.ivaList);
+				aUniverseContainer.merge(aPartitionContainer);
 			}
 		}
 		else {
@@ -242,7 +242,7 @@ public class GPMSourceIVAUniverse
 		
 					aPartitionContainer = aAPI.execute(theProdSrcKey);
 					if (aPartitionContainer != null) {
-						aUniverseContainer.ivaList.addAll(aPartitionContainer.ivaList);
+						aUniverseContainer.merge(aPartitionContainer);
 					}
 				}
 				catch (Exception e) {
