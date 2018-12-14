@@ -77,8 +77,6 @@ public class GPMSourceIVAProductSourceContainer
 			if(!theFTACode.equals(aSrcIVA.ftaCode) 
 					|| !theCOI.equals(aSrcIVA.ctryOfImport)
 					|| !theIVACode.equals(aSrcIVA.ivaCode))
-				if(!theFTACode.equals(aSrcIVA.ftaCode) 
-						|| !theCOI.equals(aSrcIVA.ctryOfImport))
 						continue;
 			
 			if(theEffectiveFrom.compareTo(aSrcIVA.effectiveFrom) != 0
@@ -113,8 +111,8 @@ public class GPMSourceIVAProductSourceContainer
 					)
 				continue;
 			
-			if(theEffectiveFrom.compareTo(aSrcIVA.effectiveFrom) < 0
-					&& theEffectiveTo.compareTo(aSrcIVA.effectiveTo) > 0)
+			if(theEffectiveFrom.compareTo(aSrcIVA.effectiveFrom) != 0
+					&& theEffectiveTo.compareTo(aSrcIVA.effectiveTo) != 0)
 				continue;
 			
 			if (STPDecisionEnum.M != aSrcIVA.systemDecision) {
