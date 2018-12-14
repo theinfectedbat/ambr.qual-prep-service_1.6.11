@@ -28,6 +28,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
@@ -825,12 +826,13 @@ public class ApplicationConfiguration
 	{
 		this.qualTXBusinessLogicProcessor = new QualTXBusinessLogicProcessor(qeConfigCache,ftaHSListCache); 
 		CumulationComputationRule computationRule = new CumulationComputationRule(beanCurrencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
+		PreviousYearQualificationRule previousYearQualificationRule = new PreviousYearQualificationRule(qeConfigCache);
 		this.qualTXBusinessLogicProcessor.setCurrencyExchangeRateManager(beanCurrencyExchangeRateManager);
 		this.qualTXBusinessLogicProcessor.setCumulationComputationRule(computationRule);
 		this.qualTXBusinessLogicProcessor.setDetermineComponentCOO(new DetermineComponentCOO());
 		this.qualTXBusinessLogicProcessor.setPropertySheetManager(propertySheetManager);
 		this.qualTXBusinessLogicProcessor.setDataExtensionConfigRepos(theRepos);
-
+		this.qualTXBusinessLogicProcessor.setPreviousYearQualificationRule(previousYearQualificationRule);
 		return this.qualTXBusinessLogicProcessor;
 	}
 	

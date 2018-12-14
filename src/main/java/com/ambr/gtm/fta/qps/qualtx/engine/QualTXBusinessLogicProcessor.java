@@ -34,6 +34,7 @@ import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheetManager;
 import com.ambr.platform.utils.log.MessageFormatter;
+import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;
 
 public class QualTXBusinessLogicProcessor
 {
@@ -50,6 +51,7 @@ public class QualTXBusinessLogicProcessor
 	public CurrencyExchangeRateManager currencyExchangeRateManager;
 	public CumulationComputationRule cumulationComputationRule;
 	public SimplePropertySheetManager propertySheetManager;
+	public PreviousYearQualificationRule	previousYearQualificationRule;
 	public DataExtensionConfigurationRepository dataExtensionConfigRepos;
 	
 
@@ -88,8 +90,17 @@ public class QualTXBusinessLogicProcessor
 		this.propertySheetManager = propertySheetManager;
 	}
 	
+	public PreviousYearQualificationRule getPreviousYearQualificationRule()
+	{
+		return previousYearQualificationRule;
+	}
 
-public DataExtensionConfigurationRepository getDataExtensionConfigRepos() {
+	public void setPreviousYearQualificationRule(PreviousYearQualificationRule previousYearQualificationRule)
+	{
+		this.previousYearQualificationRule = previousYearQualificationRule;
+	}
+
+	public DataExtensionConfigurationRepository getDataExtensionConfigRepos() {
 		return dataExtensionConfigRepos;
 	}
 
