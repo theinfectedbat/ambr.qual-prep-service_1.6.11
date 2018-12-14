@@ -20,6 +20,8 @@ import com.ambr.gtm.fta.qps.qualtx.exception.QualTXPersistenceRetryRequiredExcep
 import com.ambr.gtm.fta.qps.util.QualTXUtility;
 import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
+import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
+import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheetManager;
 import com.ambr.platform.rdbms.util.bdrp.BatchDataRecordTask;
@@ -55,7 +57,7 @@ public class TradeLaneProcessorTask
 	private SimplePropertySheetManager			propertySheetManager;
 	private TradeLaneStatusTracker				statusTracker;
 	private PersistenceTaskHandler				taskHandler;
-	
+	private DataExtensionConfigurationRepository dataExtCfgRepos;
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -152,6 +154,7 @@ public class TradeLaneProcessorTask
 		this.gpmClassQueue = this.tradeLaneQueue.gpmClassQueue;
 		this.componentQueue = this.tradeLaneQueue.compQueue;
 		this.qualTXPriceQueue = this.tradeLaneQueue.qualTXPricePersistenceQueue;
+		this.dataExtCfgRepos = this.tradeLaneQueue.queueUniverse.dataExtCfgRepos;
 		this.newQualTXKey = theNewQualTXKey;
 		this.qeConfigCache = this.tradeLaneQueue.queueUniverse.qeConfigCache;
 		this.propertySheetManager = this.tradeLaneQueue.queueUniverse.qtxBusinessLogicProcessor.propertySheetManager;
@@ -346,7 +349,12 @@ public class TradeLaneProcessorTask
 		if (aGroupNameSpec.deFlexName.equalsIgnoreCase("IMPL_BOM_PROD_FAMILY") && 
 			aGroupNameSpec.deConfigName.equalsIgnoreCase("TEXTILES"))
 		{
-			this.qualTX.knit_to_shape = (String)theBOMDE.getValue("knit_to_shape");
+			DataExtensionConfiguration deCfg = dataExtCfgRepos.getDataExtensionConfiguration(theBOMDE.group_name);
+			if (deCfg != null)
+			{
+				String physicalColumn = deCfg.getFlexColumnMapping().get("KNIT_TO_SHAPE");
+				this.qualTX.knit_to_shape = (String) theBOMDE.getValue(physicalColumn);
+			}
 		}
 		
 		for (String aColumnName : theBOMDE.getColumnNames()) {
