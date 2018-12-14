@@ -17,7 +17,9 @@ public class QtsUtility
 		{
 			QTXWork qtxWork = workRepository.createWork();
 			qtxWork.setWorkStatus(TrackerCodes.QualtxStatus.READY_FOR_QUALIFICATION);
-			qtxWork.priority = work.priority;
+			if (work.priority == null) qtxWork.priority = 70;
+			else qtxWork.priority = work.priority;
+			
 			qtxWork.userId = work.userId;
 			qtxWork.entity_type = QTXWork.ENTITY_TYPE_PRODUCT;
 			qtxWork.bom_key = work.bomKey;

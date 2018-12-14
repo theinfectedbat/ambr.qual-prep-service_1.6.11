@@ -231,7 +231,7 @@ public class QTXWorkRepository
 			template.batchUpdate(sql, workList, this.commitSize, new ParameterizedPreparedStatementSetter<QTXWork>() {
 				   public void setValues(PreparedStatement ps, QTXWork work) throws SQLException {
 					   ps.setLong(1, work.qtx_wid);
-					   ps.setLong(2, work.priority);
+					   ps.setInt(2, work.priority);
 					   ps.setString(3, work.company_code);
 					   ps.setLong(4, work.bom_key);
 					   if (work.iva_key != null)
