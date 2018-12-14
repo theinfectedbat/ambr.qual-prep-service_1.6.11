@@ -131,9 +131,15 @@ public class QTXWorkUniverse
 		{
 			EntityManager<QualTX> qualtxMgr = new EntityManager<QualTX>(QualTX.class, this.txMgr, this.schemaDesc, template);
 			
-			qualtxMgr.setExistingEntity(workPackage.qualtx);
-			
-			workPackage.setEntityManager(qualtxMgr);
+			if (null != workPackage.qualtx)
+			{
+				qualtxMgr.setExistingEntity(workPackage.qualtx);
+				workPackage.setEntityManager(qualtxMgr);
+			}
+			else
+			{
+				logger.error("Work package does not have qualtx assigned to it " + workPackage.work.qtx_wid);
+			}
 		}
 	}
 
@@ -412,6 +418,9 @@ public class QTXWorkUniverse
 	private void setCompWorkOnWorkPackage(QTXCompWork compWork)
 	{
 		WorkPackage workPackage = this.getWorkPackage(compWork.qtx_wid);
+		
+		if(null == workPackage) return;
+		
 		CompWorkPackage compWorkPackage = new CompWorkPackage(workPackage);
 		
 		workPackage.work.addCompWork(compWork);
@@ -486,7 +495,6 @@ public class QTXWorkUniverse
 	{
 		WorkPackage workPackage = this.workByQualtxMap.get(qualtxComp.alt_key_qualtx);
 		QualTX qualtx = this.qualTXMap.get(qualtxComp.alt_key_qualtx);
-
 
 		// qualtx will not have list of comps - managed separately
 
