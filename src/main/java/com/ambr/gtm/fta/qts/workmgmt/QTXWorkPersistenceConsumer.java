@@ -74,7 +74,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			
 			
 			//Iterate through all linked packages and compwork packages to get full setup qualtxcomponent records modified
-			WorkPackage currentWorkPackage = workPackage;
+			/*WorkPackage currentWorkPackage = workPackage;
 			HashMap<Long, EntityManager<QualTXComponent>> qualtxCompEntityMap = new HashMap<Long, EntityManager<QualTXComponent>>();
 			while (currentWorkPackage != null)
 			{
@@ -84,18 +84,19 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				}
 				
 				currentWorkPackage = currentWorkPackage.getLinkedPackage();
-			}
+			}*/
 	/*		
 			for (EntityManager<QualTXComponent> qualtxCompEntityMgr : qualtxCompEntityMap.values())
 			{
 				qualtxCompEntityMgr.save(work.userId, false);
 			}
    */
+   
 			//TODO create a new Timestamp and use for all records in a modified/created state
 			//TODO make sure parent records are updated accordingly in the case where only the child is modified
 			//TODO set on all modified pojo classes
 			//TODO placeholder to make Audit API call (convert workPackage.entityMgr.get... to BOMQualAuditEntity record
-			 BOMQualAuditEntity audit = this.buildAudit(workPackage,qualtxCompEntityMap.values());
+			 BOMQualAuditEntity audit = this.buildAudit(workPackage);
 			 tradeQualtxClient.doRecordLevelAudit(audit);
 			
 			if (workPackage.deleteBOMQual)
@@ -271,7 +272,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 		}
 	}
 	
-	private BOMQualAuditEntity buildAudit(WorkPackage workPackage, Collection<EntityManager<QualTXComponent>> qualtxCompEntityList) throws Exception
+	private BOMQualAuditEntity buildAudit(WorkPackage workPackage) throws Exception
 	{
 		BOMQualAuditEntity audit = new BOMQualAuditEntity(MDIQualTx.TABLE_NAME, workPackage.qualtx.alt_key_qualtx);
 		audit.setSurrogateKeyColumn("ALT_KEY_QUALTX");
@@ -532,7 +533,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			
 		}
 		
-		for (EntityManager<QualTXComponent> qualtxCompEntityMgr : qualtxCompEntityList)
+	/*	for (EntityManager<QualTXComponent> qualtxCompEntityMgr : qualtxCompEntityList)
 		{
 			if(null == qualtxCompEntityMgr) continue;
 			for (DataRecordModificationTracker<?> deletedRecord :  qualtxCompEntityMgr.getTracker().getDeletedRecords())
@@ -646,7 +647,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 					auditMap.put(altkey, compPriceAudit);
 					audit.addChildTable(compPriceAudit);
 				}
-
 				else if (modRecord.modifiableRecord instanceof QualTXComponentDataExtension)
 				{
 					Long altkey = ((QualTXComponentDataExtension) modRecord.modifiableRecord).seq_num;
@@ -661,7 +661,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 					audit.addChildTable(compDeAudit);
 				}
 			} 
-		}
+		}*/
 		
 		return audit;
 	}
