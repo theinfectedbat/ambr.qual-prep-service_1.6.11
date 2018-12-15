@@ -37,7 +37,7 @@ public class TypedPersistenceQueue<T extends DataRecordInterface>
 	private int													batchSize;
 	private TaskQueueParameters									queueParams;
 	private int													concurrentQueueCount;
-	private int													maxWaitPeriodInSecs;
+	private int													maxWaitPeriodInMillis;
 	private DataSource											dataSrc;
 	private PlatformTransactionManager							txMgr;
 	private ArrayList<BatchDataRecordPersistenceQueue>			batchPersistenceQueueList;
@@ -150,10 +150,10 @@ public class TypedPersistenceQueue<T extends DataRecordInterface>
 	{
 		ParameterizedMessageUtility	aMsgUtil = new ParameterizedMessageUtility(thePaddingLength);
 		
-		aMsgUtil.format("Queue [{0}]: concurrent queue count [{1}] max wait period (secs) [{2}]", false, true, 
+		aMsgUtil.format("Queue [{0}]: concurrent queue count [{1}] max wait period (millis) [{2}]", false, true, 
 			this.queueName,
 			this.concurrentQueueCount,
-			this.maxWaitPeriodInSecs
+			this.maxWaitPeriodInMillis
 		);
 		
 		for (BatchDataRecordPersistenceQueue aQueue : this.batchPersistenceQueueList) {
@@ -266,16 +266,28 @@ public class TypedPersistenceQueue<T extends DataRecordInterface>
 	 * @param theMaxWaitPeriodInSecs 
 	 *************************************************************************************
 	 */
-	public TypedPersistenceQueue setMaxWaitPeriod(int theMaxWaitPeriodInSecs)
+	public TypedPersistenceQueue setMaxWaitPeriod(int theMaxWaitPeriodInMillis)
 		throws Exception
 	{
 		MessageFormatter.info(logger, "setMaxWaitPeriod", "Queue [{0}]: Current [{1}] Target [{2}]", 
 			this.queueName, 
-			this.maxWaitPeriodInSecs, 
-			theMaxWaitPeriodInSecs
+			this.maxWaitPeriodInMillis, 
+			theMaxWaitPeriodInMillis
 		);
 		
-		this.maxWaitPeriodInSecs = theMaxWaitPeriodInSecs;
+		this.maxWaitPeriodInMillis = theMaxWaitPeriodInMillis;
+
+		this.batchPersistenceQueueList.forEach(aQueue->
+			{
+				try {
+					aQueue.setMaxWaitPeriod(theMaxWaitPeriodInMillis);
+				}
+				catch (Exception e) {
+					MessageFormatter.debug(logger, "setMaxWaitPeriod", "Queue [{0}]", this.queueName);
+				}
+			}
+		);
+		
 		return this;
 	}
 	
@@ -334,7 +346,7 @@ public class TypedPersistenceQueue<T extends DataRecordInterface>
 			aQueue = new BatchDataRecordPersistenceQueue(
 				MessageFormat.format("{0} [{1}]", this.queueName, aIndex),
 				this.batchSize,
-				this.maxWaitPeriodInSecs,
+				this.maxWaitPeriodInMillis,
 				this.insertSQLStatement, 
 				this.txMgr, 
 				this.dataSrc

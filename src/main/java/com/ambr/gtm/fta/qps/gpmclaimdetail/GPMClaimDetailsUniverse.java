@@ -179,6 +179,7 @@ public class GPMClaimDetailsUniverse
 		}
 		else {
 		
+			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetGPMClaimDetailsFromPartitionClientAPI	aAPI = new GetGPMClaimDetailsFromPartitionClientAPI(aServiceRef);
@@ -572,5 +573,24 @@ public class GPMClaimDetailsUniverse
 			this.status = UniverseStatusEnum.STARTUP_FAILED;
 			throw e;
 		}
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	private void waitUntilAvailable()
+		throws Exception
+	{
+		MessageFormatter.trace(logger, "waitUntilAvailable", "checking universe status");
+	
+		while (this.status != UniverseStatusEnum.AVAILABLE) {
+			MessageFormatter.trace(logger, "waitUntilAvailable", "universe status [{0}], waiting", this.status);
+			Thread.sleep(1000);
+		}
+		
+		MessageFormatter.trace(logger, "waitUntilAvailable", "universe available");
 	}
 }
