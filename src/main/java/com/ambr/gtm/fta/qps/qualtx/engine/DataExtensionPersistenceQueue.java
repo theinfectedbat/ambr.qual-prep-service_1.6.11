@@ -32,7 +32,7 @@ public class DataExtensionPersistenceQueue<T extends DataRecordValueMapInterface
 	private TaskQueueParameters								queueParams;
 	private int												batchInsertConcurrentQueueCount;
 	private int 											batchSize;
-	private int 											batchInsertMaxWaitPeriodInSecs;
+	private int 											batchInsertMaxWaitPeriodInMillis;
 	
     /**
      *************************************************************************************
@@ -112,7 +112,7 @@ public class DataExtensionPersistenceQueue<T extends DataRecordValueMapInterface
 			
 			aQueue.setBatchSize(this.batchSize);
 			aQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
-			aQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+			aQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 			aQueue.setQueueParams(this.queueParams);
 			aQueue.start();
 			
@@ -169,13 +169,13 @@ public class DataExtensionPersistenceQueue<T extends DataRecordValueMapInterface
      * <P>
      * </P>
      * 
-     * @param	theBatchInsertMaxWaitPeriodInSecs
+     * @param	theBatchInsertMaxWaitPeriodInMillis
      *************************************************************************************
      */
-	public void setMaxWaitPeriod(int theBatchInsertMaxWaitPeriodInSecs)
+	public void setMaxWaitPeriod(int theBatchInsertMaxWaitPeriodInMillis)
 		throws Exception
 	{
-		this.batchInsertMaxWaitPeriodInSecs = theBatchInsertMaxWaitPeriodInSecs;
+		this.batchInsertMaxWaitPeriodInMillis = theBatchInsertMaxWaitPeriodInMillis;
 	}
 	
 	/**

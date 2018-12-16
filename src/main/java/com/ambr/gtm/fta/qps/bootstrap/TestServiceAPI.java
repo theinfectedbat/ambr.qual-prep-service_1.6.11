@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatus;
+import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusGenerator;
+import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
@@ -63,6 +66,7 @@ public class TestServiceAPI
 	@Autowired private SchemaDescriptorService				schemaDescService;
 	@Autowired private DataExtensionConfigurationRepository	repos;
 	@Autowired private UniversalObjectIDGenerator			idGenerator;
+	@Autowired private PreparationEngineQueueUniverse		queueUniverse;
 	private int rowNum;
 	
 	/**
@@ -75,7 +79,7 @@ public class TestServiceAPI
 	public void execute()
 		throws Exception
 	{
-		this.test8();
+		this.test9();
 	}
 	
 	/**
@@ -464,5 +468,16 @@ public class TestServiceAPI
 		
 		aQualTXMgr.save();
 		System.out.println("done");
+	}
+	
+	public void test9()
+		throws Exception
+	{
+		BOMQualificationStatus			aStatus;
+		BOMQualificationStatusGenerator	aGenerator;
+		
+		aGenerator = new BOMQualificationStatusGenerator(this.queueUniverse);
+		aStatus = aGenerator.generate(735633486L);
+		System.out.println(aStatus.toString());
 	}
 }

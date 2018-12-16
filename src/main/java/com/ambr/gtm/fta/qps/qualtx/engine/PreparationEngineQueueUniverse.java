@@ -69,7 +69,7 @@ public class PreparationEngineQueueUniverse
 
 	private int													componentMaxBatchSize;
 	private int 												batchInsertConcurrentQueueCount;
-	private int													batchInsertMaxWaitPeriodInSecs;
+	private int													batchInsertMaxWaitPeriodInMillis;
 	private int													batchInsertSize;
 
 	public BOMProcessorQueue											bomQueue;
@@ -137,7 +137,7 @@ public class PreparationEngineQueueUniverse
 
 		this.componentMaxBatchSize = 100;
 		this.batchInsertConcurrentQueueCount = 5;
-		this.batchInsertMaxWaitPeriodInSecs = 5;
+		this.batchInsertMaxWaitPeriodInMillis = 5000;
 		this.batchInsertSize = 250;
 		this.cacheRefreshStart = System.currentTimeMillis();
 		this.cacheRefreshComplete = this.cacheRefreshStart;
@@ -410,47 +410,47 @@ public class PreparationEngineQueueUniverse
 		this.qualTXQueue.setQueueParams(this.qualTXQueueParams);
 		this.qualTXQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 		this.qualTXQueue.start();
 	
 		this.qualTXComponentQueue = new TypedPersistenceQueue<QualTXComponent>(this.dataSrc, this.txMgr, "DB Queue - QTX Component", QualTXComponent.class);	
 		this.qualTXComponentQueue.setQueueParams(this.qualTXComponentQueueParams);
 		this.qualTXComponentQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXComponentQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXComponentQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXComponentQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 		this.qualTXComponentQueue.start();
 
 		this.qualTXComponentPriceQueue = new TypedPersistenceQueue<QualTXComponentPrice>(this.dataSrc, this.txMgr, "DB Queue - QTX Component Price", QualTXComponentPrice.class);	
 		this.qualTXComponentPriceQueue.setQueueParams(this.qualTXComponentPriceQueueParams);
 		this.qualTXComponentPriceQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXComponentPriceQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXComponentPriceQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXComponentPriceQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 		this.qualTXComponentPriceQueue.start();
 		
 		this.qualTXPriceQueue = new TypedPersistenceQueue<QualTXPrice>(this.dataSrc, this.txMgr, "DB Queue - QTX Price", QualTXPrice.class);
 		this.qualTXPriceQueue.setQueueParams(this.qualTXPriceQueueParams);
 		this.qualTXPriceQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXPriceQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXPriceQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXPriceQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 		this.qualTXPriceQueue.start();
 		
 		this.qualTXdataExtQueue = new DataExtensionPersistenceQueue<QualTXDataExtension>(this.dataSrc,  this.txMgr);
 		this.qualTXdataExtQueue.setQueueParams(this.deQueueParams);
 		this.qualTXdataExtQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXdataExtQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXdataExtQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXdataExtQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 
 		this.qualTXComponentdataExtQueue = new DataExtensionPersistenceQueue<QualTXComponentDataExtension>(this.dataSrc,  this.txMgr);
 		this.qualTXComponentdataExtQueue.setQueueParams(this.deQueueParams);
 		this.qualTXComponentdataExtQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXComponentdataExtQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXComponentdataExtQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXComponentdataExtQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 		
 		this.qualTXPrepLogQueue = new TypedPersistenceQueue<QualTXPrepLogDtlEntry>(this.dataSrc, this.txMgr, "DB Queue - QTX Prep Log", QualTXPrepLogDtlEntry.class);	
 		this.qualTXPrepLogQueue.setQueueParams(this.qualTXQueueParams);
 		this.qualTXPrepLogQueue.setConcurrentQueueCount(this.batchInsertConcurrentQueueCount);
 		this.qualTXPrepLogQueue.setBatchSize(this.batchInsertSize);
-		this.qualTXPrepLogQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInSecs);
+		this.qualTXPrepLogQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
 		this.qualTXPrepLogQueue.start();
 		
 		this.tradeLaneQueue = new TradeLaneProcessorQueue(this);
@@ -615,14 +615,48 @@ public class PreparationEngineQueueUniverse
 	 * <P>
 	 * </P>
 	 * 
-	 * @param	theWaitPeriodInSecs
+	 * @param	theWaitPeriod		If value is between 1 and 999, it is interpreted to be
+	 * 								specified in seconds.  Otherwise, it is interpreted to
+	 * 								be in milliseconds.
 	 *************************************************************************************
 	 */
-	public PreparationEngineQueueUniverse setBatchInsertMaxWaitPeriod(int theWaitPeriodInSecs)
+	public PreparationEngineQueueUniverse setBatchInsertMaxWaitPeriod(int theWaitPeriod)
 		throws Exception
 	{
-		MessageFormatter.info(logger, "setBatchInsertMaxWaitPeriod", "Current [{0}] Target [{1}]", this.batchInsertMaxWaitPeriodInSecs, theWaitPeriodInSecs);
-		this.batchInsertMaxWaitPeriodInSecs = theWaitPeriodInSecs;
+		MessageFormatter.info(logger, "setBatchInsertMaxWaitPeriod", "Current [{0}] Target [{1}]", this.batchInsertMaxWaitPeriodInMillis, theWaitPeriod);
+		
+		this.batchInsertMaxWaitPeriodInMillis = theWaitPeriod;
+//		if (theWaitPeriod < 1000) {
+//			//
+//			this.batchInsertMaxWaitPeriodInMillis = theWaitPeriod * 1000;
+//		}
+//		else {
+//			this.batchInsertMaxWaitPeriodInMillis = theWaitPeriod;
+//		}
+		
+		TypedPersistenceQueue<?>[] aTypedQueueList = new TypedPersistenceQueue<?>[] {
+			this.qualTXQueue,
+			this.qualTXComponentQueue,
+			this.qualTXComponentPriceQueue,
+			this.qualTXPriceQueue,
+			this.qualTXPrepLogQueue
+		};
+
+		for (TypedPersistenceQueue<?> aQueue : aTypedQueueList) {
+			if (aQueue == null) {continue;}
+			aQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
+		}
+		
+		DataExtensionPersistenceQueue<?>[] aDataExtQueueList = new DataExtensionPersistenceQueue<?>[] {
+			this.qualTXdataExtQueue,
+			this.qualTXComponentdataExtQueue
+		};
+
+		for (DataExtensionPersistenceQueue<?> aQueue : aDataExtQueueList) {
+			if (aQueue == null) {continue;}
+			aQueue.setMaxWaitPeriod(this.batchInsertMaxWaitPeriodInMillis);
+		}
+		
 		return this;
 	}
 

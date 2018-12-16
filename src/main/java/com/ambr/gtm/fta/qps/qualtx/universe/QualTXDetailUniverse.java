@@ -10,8 +10,8 @@ import org.apache.logging.log4j.Logger;
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.bom.api.GetBOMStatusFromPartitionClientAPI;
+import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXCountFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXDetailFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
 import com.ambr.platform.utils.log.MessageFormatter;
@@ -95,6 +95,37 @@ public class QualTXDetailUniverse
 		
 		MessageFormatter.info(logger, "ensureAvailable", "Complete");
 	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getQualTXCount()
+		throws Exception
+	{
+		int		aCount = 0;
+		
+		if (this.localPartition != null) {
+			aCount += this.localPartition.getQualTXCount();
+		}
+		else {
+			this.waitUntilAvailable();
+			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
+				try {
+					GetQualTXCountFromPartitionClientAPI		aAPI = new GetQualTXCountFromPartitionClientAPI(aServiceRef);
+		
+					aCount += aAPI.execute();
+				}
+				catch (Exception e) {
+					MessageFormatter.error(logger, "getBOM", e, "Error receiving result from partition [{0}]", aServiceRef.getInstanceID());
+				}
+			}
+		}
+	
+		return aCount;
+	}
 
 	/**
 	 *************************************************************************************
@@ -116,6 +147,7 @@ public class QualTXDetailUniverse
 			aContainer = this.localPartition.getQualTXDetailByBOM(theBOMKey);
 		}
 		else {
+			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetQualTXDetailFromPartitionClientAPI		aAPI = new GetQualTXDetailFromPartitionClientAPI(aServiceRef);
@@ -582,5 +614,24 @@ public class QualTXDetailUniverse
 			this.status = UniverseStatusEnum.STARTUP_FAILED;
 			throw e;
 		}
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	private void waitUntilAvailable()
+		throws Exception
+	{
+		MessageFormatter.trace(logger, "waitUntilAvailable", "checking universe status");
+	
+		while (this.status != UniverseStatusEnum.AVAILABLE) {
+			MessageFormatter.trace(logger, "waitUntilAvailable", "universe status [{0}], waiting", this.status);
+			Thread.sleep(1000);
+		}
+		
+		MessageFormatter.trace(logger, "waitUntilAvailable", "universe available");
 	}
 }
