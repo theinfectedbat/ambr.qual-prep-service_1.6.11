@@ -70,9 +70,9 @@ public class QualTXDataExtension
 	public QualTXDataExtension(String theGroupName, DataExtensionConfigurationRepository theRepos)
 		throws Exception
 	{
+		this();
 		this.group_name = theGroupName;
 		this.repos = theRepos;
-		this.deFieldMap = new HashMap<>();
 	}
 
 	/**
