@@ -28,6 +28,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
@@ -94,6 +95,7 @@ import com.ambr.platform.utils.subservice.SubordinateServiceConnector;
  * </P>
  *****************************************************************************************
  */
+
 @Configuration
 @EnableTransactionManagement
 public class ApplicationConfiguration 
@@ -825,12 +827,13 @@ public class ApplicationConfiguration
 	{
 		this.qualTXBusinessLogicProcessor = new QualTXBusinessLogicProcessor(qeConfigCache,ftaHSListCache); 
 		CumulationComputationRule computationRule = new CumulationComputationRule(beanCurrencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
+		PreviousYearQualificationRule previousYearQualificationRule = new PreviousYearQualificationRule(qeConfigCache,theRepos);
 		this.qualTXBusinessLogicProcessor.setCurrencyExchangeRateManager(beanCurrencyExchangeRateManager);
 		this.qualTXBusinessLogicProcessor.setCumulationComputationRule(computationRule);
 		this.qualTXBusinessLogicProcessor.setDetermineComponentCOO(new DetermineComponentCOO());
 		this.qualTXBusinessLogicProcessor.setPropertySheetManager(propertySheetManager);
 		this.qualTXBusinessLogicProcessor.setDataExtensionConfigRepos(theRepos);
-
+		this.qualTXBusinessLogicProcessor.setPreviousYearQualificationRule(previousYearQualificationRule);
 		return this.qualTXBusinessLogicProcessor;
 	}
 	
@@ -856,7 +859,6 @@ public class ApplicationConfiguration
 			MessageFormatter.info(logger, "beanLoadTrackerUniverse", "Tracker service starting is not enabled.");
 			return this.trackerLoader;
 		}
-			
 		aFetchSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.MAX_FETCH_SIZE, "1000"));
 		aTargetSchema = this.propertyResolver.getPropertyValue(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, null);
 	

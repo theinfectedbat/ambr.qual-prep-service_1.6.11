@@ -1,9 +1,11 @@
 package com.ambr.gtm.fta.qps.qualtx.engine;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
@@ -13,6 +15,7 @@ import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.util.CumulationComputationRule;
 import com.ambr.gtm.fta.qps.util.DetermineComponentCOO;
+import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;
 import com.ambr.gtm.fta.qps.util.QualTXComponentUtility;
 import com.ambr.platform.utils.queue.TaskInterface;
 import com.ambr.platform.utils.queue.TaskProgressInterface;
@@ -38,6 +41,7 @@ public class ComponentIVAPullProcessorTask
 	private CumulationComputationRule				cumulationComputationRule;
 	private DetermineComponentCOO					determineComponentCOO;
 	private QualTXBusinessLogicProcessor			businessProcessor;
+	private PreviousYearQualificationRule			previousYearQualificationRule;
 	/**
      *************************************************************************************
      * <P>
@@ -59,6 +63,7 @@ public class ComponentIVAPullProcessorTask
 		this.businessProcessor = this.queue.queueUniverse.qtxBusinessLogicProcessor;
 		this.determineComponentCOO = this.businessProcessor.determineComponentCOO;
 		this.cumulationComputationRule = this.businessProcessor.cumulationComputationRule;
+		this.previousYearQualificationRule= this.businessProcessor.previousYearQualificationRule;
 		this.gpmClassCache =  this.queue.queueUniverse.gpmClassCache;
 		this.description =
 			"BOM." +
@@ -111,6 +116,21 @@ public class ComponentIVAPullProcessorTask
 					if(this.cumulationComputationRule != null)
 						cumulationComputationRule.applyCumulationForComponent(aQualTXComp, aContainer, this.claimDetailsCache,this.queue.queueUniverse.dataExtCfgRepos);
 					
+					if (!"Y".equalsIgnoreCase(aQualTXComp.cumulation_rule_applied) && ( aQualTXComp.qualified_flg == null || "".equalsIgnoreCase(aQualTXComp.qualified_flg)))
+					{
+						if (this.previousYearQualificationRule != null)
+						{
+							Date origEffectiveFrom = aQualTXComp.qualified_from;
+							Date origEffectiveTo = aQualTXComp.qualified_to;
+							boolean isPrevYearQualApplied = previousYearQualificationRule.applyPrevYearQualForComponent(aBOMComp, aQualTXComp, aContainer, claimDetailsCache, this.queue.queueUniverse.dataExtCfgRepos);
+							if (!isPrevYearQualApplied)
+							{
+								if (this.cumulationComputationRule != null) cumulationComputationRule.applyCumulationForComponent(aQualTXComp, aContainer, this.claimDetailsCache, this.queue.queueUniverse.dataExtCfgRepos);
+								aQualTXComp.qualified_from = origEffectiveFrom;
+								aQualTXComp.qualified_to = origEffectiveTo;
+							}
+						}
+					}
 					this.componentBatch.statusTracker.sourceIVAPullSuccess(aQualTXComp);
 				}
 				catch (Exception e) {
