@@ -111,7 +111,6 @@ public class PreviousYearQualificationRule
 					{
 						qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
 					}
-
 					Map<String, String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 					qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("PREV_YEAR_QUAL_APPLIED"), "Y");
 					return true;
