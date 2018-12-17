@@ -234,34 +234,40 @@ public class QTXStageProducer extends QTXProducer
 	{
 		for (Map.Entry<Long, ArrayList<Long>> entry : bomRequalMap.entrySet())
 		{
-			long reasonCode = entry.getKey();
-			ArrayList<Long> theAltKeyList = entry.getValue();
-
-			if(reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG )
-			{
-				List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList, reasonCode);
-				
-				this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
-			}
-			else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION)
-			{
-				List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
-				this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
-			}
-			else
-			{
-				List<QualTX> compChanges;
-				if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED)
+			long reasonCode = 0;
+			try {
+				reasonCode = entry.getKey();
+				ArrayList<Long> theAltKeyList = entry.getValue();
+	
+				if(reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG )
 				{
-					compChanges = this.utility.getImpactedQtxCompKeysForNewComp(theAltKeyList, reasonCode);
+					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList, reasonCode);
+					
+					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
+				}
+				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION)
+				{
+					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
+					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
 				}
 				else
 				{
-					compChanges = this.utility.getImpactedQtxCompKeys(theAltKeyList, reasonCode);
+					List<QualTX> compChanges;
+					if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED)
+					{
+						compChanges = this.utility.getImpactedQtxCompKeysForNewComp(theAltKeyList, reasonCode);
+					}
+					else
+					{
+						compChanges = this.utility.getImpactedQtxCompKeys(theAltKeyList, reasonCode);
+					}
+	
+					this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap);
 				}
-
-				this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap);
+			}catch(Exception e){
+				logger.error("getConsolidatedQualtxForBomUpdate, Error while processing the reasonCode:" + reasonCode + "bomRequalMap ="+bomRequalMap.keySet() + "consolidatedWork ="+consolidatedWork.keySet() + "bomConsolMap ="+bomConsolMap.keySet());
 			}
+			
 		}
 	}
 	
@@ -642,19 +648,22 @@ public class QTXStageProducer extends QTXProducer
 		for (Map.Entry<Long, ArrayList<Long>> entry : prodRequalMap.entrySet())
 		{
 			long reasonCode = entry.getKey();
-
-			ArrayList<Long> keyList = entry.getValue();
-
-			List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, reasonCode);
-
-			buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap);
-
-			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
-			{
-				List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
-				buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap);
+			try{
+				
+				ArrayList<Long> keyList = entry.getValue();
+	
+				List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, reasonCode);
+	
+				buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap);
+	
+				if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
+				{
+					List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
+					buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap);
+				}
+			}catch(Exception e){
+					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the reasonCode:" + reasonCode + "prodRequalMap ="+prodRequalMap.keySet() + "consolidatedWork ="+consolidatedWork.keySet() + "newCtryCmpMap ="+newCtryCmpMap.keySet()+ "prodConsolMap ="+prodConsolMap.keySet());
 			}
-
 		}
 		
 		// New Ctry Compliance added in Component so need to explicitly pass the
@@ -663,24 +672,28 @@ public class QTXStageProducer extends QTXProducer
 		{
 			for (Map.Entry<Long, String> entry : newCtryCmpMap.entrySet())
 			{
-				long altKeyIva = entry.getKey();
-				ArrayList<Long> ivaKey = new ArrayList<>();
-				ivaKey.add(altKeyIva);
-				String iva = entry.getValue();
-				if (null != iva)
-				{
-					String[] ivaValueArr = iva.split("\\|");
-					String ctryCmplkey = ivaValueArr[1];
-					String ctryCmplCode = ivaValueArr[0];
-
-					// Processing new country compliance addition in component product.
-					List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
-					buildQtxForNewCtryCmpl(qualtxCompList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, false);
-
-					// Processing new country compliance addition in main product.
-					List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
-					buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, true);
-
+				try{
+					
+					long altKeyIva = entry.getKey();
+					ArrayList<Long> ivaKey = new ArrayList<>();
+					ivaKey.add(altKeyIva);
+					String iva = entry.getValue();
+					if (null != iva)
+					{
+						String[] ivaValueArr = iva.split("\\|");
+						String ctryCmplkey = ivaValueArr[1];
+						String ctryCmplCode = ivaValueArr[0];
+	
+						// Processing new country compliance addition in component product.
+						List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
+						buildQtxForNewCtryCmpl(qualtxCompList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, false);
+	
+						// Processing new country compliance addition in main product.
+						List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
+						buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, true);
+					}
+				}catch(Exception e){
+					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED:"  + "prodRequalMap ="+prodRequalMap.keySet() + "consolidatedWork ="+consolidatedWork.keySet() + "newCtryCmpMap ="+newCtryCmpMap.keySet()+ "prodConsolMap ="+prodConsolMap.keySet());
 				}
 			}
 		}
@@ -985,17 +998,20 @@ public class QTXStageProducer extends QTXProducer
 	{
 		for (Map.Entry<QTXStage, ArrayList<Long>> entry : configRequalMap.entrySet())
 		{
-			QTXStage stage = entry.getKey();
-
-			ArrayList<Long> keyList = entry.getValue();
-
-			List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
-
-			buildCompConfigQtxWorkBean(qualtxCompList, qtxWorkList, stage);
-
-			List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
-			buildheaderConfigQtxWorkBean(qualtxList, qtxWorkList, stage);
-
+			try{
+				QTXStage stage = entry.getKey();
+	
+				ArrayList<Long> keyList = entry.getValue();
+	
+				List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
+	
+				buildCompConfigQtxWorkBean(qualtxCompList, qtxWorkList, stage);
+	
+				List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
+				buildheaderConfigQtxWorkBean(qualtxList, qtxWorkList, stage);
+			}catch(Exception e){
+				logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the configRequalMap:" + configRequalMap + "qtxWorkList ="+qtxWorkList.keySet());
+			}
 		}
 
 	}
