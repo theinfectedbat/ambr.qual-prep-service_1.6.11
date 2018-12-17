@@ -3,6 +3,7 @@ package com.ambr.gtm.fta.qts.config;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.util.BomAnalysisConfigData;
 import com.ambr.gtm.fta.qts.util.CompAnalysisConfData;
 import com.ambr.gtm.fta.qts.util.CumulationConfigContainer;
@@ -105,8 +106,9 @@ public class QEConfig
 	
 	public String getAnalysisMethod() throws Exception
 	{
-		
-		return this.bomAnalysisConfigData != null ? this.bomAnalysisConfigData.getAnalysisMethod() : null;
+		String analysisMethod =  this.bomAnalysisConfigData != null ? this.bomAnalysisConfigData.getAnalysisMethod() : null;
+		if (analysisMethod == null) analysisMethod= TrackerCodes.AnalysisMethodFromConfig.TOP_DOWN.name();
+		return analysisMethod;
 	}
 	
 	
