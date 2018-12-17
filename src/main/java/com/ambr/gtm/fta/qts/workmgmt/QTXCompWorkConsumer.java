@@ -345,7 +345,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.qualTX = qualtx;
 			ArrayList<BOMComponentDataExtension> priceDetailsList = bomComp.getDataExtensionByGroupName("BOM_COMP_STATIC:PRICE");
 			
-			compWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_PRICE");
+			parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_PRICE");
 			Set<QualTXComponentPrice> deleteCompPriceList = new HashSet(); 
 			deleteCompPriceList.addAll(qualtxComp.priceList);
 			
