@@ -117,7 +117,6 @@ public class PreviousYearQualificationRule
 					return true;
 				}
 			}
-
 		}
 		return true;
 	}

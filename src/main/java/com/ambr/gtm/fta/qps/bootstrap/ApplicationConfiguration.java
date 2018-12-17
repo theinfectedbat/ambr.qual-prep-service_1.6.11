@@ -858,7 +858,6 @@ public class ApplicationConfiguration
 			MessageFormatter.info(logger, "beanLoadTrackerUniverse", "Tracker service starting is not enabled.");
 			return this.trackerLoader;
 		}
-			
 		aFetchSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.MAX_FETCH_SIZE, "1000"));
 		aTargetSchema = this.propertyResolver.getPropertyValue(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, null);
 	
