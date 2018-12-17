@@ -105,8 +105,9 @@ public class QEConfig
 	
 	public String getAnalysisMethod() throws Exception
 	{
-		
-		return this.bomAnalysisConfigData != null ? this.bomAnalysisConfigData.getAnalysisMethod() : null;
+		String analysisMethod =  this.bomAnalysisConfigData != null ? this.bomAnalysisConfigData.getAnalysisMethod() : null;
+		if (analysisMethod == null) analysisMethod= TrackerCodes.AnalysisMethodFromConfig.TOP_DOWN.name();
+		return analysisMethod;
 	}
 	
 	
