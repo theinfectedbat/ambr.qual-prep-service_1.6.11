@@ -265,7 +265,7 @@ public class QTXStageProducer extends QTXProducer
 					this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap);
 				}
 			}catch(Exception e){
-				logger.error("getConsolidatedQualtxForBomUpdate, Error while processing the reasonCode:" + reasonCode + "bomRequalMap ="+bomRequalMap.keySet() + "consolidatedWork ="+consolidatedWork.keySet() + "bomConsolMap ="+bomConsolMap.keySet());
+				logger.error("getConsolidatedQualtxForBomUpdate, Error while processing the reasonCode:" + reasonCode + "bomRequalMap ="+bomRequalMap.keySet());
 			}
 			
 		}
@@ -656,13 +656,13 @@ public class QTXStageProducer extends QTXProducer
 	
 				buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap);
 	
-				if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
+				if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
 				{
 					List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
 					buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap);
 				}
 			}catch(Exception e){
-					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the reasonCode:" + reasonCode + "prodRequalMap ="+prodRequalMap.keySet() + "consolidatedWork ="+consolidatedWork.keySet() + "newCtryCmpMap ="+newCtryCmpMap.keySet()+ "prodConsolMap ="+prodConsolMap.keySet());
+					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the reasonCode:" + reasonCode + "newCtryCmpMap ="+newCtryCmpMap.keySet());
 			}
 		}
 		
@@ -693,7 +693,7 @@ public class QTXStageProducer extends QTXProducer
 						buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, true);
 					}
 				}catch(Exception e){
-					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED:"  + "prodRequalMap ="+prodRequalMap.keySet() + "consolidatedWork ="+consolidatedWork.keySet() + "newCtryCmpMap ="+newCtryCmpMap.keySet()+ "prodConsolMap ="+prodConsolMap.keySet());
+					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED:");
 				}
 			}
 		}
@@ -825,7 +825,7 @@ public class QTXStageProducer extends QTXProducer
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
-				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
+				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
 				{
 					theQtxWork.details.setReasonCodeFlag(workCode);
 					theQtxWork.setWorkStatus(QualtxStatus.INIT);
@@ -1010,7 +1010,7 @@ public class QTXStageProducer extends QTXProducer
 				List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
 				buildheaderConfigQtxWorkBean(qualtxList, qtxWorkList, stage);
 			}catch(Exception e){
-				logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the configRequalMap:" + configRequalMap + "qtxWorkList ="+qtxWorkList.keySet());
+				logger.error("getConsolidatedQualtxForConfigUpdates, Error while processing the configRequalMap:" + configRequalMap);
 			}
 		}
 
