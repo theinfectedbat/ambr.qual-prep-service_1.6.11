@@ -10,7 +10,6 @@ import java.util.HashMap;
 import javax.persistence.Column;
 import javax.persistence.Table;
 
-import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.platform.rdbms.util.DataRecordUtility;
@@ -34,8 +33,8 @@ public class BOMComponentDataExtension
 	@Column(name = "group_name") 		public String	group_name;
 	@Column(name = "parent_seq_num") 	public long		parent_seq_num;
 	
-	private HashMap<String, Object>					deFieldMap;
-	private HashMap<String, Timestamp>				deDateFieldMap;
+	public HashMap<String, Object>					deFieldMap;
+	public HashMap<String, Timestamp>				deDateFieldMap;
 	private DataExtensionConfigurationRepository	repos;
 	private transient BOMComponent 					bomComp;
 	
