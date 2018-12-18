@@ -17,7 +17,7 @@ public class BOMMetricSet
 	public int		depth;
 	public int  	refCnt;
 	public int  	cmpCnt;
-	public Integer	priority;
+	public Integer	processingPriority;
 	
     /**
      *************************************************************************************
@@ -43,7 +43,7 @@ public class BOMMetricSet
 		throws Exception
 	{
 		this.bomKey = theBOM.alt_key_bom;
-		this.priority = theBOM.priority;
+		this.processingPriority = theBOM.priority;
 		this.cmpCnt = theBOM.getComponentCount();
 		this.depth = theBOM.getDepth();
 		this.refCnt = theBOM.getReferenceCount();
