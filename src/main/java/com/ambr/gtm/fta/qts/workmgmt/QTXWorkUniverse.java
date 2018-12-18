@@ -490,7 +490,7 @@ public class QTXWorkUniverse
 			workPackage.qualtx = qualtx;
 			//workPackage.entityMgr = entityMgr;
 			
-			workPackage = workPackage.getLinkedPackage() == null ? workPackage : workPackage.getLinkedPackage();
+			workPackage = workPackage.getLinkedPackage();
 		}
 	}
 	
@@ -507,7 +507,7 @@ public class QTXWorkUniverse
 		{
 			workPackage.qualtx = qualtx;
 			
-			workPackage = workPackage.getLinkedPackage() == null ? workPackage : workPackage.getLinkedPackage();
+			workPackage = workPackage.getLinkedPackage();
 		}
 
 			ArrayList<CompWorkPackage> compWorkList = this.compWorkByQualtxCompMap.get(qualtxComp.alt_key_comp);
