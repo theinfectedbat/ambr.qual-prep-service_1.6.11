@@ -26,8 +26,8 @@ public class BottomUpSorter
 		int		aDiff;
 
 		try {
-			int aPriority1 = (theBOM1.metricSet.priority == null)? 0 : theBOM1.metricSet.priority;
-			int aPriority2 = (theBOM2.metricSet.priority == null)? 0 : theBOM2.metricSet.priority;
+			int aPriority1 = (theBOM1.metricSet.processingPriority == null)? 0 : theBOM1.metricSet.processingPriority;
+			int aPriority2 = (theBOM2.metricSet.processingPriority == null)? 0 : theBOM2.metricSet.processingPriority;
 
 			// Prioritize higher values over lower values
 			aDiff = aPriority2 - aPriority1;
