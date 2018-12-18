@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qps.util;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -146,6 +147,12 @@ public class QualTXUtility
 			this.statusTracker.qualificationFailed(e);
 			MessageFormatter.error(logger, "readyForQualificaiton", e, "BOM [{0,number,#}] Qual TX [{1,number,#}]: Failed to post qualification work",  this.qualTX.src_key, this.qualTX.alt_key_qualtx);
 		}
+	}
+	public static double toDecimalFormat(double theDoubleValue) throws Exception
+	{
+		DecimalFormat fourDecimalFormat = new DecimalFormat("#.####");
+		double theReturnValue = Double.valueOf(fourDecimalFormat.format(theDoubleValue));
+		return theReturnValue;
 	}
 }
 	
