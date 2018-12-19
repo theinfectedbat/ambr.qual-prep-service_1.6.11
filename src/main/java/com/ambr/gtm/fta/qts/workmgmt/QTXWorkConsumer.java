@@ -13,6 +13,7 @@ import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMPrice;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassification;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
+import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXDataExtension;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXPrice;
 import com.ambr.gtm.fta.qts.QTXWork;
@@ -23,6 +24,19 @@ import com.ambr.gtm.fta.trade.client.TradeQualtxClient;
 
 public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 	private static Logger logger = LogManager.getLogger(QTXWorkConsumer.class);
+
+	private QualTXBusinessLogicProcessor qtxBusinessLogicProcessor;
+	
+
+	public QualTXBusinessLogicProcessor getQtxBusinessLogicProcessor()
+	{
+		return qtxBusinessLogicProcessor;
+	}
+
+	public void setQtxBusinessLogicProcessor(QualTXBusinessLogicProcessor qtxBusinessLogicProcessor)
+	{
+		this.qtxBusinessLogicProcessor = qtxBusinessLogicProcessor;
+	}
 
 	public QTXWorkConsumer(ArrayList<WorkPackage> workList) {
 		super(workList);
@@ -57,7 +71,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 			throw new Exception("Failed to process work item " + workPackage.work.qtx_wid + " qualtx not found (" + workPackage.work.details.qualtx_key + ")");
 		}
 		
-		
 		for (QualTXDataExtension  qualtxDE :qualtx.deList)
 		{
 			if(qualtxDE.group_name.equalsIgnoreCase("STP:"+qualtx.fta_code_group))
@@ -68,6 +81,15 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.HEADER_CONFIG_CHANGE) == true)
 		{
 			isConfigChange = true;
+
+			if (workPackage.gpmClassificationProductContainer == null) throw new Exception("GPMClassificationProductContainer not present during HS pull for work " + work.qtx_wid);
+
+			ArrayList<GPMClassification> gpmClassificationList = workPackage.gpmClassificationProductContainer.classificationList;
+
+			if (gpmClassificationList == null) throw new Exception("Failed to find GPMClassification for header HS pull config change " + work.qtx_wid);
+
+			this.qtxBusinessLogicProcessor.setQualTXHeaderHSNumber(qualtx, gpmClassificationList);
+
 		}
 		
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_HDR_CHG) == true || isConfigChange)

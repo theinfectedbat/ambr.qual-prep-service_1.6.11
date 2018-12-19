@@ -14,6 +14,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.ambr.gtm.fta.qps.bom.api.BOMUniverseBOMClientAPI;
 import com.ambr.gtm.fta.qps.gpmclass.api.GetGPMClassificationsByProductFromUniverseClientAPI;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromUniverseClientAPI;
+import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.GetCacheRefreshInformationClientAPI;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
@@ -35,6 +36,19 @@ public class QTXWorkProducer extends QTXProducer
 	public QTXWorkProducer(SchemaDescriptorService schemaService, PlatformTransactionManager txMgr, JdbcTemplate template)
 	{
 		super(schemaService, txMgr, template);
+	}
+
+	private QualTXBusinessLogicProcessor qtxBusinessLogicProcessor;
+	
+
+	public QualTXBusinessLogicProcessor getQtxBusinessLogicProcessor()
+	{
+		return qtxBusinessLogicProcessor;
+	}
+
+	public void setQtxBusinessLogicProcessor(QualTXBusinessLogicProcessor qtxBusinessLogicProcessor)
+	{
+		this.qtxBusinessLogicProcessor = qtxBusinessLogicProcessor;
 	}
 
 	public void setAPI(
@@ -111,7 +125,7 @@ public class QTXWorkProducer extends QTXProducer
 		logger.debug("Submitting work " + workPackage.work.qtx_wid);
 		
 		QTXWorkConsumer consumer = new QTXWorkConsumer(workPackage);
-		
+		consumer.setQtxBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
 		this.submit(consumer);
 
 		for (CompWorkPackage compWorkPackage : workPackage.compWorks.values())

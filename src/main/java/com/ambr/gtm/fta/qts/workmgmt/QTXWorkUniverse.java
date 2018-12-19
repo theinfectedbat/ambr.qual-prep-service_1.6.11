@@ -414,8 +414,6 @@ public class QTXWorkUniverse
 		WorkPackage workPackage = this.getWorkPackage(workHS.qtx_wid);
 		
 		workPackage.work.workHSList.add(workHS);
-		
-		this.checkForGPMClassificationResourceRequirements(workPackage, workHS);
 	}
 	
 	private void setCompWorkOnWorkPackage(QTXCompWork compWork)
@@ -488,6 +486,7 @@ public class QTXWorkUniverse
 		while (workPackage != null)
 		{
 			workPackage.qualtx = qualtx;
+			this.checkForGPMClassificationResourceRequirements(workPackage);
 			//workPackage.entityMgr = entityMgr;
 			
 			workPackage = workPackage.getLinkedPackage();
@@ -545,7 +544,7 @@ public class QTXWorkUniverse
 		}
 		
 		this.checkForBOMResourceRequirements(workPackage);
-		
+
 		return workPackage;
 	}
 	
@@ -619,13 +618,9 @@ public class QTXWorkUniverse
 		registeredWork.add(compWorkPackage);
 	}
 
-	private void checkForGPMClassificationResourceRequirements(WorkPackage workPackage, QTXWorkHS workHS)
+	private void checkForGPMClassificationResourceRequirements(WorkPackage workPackage)
 	{
-		if (workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) || 
-				workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE))
-		{
 			this.addGPMClassificationResourceRequirement(workPackage, workPackage.qualtx.prod_key);
-		}
 	}
 	
 	private void addGPMClassificationResourceRequirement(WorkPackage workPackage, Long prodKey)
