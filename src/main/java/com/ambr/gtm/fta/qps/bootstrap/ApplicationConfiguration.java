@@ -608,10 +608,12 @@ public class ApplicationConfiguration
 			@Autowired UniversalObjectIDGenerator idGenerator, 
 			@Autowired MDIQualTxRepository qualTxRepository, 
 			@Autowired QTXWorkRepository workRepository,
-			@Autowired SchemaDescriptorService schemaService) throws Exception
+			@Autowired SchemaDescriptorService schemaService,
+			@Autowired QualTXBusinessLogicProcessor businsessLogicProcessor ) throws Exception
 	{
 		boolean requalServiceRequired = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.REQUAL_SERVICE_START, "N"));
 		QTXWorkProducer qtxWorkProducer = new QTXWorkProducer(schemaService, txMgr, new JdbcTemplate(dataSrc));
+		qtxWorkProducer.setQtxBusinessLogicProcessor(businsessLogicProcessor);
 
 		if (requalServiceRequired)
 		{
