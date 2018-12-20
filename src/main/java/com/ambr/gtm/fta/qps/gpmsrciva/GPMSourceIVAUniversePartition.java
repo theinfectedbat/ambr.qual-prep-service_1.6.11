@@ -2,6 +2,7 @@ package com.ambr.gtm.fta.qps.gpmsrciva;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.logging.log4j.Level;
@@ -32,6 +33,7 @@ public class GPMSourceIVAUniversePartition
 	private ArrayList<GPMSourceIVA>								gpmSrcIVAList;
 	private String												loadSrcIVASQLText;
 	private String												loadSrcCOOSQLText;
+	private String												loadSrcCampaignDetailsSQLText;
 	private int													partitionNum;
 	private int													fetchSize;
 	int															maxCursorDepth;
@@ -118,6 +120,16 @@ public class GPMSourceIVAUniversePartition
 		if (aWhereClauseLines.size() > 0) {
 			this.loadSrcCOOSQLText += " where " + StringUtil.join(aWhereClauseLines.toArray(), " and ");
 		}
+
+		aSQLLines = new ArrayList<>();
+		aSQLLines.add("SELECT alt_key_prod, alt_key_src, seq_num, group_name, flexfield_var1 as \"camp_id\", flexfield_var6 as \"fta_code\", flexfield_var9 as \"prev_year_qual_override\", flexfield_date1 as \"prev_year_qual_override_date\""); 
+		aSQLLines.add("FROM mdi_prod_src_de");
+
+		this.loadSrcCampaignDetailsSQLText = StringUtil.join(aSQLLines.toArray(), " ");
+		
+		if (aWhereClauseLines.size() > 0) {
+			this.loadSrcCampaignDetailsSQLText += " where " + StringUtil.join(aWhereClauseLines.toArray(), " and ");
+		}
 		
 		MessageFormatter.info(logger, "constructor", "GPM IVA Universe Partition: Count [{0}] Partition Number [{1}]", this.partitionCount, this.partitionNum);
 	}
@@ -156,6 +168,43 @@ public class GPMSourceIVAUniversePartition
 		aProdContainer.add(aSrcContainer.prodSrcKey);
 	}
 	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theProdKey
+	 * @param	theProdSrcKey
+	 * @param	theGPMSrcCampDetail
+	 *************************************************************************************
+	 */
+	public void addGPMSourceCampaignDetails(
+		Long 					theProdKey, 
+		Long 					theProdSrcKey,
+		GPMSourceCampaignDetail theGPMSrcCampDetail)
+		throws Exception
+	{
+		GPMSourceIVAProductSourceContainer		aSrcContainer;
+		GPMSourceIVAProductContainer			aProdContainer;
+		
+		aSrcContainer = this.ivaByProdSrcTable.get(theProdSrcKey);
+		if (aSrcContainer == null) {
+			aSrcContainer = new GPMSourceIVAProductSourceContainer();
+			aSrcContainer.prodSrcKey = theProdSrcKey;
+			this.ivaByProdSrcTable.put(aSrcContainer.prodSrcKey, aSrcContainer);
+		}
+		
+		aSrcContainer.campDetailList.add(theGPMSrcCampDetail);
+
+		aProdContainer = this.ivaByProdTable.get(theProdKey);
+		if (aProdContainer == null) {
+			aProdContainer = new GPMSourceIVAProductContainer(theProdKey);
+			this.ivaByProdTable.put(aProdContainer.prodKey, aProdContainer);
+		}
+		
+		aProdContainer.add(aSrcContainer.prodSrcKey);
+	}
+
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -323,10 +372,12 @@ public class GPMSourceIVAUniversePartition
 				if (aInputList == null) {
 					theJdbcTemplate.query(this.loadSrcIVASQLText, new GPMSourceIVARowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadSrcCOOSQLText, new GPMSourceCOORowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadSrcCampaignDetailsSQLText, new GPMSourceCampaignDetailRowCallbackHandler(this));
 				}
 				else {
 					theJdbcTemplate.query(this.loadSrcIVASQLText, aInputList, new GPMSourceIVARowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadSrcCOOSQLText, aInputList, new GPMSourceCOORowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadSrcCampaignDetailsSQLText, aInputList, new GPMSourceCampaignDetailRowCallbackHandler(this));
 				}
 			}
 			catch (DataAccessException e) {
