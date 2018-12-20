@@ -3,6 +3,7 @@ package com.ambr.gtm.fta.qts.workmgmt;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -279,8 +280,8 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 			qualtxComp.qualTX = qualtx;
+			parentWorkPackage.entityMgr.getLoader().setIgnoreParentRecordMissingException(true);
 			parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_DE");
-			
 			ArrayList<BOMComponentDataExtension> bomCompYarnDetailsList = bomComp.getDataExtensionByGroupName("IMPL_BOM_PROD_FAMILY:TEXTILES");
 
 			Set<QualTXComponentDataExtension> qualtxYarnDtlsCompDEs = new HashSet<>(); 
@@ -344,7 +345,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 			qualtxComp.qualTX = qualtx;
 			ArrayList<BOMComponentDataExtension> priceDetailsList = bomComp.getDataExtensionByGroupName("BOM_COMP_STATIC:PRICE");
-			
+			parentWorkPackage.entityMgr.getLoader().setIgnoreParentRecordMissingException(true);
 			parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_PRICE");
 			Set<QualTXComponentPrice> deleteCompPriceList = new HashSet(); 
 			deleteCompPriceList.addAll(qualtxComp.priceList);
@@ -509,7 +510,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				
 					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache ,this.repos);
 				}
-			/*	if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE))
+				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE))
 				{
 					Long prodSourceKey = (qualtxComp != null) ? qualtxComp.prod_src_key : ((bomComp.prod_src_key != 0) ? new Long(bomComp.prod_src_key) : null);
 					
@@ -519,14 +520,21 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					if (compWorkPackage.gpmSourceIVAProductContainer == null)
 						throw new Exception("GPMSourceIVAProductContainer not present during comp IVA pull for work " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_comp_wid);
 
-					GPMSourceIVA gpmSourceIVA = compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVA(prodSourceKey, compWorkIVA.iva_key);
-					boolean isQualified = gpmSourceIVA != null;
+					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
 					
-					//qualtxCompAudit.setModifiedColumn("qualified_flg", (isQualified) ? "QUALIFIED" : "NOT_QUALIFIED", qualtxComp.qualified_flg);
-					//qualtxComp.qualified_flg = Boolean.toString(isQualified);
-					
-					//TODO Need to copy the final decision from for that period and update to comp final decision //TODO BOMRecord 
-				}*/
+					if (!"Y".equalsIgnoreCase(qualtxComp.cumulation_rule_applied) && ( qualtxComp.qualified_flg == null || "".equalsIgnoreCase(qualtxComp.qualified_flg)))
+					{
+						Date origEffectiveFrom = qualtxComp.qualified_from;
+						Date origEffectiveTo = qualtxComp.qualified_to;
+						boolean isPrevYearQualApplied = this.qtxBusinessLogicProcessor.previousYearQualificationRule.applyPrevYearQualForComponent(bomComp, qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+						if (!isPrevYearQualApplied)
+						{
+							this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+							qualtxComp.qualified_from = origEffectiveFrom;
+							qualtxComp.qualified_to = origEffectiveTo;
+						}
+					}
+				}
 				
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_IVA_DELETED) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
 				{
