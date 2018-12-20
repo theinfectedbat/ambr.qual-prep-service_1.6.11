@@ -113,6 +113,10 @@ public class ArQtxWorkUtility
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_FORCE_QUALIFICATION) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
 
 		List<QualTX> list = new ArrayList<QualTX>();
 		
@@ -283,16 +287,14 @@ public class ArQtxWorkUtility
 				qtxConsolWork.time_stamp =  new Timestamp(System.currentTimeMillis());
 				qtxConsolWork.user_id = (qualtx.last_modified_by == null) ? "SYSTEM_ADMIN" : qualtx.last_modified_by;
 			}	
-			else work.priority = bomUniverse.getPrioritizedBOMSet().getBOMPriority(qualtx.src_key);
+			else work.priority = qtxConsolWork.priority; //Since we are setting the default priority as 70 in GPM, we are using the same priority.
 
 			work.time_stamp = qtxConsolWork.time_stamp;
 			work.status.time_stamp = qtxConsolWork.time_stamp;
 			work.details.time_stamp = qtxConsolWork.time_stamp;
 			work.userId = qtxConsolWork.user_id;
-			
 		}
 		
-		work.priority = bomUniverse.getPrioritizedBOMSet().getBOMPriority(qualtx.src_key);
 		QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
 		if(QEConfig != null && QEConfig.getAnalysisMethod() != null )
 		{ 
@@ -383,6 +385,10 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) workCode = RequalificationWorkCodes.COMP_PRC_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_FORCE_QUALIFICATION) workCode = RequalificationWorkCodes.COMP_CONFIG_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COO_CHG) workCode = RequalificationWorkCodes.BOM_COMP_COO_CHG;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) workCode = RequalificationWorkCodes.BOM_COMP_COM_COO_CHG;
+		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) workCode = RequalificationWorkCodes.COMP_STP_COO_CHG;
+		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) workCode = RequalificationWorkCodes.COMP_GPM_COO_CHG;
 
 		return workCode;
 	}
