@@ -305,6 +305,8 @@ public class CumulationComputationRule
 				return cumulationConfigRdc;
 			}
 		}
+		if(cumulationConfigRdc != null)
+			return cumulationConfigRdc;
 
 		SimplePropertySheet aPropertySheet = this.propertySheetManager.getPropertySheet(orgcode, "BOM_SCREENING_CONFIG");
 		
