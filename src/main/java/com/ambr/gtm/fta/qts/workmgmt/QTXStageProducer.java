@@ -559,7 +559,7 @@ public class QTXStageProducer extends QTXProducer
 			qtxConsolWork = new QTXConsolWork();
 			qtxConsolWork.time_stamp  = stageData.time_stamp;
 			qtxConsolWork.user_id = stageData.user_id;
-			//qtxConsolWork.priority = 1; //TODO set the correct priority
+			qtxConsolWork.priority = stageData.priority;
 			prodConsolMap.put(key, qtxConsolWork); 
 		}
 			
@@ -639,6 +639,24 @@ public class QTXStageProducer extends QTXProducer
 				}
 				
 				theProdChangeMap.put(theCtryCmplDtl.optLong("REASON_CODE"), ctryCmpKeyList);
+			}
+		}
+		
+		JSONArray theCooDtls = theProdDtlsObj.getJSONArray("COO_DTLS");
+		ArrayList<Long> CooDtlsList = null;
+		if (!theCooDtls.isNull(0))
+		{
+			for (int index = 0; index < theCooDtls.length(); index++)
+			{
+				JSONObject theCooDtl = theCooDtls.getJSONObject(index);
+				ArrayList<Long> srcKeyList = null;
+				if (!theProdChangeMap.containsKey(theCooDtl.optLong("REASON_CODE")))
+				{
+					CooDtlsList = new ArrayList<>();
+					CooDtlsList.add(key);
+					theProdChangeMap.put(theCooDtl.optLong("REASON_CODE"), CooDtlsList);
+				}
+				
 			}
 		}
 	}
@@ -839,7 +857,7 @@ public class QTXStageProducer extends QTXProducer
 			{
 				//logger.error("@@@@ buildheaderProdQtxWorkBean=qualtx.src_key= " +qualtx.src_key + " qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.utility.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtx.prod_key);
-				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_PREV_YEAR_QUAL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_CUMULATION_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_HEAD_TRACE_VALUE_CHANGE)
+				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
 				{
 					theQtxWork.details.setReasonCodeFlag(workCode);
 					theQtxWork.setWorkStatus(QualtxStatus.INIT);
