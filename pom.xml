@@ -8,8 +8,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.build.timestamp.format>yyyy/MM/dd HH:mm:ss z</maven.build.timestamp.format>
+		<awsAccountId>${m_AWSAccountID}</awsAccountId>
 	</properties>
-	
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -28,17 +29,17 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-loader-tools</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-loader-tools</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -51,17 +52,17 @@
 		</dependency>
 
 		<dependency>
-		    <groupId>com.ambr.solutions.service</groupId>
-		    <artifactId>ambr.qual-trade-client</artifactId>
-		    <version>1.0.0</version>
+			<groupId>com.ambr.solutions.service</groupId>
+			<artifactId>ambr.qual-trade-client</artifactId>
+			<version>1.0.0</version>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>org.json</groupId>
-		    <artifactId>json</artifactId>
-		    <version>20180813</version>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20180813</version>
 		</dependency>
-		
+
 	</dependencies>
 
 	<build>
@@ -78,6 +79,59 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/target/dockerbuild</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}</directory>
+									<includes>
+										<include>Dockerfile</include>
+									</includes>
+								</resource>
+								<resource>
+									<directory>${basedir}/target</directory>
+									<includes>
+										<include>${project.artifactId}-${project.version}.jar</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>1.4.0</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>build</goal>
+							<goal>push</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<contextDirectory>${basedir}/target/dockerbuild</contextDirectory>
+					<repository>${m_DockerRegistryURI}/${m_DockerArtifactID}</repository>
+					<tag>${m_DockerArtifactVersion}</tag>
+					<buildArgs>
+						<JAR_FILE_NAME>${project.artifactId}-${project.version}.jar</JAR_FILE_NAME>
+					</buildArgs>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
