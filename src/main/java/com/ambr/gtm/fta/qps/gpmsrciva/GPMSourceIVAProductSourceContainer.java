@@ -18,9 +18,10 @@ public class GPMSourceIVAProductSourceContainer
 {
 	private static final long serialVersionUID = 1L;
 	
-	public long							prodSrcKey;
-	public String						ctryOfOrigin;
-	public ArrayList<GPMSourceIVA>		ivaList;
+	public long										prodSrcKey;
+	public String									ctryOfOrigin;
+	public ArrayList<GPMSourceCampaignDetail>		campDetailList;
+	public ArrayList<GPMSourceIVA>					ivaList;
 	
 	@JsonIgnore
 	private HashMap<Long, GPMSourceIVA> ivaKeyIndex;
@@ -35,8 +36,15 @@ public class GPMSourceIVAProductSourceContainer
 		throws Exception
 	{
 		this.ivaList = new ArrayList<>();
+		this.campDetailList = new ArrayList<>();
 	}
 	
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     *************************************************************************************
+     */
 	public void indexByIVAKey()
 	{
 		this.ivaKeyIndex = new HashMap<Long, GPMSourceIVA>();
@@ -47,23 +55,40 @@ public class GPMSourceIVAProductSourceContainer
 		}
 	}
 	
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     * 
+     * @param	theIVAKey
+     *************************************************************************************
+     */
 	public GPMSourceIVA getGPMSourceIVA(long theIVAKey)
 	{
 		return this.ivaKeyIndex.get(theIVAKey);
 	}
 	
-	
-	/**
-	 * @param theFTACode
-	 * @param theIVACode
-	 * @param theCOI
-	 * @param theEffectiveFrom
-	 * @param theEffectiveTo
-	 * @return
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     * 
+     * @param	theFTACode
+     * @param	theIVACode
+     * @param	theCOI
+     * @param	theEffectiveFrom
+     * @param	theEffectiveTo
+     * 
 	 * @throws Exception
-	 */
-	public GPMSourceIVA getIVA(String theFTACode, String theIVACode, String theCOI, Date theEffectiveFrom, Date theEffectiveTo)
-			throws Exception
+     *************************************************************************************
+     */
+	public GPMSourceIVA getIVA(
+		String 	theFTACode, 
+		String 	theIVACode, 
+		String 	theCOI, 
+		Date 	theEffectiveFrom, 
+		Date 	theEffectiveTo)
+		throws Exception
 	{
 		
 		if(theFTACode == null || theIVACode == null || theCOI == null || theEffectiveFrom == null || theEffectiveTo == null)
@@ -89,15 +114,24 @@ public class GPMSourceIVAProductSourceContainer
 		return null;
 	}
 	
-	/**
-	 * @param theFTACode
-	 * @param theCOI
-	 * @param theEffectiveFrom
-	 * @param theEffectiveTo
-	 * @return
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     * 
+     * @param	theFTACode
+     * @param	theCOI
+     * @param	theEffectiveFrom
+     * @param	theEffectiveTo
+     * 
 	 * @throws Exception
-	 */
-	public GPMSourceIVA getIVA(String theFTACode, String theCOI, Date theEffectiveFrom, Date theEffectiveTo)
+     *************************************************************************************
+     */
+	public GPMSourceIVA getIVA(
+		String 	theFTACode, 
+		String 	theCOI, 
+		Date 	theEffectiveFrom, 
+		Date 	theEffectiveTo)
 			throws Exception
 	{
 		
@@ -141,5 +175,6 @@ public class GPMSourceIVAProductSourceContainer
 		}
 		
 		this.ivaList.addAll(thePartitionContainer.ivaList);
+		this.campDetailList.addAll(thePartitionContainer.campDetailList);
 	}
 }
