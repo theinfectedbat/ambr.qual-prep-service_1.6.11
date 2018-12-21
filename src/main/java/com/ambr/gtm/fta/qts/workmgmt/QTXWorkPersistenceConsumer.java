@@ -1,7 +1,6 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -24,13 +23,13 @@ import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.trade.MDIBomRepository;
 import com.ambr.gtm.fta.qts.trade.MDIQualTx;
 import com.ambr.gtm.fta.qts.util.Env;
+import com.ambr.gtm.fta.trade.BOMQualtxData;
 import com.ambr.gtm.fta.trade.client.LockException;
 import com.ambr.gtm.fta.trade.client.TradeQualtxClient;
 import com.ambr.gtm.fta.trade.model.BOMQualAuditEntity;
 import com.ambr.gtm.fta.trade.model.BOMQualAuditEntity.STATE;
 import com.ambr.platform.rdbms.orm.DataRecordColumnModification;
 import com.ambr.platform.rdbms.orm.DataRecordModificationTracker;
-import com.ambr.platform.rdbms.orm.EntityManager;
 
 public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 {
@@ -79,15 +78,24 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			 BOMQualAuditEntity audit = this.buildAudit(workPackage);
 			 tradeQualtxClient.doRecordLevelAudit(audit);
 			
+			String aWorkId = null;
 			if (workPackage.deleteBOMQual)
 			{
-				ArrayList<Long> list = new ArrayList<Long>();
+				ArrayList<Long> qualtxKeyList = new ArrayList<Long>();
+				ArrayList<Long> qtxWorkIdList = new ArrayList<Long>();
 				
-				list.add(workPackage.qualtx.alt_key_qualtx);
+				qualtxKeyList.add(workPackage.qualtx.alt_key_qualtx);
+				qtxWorkIdList.add(workPackage.work.qtx_wid);
 				
-				MDIBomRepository.deleteBomQualRecords(work.bom_key, list, workPackage.qualtx.org_code, (work.userId == null)? workPackage.qualtx.last_modified_by : work.userId, template);
+				BOMQualtxData bomQualtxData = new BOMQualtxData();
+				bomQualtxData.bomkey = workPackage.work.bom_key;
+				bomQualtxData.qtxWorkIdList = qtxWorkIdList;
+				bomQualtxData.qualtxKeyList = qualtxKeyList;
+				bomQualtxData.priority = workPackage.bom.priority;
+				bomQualtxData.action="delete";
+				aWorkId = Env.getSingleton().getTradeQualtxClient().createWorkForBOMQualUpdate(bomQualtxData);
 			}
-			
+			if(aWorkId != null)
 			this.updateWorkToSuccess(workPackage, template);
 			
 			if (workPackage.lockId != null)
