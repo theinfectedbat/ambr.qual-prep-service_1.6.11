@@ -28,7 +28,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
@@ -48,6 +47,9 @@ import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverse;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniversePartition;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverseProperties;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromUniverseClientAPI;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverse;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniversePartition;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverseProperties;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngine;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
@@ -60,6 +62,7 @@ import com.ambr.gtm.fta.qps.qualtx.universe.QualTXDetailUniverseProperties;
 import com.ambr.gtm.fta.qps.util.CumulationComputationRule;
 import com.ambr.gtm.fta.qps.util.CurrencyExchangeRateManager;
 import com.ambr.gtm.fta.qps.util.DetermineComponentCOO;
+import com.ambr.gtm.fta.qps.util.PreviousYearQualificationRule;
 import com.ambr.gtm.fta.qts.QTSProperties;
 import com.ambr.gtm.fta.qts.QTXWorkRepository;
 import com.ambr.gtm.fta.qts.TrackerLoader;
@@ -109,24 +112,26 @@ public class ApplicationConfiguration
     @Autowired 	@Qualifier(PrimaryDataSourceConfiguration.TX_MGR_BEAN_NAME)			private PlatformTransactionManager txMgr;
 	@Autowired	@Qualifier(PrimaryDataSourceConfiguration.DATA_SOURCE_BEAN_NAME)	private DataSource dataSrc;
 	@Autowired
-	Environment									environment;
-    private TrackerLoader						trackerLoader;
-	private UniversalObjectIDGenerator			idGenerator;
-    private BOMUniverse							bomUniverse;
-    private BOMUniversePartition				bomUniversePartition;
-    private GPMSourceIVAUniverse				gpmIVAUniverse;
-    private GPMSourceIVAUniversePartition		gpmIVAUniversePartition;
-    private GPMClassificationUniverse			gpmClassUniverse;
-    private GPMClassificationUniversePartition	gpmClassUniversePartition;
-    private PreparationEngineQueueUniverse		queueUniverse;
-    private GPMClaimDetailsUniverse				gpmClaimDetailsUniverse;
-    private GPMClaimDetailsUniversePartition	gpmClaimDetailsUniversePartition;
-    private QualTXDetailUniverse				qualTXDetailUniverse;
-    private QualTXDetailUniversePartition		qualTXDetailUniversePartition;
-    private QualTXUniversePreparationProgressManager				qualTXUniversePreparationProgressManager;
-    private Env env;
-    private TrackerClientAPI aClientAPI;
-    private QualTXBusinessLogicProcessor qualTXBusinessLogicProcessor;
+	Environment											environment;
+    private TrackerLoader								trackerLoader;
+	private UniversalObjectIDGenerator					idGenerator;
+    private BOMUniverse									bomUniverse;
+    private BOMUniversePartition						bomUniversePartition;
+    private GPMSourceIVAUniverse						gpmIVAUniverse;
+    private GPMSourceIVAUniversePartition				gpmIVAUniversePartition;
+    private GPMClassificationUniverse					gpmClassUniverse;
+    private GPMClassificationUniversePartition			gpmClassUniversePartition;
+    private PreparationEngineQueueUniverse				queueUniverse;
+    private GPMClaimDetailsUniverse						gpmClaimDetailsUniverse;
+    private GPMClaimDetailsUniversePartition			gpmClaimDetailsUniversePartition;
+    private QualTXDetailUniverse						qualTXDetailUniverse;
+    private QualTXDetailUniversePartition				qualTXDetailUniversePartition;
+    private PartnerDetailUniverse						ptnrDetailUniverse;
+    private PartnerDetailUniversePartition				ptnrDetailUniversePartition;
+    private QualTXUniversePreparationProgressManager	qualTXUniversePreparationProgressManager;
+    private Env 										env;
+    private TrackerClientAPI 							clientAPI;
+    private QualTXBusinessLogicProcessor 				qualTXBusinessLogicProcessor;
             
     /**
      *************************************************************************************
@@ -171,7 +176,7 @@ public class ApplicationConfiguration
 			switch (aCommandEnum) {
 				case TEST:
 				{
-					this.test();
+//					this.test();
 					break;
 				}
 			}
@@ -282,6 +287,40 @@ public class ApplicationConfiguration
 		return this.bomUniversePartition;
 	}
 	
+	@Bean
+	public CurrencyExchangeRateManager  beanCurrencyExchangeRateManager () throws Exception
+	{
+		CurrencyExchangeRateManager currencyExchangeRateManager = new CurrencyExchangeRateManager();
+		return currencyExchangeRateManager;
+	}
+
+	@Bean
+	public FTACtryConfigCache beanFTACtryConfigCache(@Autowired DataSource dataSrc, 
+			@Autowired OrgCache orgCache
+			) throws Exception
+	{
+		boolean loadUsingTAService = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.LOAD_FTA_CTRY_DG_USING_TA_SERVICE, "N"));
+		boolean loadFTACtryCacheEnabledFlag = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.FTA_CTRY_DG_CACHE, "N"));
+		FTACtryConfigCache ftaCtryConfigCache = null;
+		if (loadFTACtryCacheEnabledFlag)
+		{
+			ftaCtryConfigCache = new FTACtryConfigCache(orgCache, new JdbcTemplate(dataSrc), 1000, loadUsingTAService);
+			ftaCtryConfigCache.load();
+		}
+		else
+		{
+			ftaCtryConfigCache = new FTACtryConfigCache();
+		}
+		return ftaCtryConfigCache;
+	}
+
+	@Bean
+	public FTAHSListCache beanFTAHSListCache() throws Exception
+	{
+		FTAHSListCache ftaHSListCache = new FTAHSListCache();
+		return ftaHSListCache;
+	}
+
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -490,6 +529,94 @@ public class ApplicationConfiguration
 		return this.gpmIVAUniversePartition;
 	}
 
+	@Bean
+	public TrackerLoader beanLoadTrackerUniverse(@Autowired TrackerContainer trackerContainer) throws Exception
+	{
+		int aFetchSize;
+		String aTargetSchema = null;
+		boolean trackerServiceRequired = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_SERVICE_START, "N"));
+	
+		if (!trackerServiceRequired)
+		{
+			this.trackerLoader = new TrackerLoader();
+			MessageFormatter.info(logger, "beanLoadTrackerUniverse", "Tracker service starting is not enabled.");
+			return this.trackerLoader;
+		}
+		aFetchSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.MAX_FETCH_SIZE, "1000"));
+		aTargetSchema = this.propertyResolver.getPropertyValue(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, null);
+	
+		this.trackerLoader = new TrackerLoader(this.propertyResolver, this.dataSrc);
+		this.trackerLoader.setFetchSize(aFetchSize);
+		this.trackerLoader.setTargetSchema(aTargetSchema);
+		// TODO Convert this to multithreading to have parallel processing.
+		this.trackerLoader.loadTracker(trackerContainer);
+		MessageFormatter.info(logger, "beanLoadTrackerUniverse", "Tracker service is started successfully.");
+		return this.trackerLoader;
+	}
+	
+	/**
+     *************************************************************************************
+     * <P>
+     * </P>
+     *************************************************************************************
+     */
+	@Bean
+	public PartnerDetailUniverse beanPartnerDetailUniverse()
+		throws Exception
+	{
+		// Just initialize a basic Partner Detail Universe object.  The remainder of the initialization process
+		// will occur when the Spring Application is fully initialized.  This is necessary because
+		// we need to know the server port the JVM is using.
+		this.ptnrDetailUniverse = new PartnerDetailUniverse();
+		
+		return this.ptnrDetailUniverse;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	@Bean
+	public PartnerDetailUniversePartition beanPartnerDetailUniversePartition(
+		@Autowired ConfigurationPropertyResolver 			thePropertyResolver,
+		@Autowired DataExtensionConfigurationRepository 	theRepos)
+		throws Exception
+	{
+		int			aMaxQueueDepth;
+		int			aFetchSize;
+		String 		aTargetSchema = null;
+		boolean		aUniversePartitionEnabledFlag;
+		int 		aPartitionCount;
+		int			aPartitionNum;
+		String		aFilterOrgCode;
+	
+		aUniversePartitionEnabledFlag = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(PartnerDetailUniverseProperties.UNIVERSE_PARTITION_ENABLED, "N"));
+	
+		if (!aUniversePartitionEnabledFlag) {
+			// We don't intended to utilize this JVM as a BOM Universe partition
+			// We will initialize a "blank" object, but we won't ever load it.
+			this.ptnrDetailUniversePartition = new PartnerDetailUniversePartition();
+			return this.ptnrDetailUniversePartition;
+		}
+		
+		aMaxQueueDepth = Integer.valueOf(this.propertyResolver.getPropertyValue(QPSProperties.MAX_QUEUE_DEPTH, "-1"));
+		aFetchSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QPSProperties.MAX_FETCH_SIZE, "1000"));
+		aTargetSchema = this.propertyResolver.getPropertyValue(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, null);
+		aPartitionCount = Integer.valueOf(this.propertyResolver.getPropertyValue(PartnerDetailUniverseProperties.UNIVERSE_PARTITION_COUNT, "1"));
+		aPartitionNum = Integer.valueOf(this.propertyResolver.getPropertyValue(PartnerDetailUniverseProperties.UNIVERSE_PARTITION_NUM, "1"));
+		aFilterOrgCode = this.propertyResolver.getPropertyValue(QPSProperties.FILTER_ORG_CODE, null);
+		
+		this.ptnrDetailUniversePartition = new PartnerDetailUniversePartition(aPartitionCount, aPartitionNum, aFilterOrgCode);
+		this.ptnrDetailUniversePartition.setFetchSize(aFetchSize);
+		this.ptnrDetailUniversePartition.setMaxCursorDepth(aMaxQueueDepth);
+		this.ptnrDetailUniversePartition.setTargetSchema(aTargetSchema);
+		this.ptnrDetailUniversePartition.load(new JdbcTemplate(this.dataSrc));
+	
+		return this.ptnrDetailUniversePartition;
+	}
+
 	/**
      *************************************************************************************
      * <P>
@@ -564,40 +691,6 @@ public class ApplicationConfiguration
 			qeConfigCache = new QEConfigCache();
 		}
 		return qeConfigCache;
-	}
-	
-	@Bean
-	public FTACtryConfigCache beanFTACtryConfigCache(@Autowired DataSource dataSrc, 
-			@Autowired OrgCache orgCache
-			) throws Exception
-	{
-		boolean loadUsingTAService = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.LOAD_FTA_CTRY_DG_USING_TA_SERVICE, "N"));
-		boolean loadFTACtryCacheEnabledFlag = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.FTA_CTRY_DG_CACHE, "N"));
-		FTACtryConfigCache ftaCtryConfigCache = null;
-		if (loadFTACtryCacheEnabledFlag)
-		{
-			ftaCtryConfigCache = new FTACtryConfigCache(orgCache, new JdbcTemplate(dataSrc), 1000, loadUsingTAService);
-			ftaCtryConfigCache.load();
-		}
-		else
-		{
-			ftaCtryConfigCache = new FTACtryConfigCache();
-		}
-		return ftaCtryConfigCache;
-	}
-	
-	@Bean
-	public FTAHSListCache beanFTAHSListCache() throws Exception
-	{
-		FTAHSListCache ftaHSListCache = new FTAHSListCache();
-		return ftaHSListCache;
-	}
-	
-	@Bean
-	public CurrencyExchangeRateManager  beanCurrencyExchangeRateManager () throws Exception
-	{
-		CurrencyExchangeRateManager currencyExchangeRateManager = new CurrencyExchangeRateManager();
-		return currencyExchangeRateManager;
 	}
 	
 	@Bean
@@ -843,109 +936,8 @@ public class ApplicationConfiguration
 	public TrackerClientAPI beanTrackerClient() throws Exception {
 		
 		String trackerServiceURL = this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_SERVICE_URL, null);
-		this.aClientAPI = new TrackerClientAPI(trackerServiceURL);
+		this.clientAPI = new TrackerClientAPI(trackerServiceURL);
 		
-		return this.aClientAPI;
-	}
-
-	@Bean
-	public TrackerLoader beanLoadTrackerUniverse(@Autowired TrackerContainer trackerContainer) throws Exception
-	{
-		int aFetchSize;
-		String aTargetSchema = null;
-		boolean trackerServiceRequired = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_SERVICE_START, "N"));
-	
-		if (!trackerServiceRequired)
-		{
-			this.trackerLoader = new TrackerLoader();
-			MessageFormatter.info(logger, "beanLoadTrackerUniverse", "Tracker service starting is not enabled.");
-			return this.trackerLoader;
-		}
-		aFetchSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.MAX_FETCH_SIZE, "1000"));
-		aTargetSchema = this.propertyResolver.getPropertyValue(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, null);
-	
-		this.trackerLoader = new TrackerLoader(this.propertyResolver, this.dataSrc);
-		this.trackerLoader.setFetchSize(aFetchSize);
-		this.trackerLoader.setTargetSchema(aTargetSchema);
-		// TODO Convert this to multithreading to have parallel processing.
-		this.trackerLoader.loadTracker(trackerContainer);
-		MessageFormatter.info(logger, "beanLoadTrackerUniverse", "Tracker service is started successfully.");
-		return this.trackerLoader;
-	}
-
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 *************************************************************************************
-	 */
-	private void test()
-		throws Exception
-	{
-		Object[] aValue = new MessageFormat("BOM.{0,number}|QTX.{1,number}").parse("BOM.3031677479|QTX.-6335854562173191080");
-		System.out.println("done" + aValue[0]);
-	}
-
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 *************************************************************************************
-	 */
-	private void testBatch()
-		throws Exception
-	{
-		TransactionStatus 							aStatus = this.txMgr.getTransaction(new DefaultTransactionDefinition());
-		BatchDataRecordPersistenceQueue				aBatchPersistenceQueue;
-		BatchDataRecordInsertSQLStatement			aSqlStatement;
-		ArrayList<QualTX>							aList;
-		PerformanceTracker							aPerfTracker = new PerformanceTracker(logger, Level.INFO, "testBatch");
-		
-		aSqlStatement = new BatchDataRecordInsertSQLStatement(QualTX.class);
-		
-		aList = new ArrayList<>();
-		for (int aIndex = 1; aIndex <= 199; aIndex++) {
-			QualTX	aQualTX = new QualTX(this.idGenerator, 0);
-			
-			aQualTX.ctry_of_import = "US";
-			aQualTX.effective_from = new Timestamp(System.currentTimeMillis());
-			aQualTX.effective_to = new Timestamp(System.currentTimeMillis());
-			aQualTX.fta_code = "NAFTA";
-			aQualTX.org_code = "REN";
-			aQualTX.hs_num = "HSNUM" + aIndex;
-			aList.add(aQualTX);
-		}
-		
-		int aBatchSize = 10000;
-		aBatchPersistenceQueue = new BatchDataRecordPersistenceQueue("Test Queue", aBatchSize, 5, aSqlStatement, this.txMgr, this.dataSrc);
-		aBatchPersistenceQueue.setMaxQueueDepth(1000);
-		aBatchPersistenceQueue.start();
-		
-	
-		ArrayList<Future<BatchDataRecordTask>> aFutureList = new ArrayList<>();
-	
-		aPerfTracker.start();
-		for (QualTX aQualTX : aList) {
-			Future<BatchDataRecordTask> aFuture = aBatchPersistenceQueue.put(aQualTX);
-			aFutureList.add(aFuture);
-		}
-		
-		for (Future<BatchDataRecordTask> aFuture : aFutureList) {
-			
-			try {
-				BatchDataRecordTask aBatchDataRecTask = aFuture.get();
-				
-				aBatchDataRecTask.waitForCompletion();
-	
-				MessageFormatter.info(logger, "test", "Saved Qual TX [{0,number,#}]", 
-					((QualTX)(aBatchDataRecTask.getDataRecord())).alt_key_qualtx
-				);
-			}
-			catch (ExecutionException e) {
-				MessageFormatter.trace(logger, "test", e, "Saved failed");
-			}
-		}
-		
-		aPerfTracker.stop("Persisted [{0}] qual_tx records", new Object[]{aList.size()});
+		return this.clientAPI;
 	}
 }

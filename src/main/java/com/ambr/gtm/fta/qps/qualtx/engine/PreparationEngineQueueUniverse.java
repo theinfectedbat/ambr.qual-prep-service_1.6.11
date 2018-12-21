@@ -19,6 +19,8 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationUniverse;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverse;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailCache;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
 import com.ambr.gtm.fta.qps.qualtx.engine.request.QualTXUniverseGenerationRequest;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.BOMStatusTracker;
@@ -66,6 +68,7 @@ public class PreparationEngineQueueUniverse
 	private int													localIVACacheSize;
 	private int													localGPMClassCacheSize;
 	private int													localGPMClaimDetailsCacheSize;
+	private int													localPtnrDetailCacheSize;
 
 	private int													componentMaxBatchSize;
 	private int 												batchInsertConcurrentQueueCount;
@@ -91,6 +94,7 @@ public class PreparationEngineQueueUniverse
 	public GPMClassificationProductContainerCache				gpmClassCache;
 	public GPMSourceIVAContainerCache							ivaCache;
 	public GPMClaimDetailsCache									gpmClaimDetailsCache;
+	public PartnerDetailCache									ptnrDetailCache;
 	
 	public BOMUniverse											bomUniverse;
 	public QualTXDetailUniverse									qtxDetailUniverse;
@@ -256,11 +260,19 @@ public class PreparationEngineQueueUniverse
 			this.gpmClaimDetailsCache.getMisses(),
 			this.gpmClaimDetailsCache.getHitRatio()
 		);
+
+		aMsgUtil.format("   Partner Details Cache: Current Size [{0}] Hits [{1}] Misses [{2}] Hit Ratio [{3,number,percent}]", false, true,
+			this.ptnrDetailCache.getSize(),
+			this.ptnrDetailCache.getHits(), 
+			this.ptnrDetailCache.getMisses(),
+			this.ptnrDetailCache.getHitRatio()
+		);
 		
 		aMsgUtil.format(this.bomUniverse.getStatus(aPaddingLength), true, false);
 		aMsgUtil.format(this.gpmClassCache.getUniverse().getStatus(aPaddingLength), true, false);
 		aMsgUtil.format(this.ivaCache.getUniverse().getStatus(aPaddingLength), true, false);
 		aMsgUtil.format(this.gpmClaimDetailsCache.getUniverse().getStatus(aPaddingLength), true, false);
+		aMsgUtil.format(this.ptnrDetailCache.getUniverse().getStatus(aPaddingLength), true, false);
 		
 		aMsgUtil.format("___________________", false, true);
 		
@@ -534,7 +546,7 @@ public class PreparationEngineQueueUniverse
 	private void refreshCaches()
 		throws Exception
 	{
-		ExecutorService 		aExecService = Executors.newFixedThreadPool(5);
+		ExecutorService 		aExecService = Executors.newFixedThreadPool(6);
 		ArrayList<Future>		aFutureList = new ArrayList<>();
 
 		MessageFormatter.info(logger, "refreshCaches", "start.");
@@ -567,6 +579,12 @@ public class PreparationEngineQueueUniverse
 		if (this.qtxDetailUniverse != null) {
 			aFutureList.add(aExecService.submit(()->{try {this.qtxDetailUniverse.ensureAvailable();} catch (Exception e) {
 				MessageFormatter.error(logger, "refreshCaches", e, "QTX Detail Universe unavailable");}})
+			);
+		}
+
+		if (this.ptnrDetailCache != null) {
+			aFutureList.add(aExecService.submit(()->{try {this.ptnrDetailCache.refresh(true);} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "Partner Details Cache unavailable");}})
 			);
 		}
 		
@@ -626,13 +644,6 @@ public class PreparationEngineQueueUniverse
 		MessageFormatter.info(logger, "setBatchInsertMaxWaitPeriod", "Current [{0}] Target [{1}]", this.batchInsertMaxWaitPeriodInMillis, theWaitPeriod);
 		
 		this.batchInsertMaxWaitPeriodInMillis = theWaitPeriod;
-//		if (theWaitPeriod < 1000) {
-//			//
-//			this.batchInsertMaxWaitPeriodInMillis = theWaitPeriod * 1000;
-//		}
-//		else {
-//			this.batchInsertMaxWaitPeriodInMillis = theWaitPeriod;
-//		}
 		
 		TypedPersistenceQueue<?>[] aTypedQueueList = new TypedPersistenceQueue<?>[] {
 			this.qualTXQueue,
@@ -946,6 +957,25 @@ public class PreparationEngineQueueUniverse
 			this.tradeLaneQueue.setLogThreshold(theTradeLaneQueueLogThreshold);
 		}
 		
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theUniverse
+	 * @param	theLocalCacheSize
+	 *************************************************************************************
+	 */
+	public PreparationEngineQueueUniverse setPartnerDetailUniverse(
+		PartnerDetailUniverse 	theUniverse, 
+		int 					theLocalCacheSize)
+		throws Exception
+	{
+		this.localPtnrDetailCacheSize = theLocalCacheSize;
+		this.ptnrDetailCache = new PartnerDetailCache(theUniverse, this.localPtnrDetailCacheSize);
 		return this;
 	}
 
