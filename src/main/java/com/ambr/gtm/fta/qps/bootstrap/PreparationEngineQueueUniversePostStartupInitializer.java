@@ -20,6 +20,8 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationUniverse;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationUniverseProperties;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverse;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverseProperties;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverse;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverseProperties;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.QualTXUniversePreparationProgressManager;
@@ -62,6 +64,7 @@ public class PreparationEngineQueueUniversePostStartupInitializer
 	@Autowired  private SchemaDescriptorService schemaDescService;
 	@Autowired  private QEConfigCache qeConfigCache;
 	@Autowired  private QualTXUniversePreparationProgressManager qtxUniversePrepProgressMgr;
+	@Autowired	private PartnerDetailUniverse ptnrDetailUniverse;
 	
     /**
      *************************************************************************************
@@ -87,6 +90,7 @@ public class PreparationEngineQueueUniversePostStartupInitializer
 		int			aClassCacheSize;
 		int			aIVACacheSize;
 		int			aClaimDetailsCacheSize;
+		int			aPtnrDetailCacheSize;
 		int 		aThreadCount;
 		int			aMaxQueueDepth;
 		int			aBatchInsertSize;
@@ -97,13 +101,14 @@ public class PreparationEngineQueueUniversePostStartupInitializer
 
 		if ("Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(BOMUniverseProperties.UNIVERSE_ENABLED, "N")) == false) {
 			// We don't need to initialize this JVM with a functional BOM Universe
-			MessageFormatter.info(logger, "completeInitialization", "BOM Processor Queue Universe does not require initialization.");
+			MessageFormatter.info(logger, "completeInitialization", "Queue Universe does not require initialization.");
 			return;
 		}
 
 		aClassCacheSize = Integer.valueOf(this.propertyResolver.getPropertyValue(GPMClassificationUniverseProperties.LOCAL_CACHE_SIZE, "100000"));
 		aIVACacheSize = Integer.valueOf(this.propertyResolver.getPropertyValue(GPMSourceIVAUniverseProperties.LOCAL_CACHE_SIZE, "100000"));
 		aClaimDetailsCacheSize = Integer.valueOf(this.propertyResolver.getPropertyValue(GPMClaimDetailsUniverseProperties.LOCAL_CACHE_SIZE, "100000"));
+		aPtnrDetailCacheSize = Integer.valueOf(this.propertyResolver.getPropertyValue(PartnerDetailUniverseProperties.LOCAL_CACHE_SIZE, "100000"));
 		aThreadCount = Integer.valueOf(this.propertyResolver.getPropertyValue(QPSProperties.THREAD_COUNT, "10"));
 		aMaxQueueDepth = Integer.valueOf(this.propertyResolver.getPropertyValue(QPSProperties.MAX_QUEUE_DEPTH, "1000"));
 		aBatchInsertSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QPSProperties.BATCH_INSERT_SIZE, "250"));
@@ -115,6 +120,7 @@ public class PreparationEngineQueueUniversePostStartupInitializer
 		this.queueUniverse.setGPMClaimDetailsUniverse(this.gpmClaimDetailsUniverse, aClaimDetailsCacheSize);
 		this.queueUniverse.setGPMClassificationUniverse(this.gpmClassUniverse, aClassCacheSize);
 		this.queueUniverse.setGPMSourceIVAUniverse(this.gpmSrcIVAUniverse, aIVACacheSize);
+		this.queueUniverse.setPartnerDetailUniverse(this.ptnrDetailUniverse, aPtnrDetailCacheSize);
 		this.queueUniverse.setQueueParams(new TaskQueueParameters(aThreadCount, aMaxQueueDepth));
 		this.queueUniverse.setDataSource(this.dataSrc, this.txMgr, this.schemaDescService.getPrimarySchemaDescriptor());
 		this.queueUniverse.setBatchInsertSize(aBatchInsertSize);

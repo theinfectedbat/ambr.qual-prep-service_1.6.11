@@ -23,6 +23,7 @@ public class UniversePostStartupInitializer
 	@Autowired GPMClassificationUniversePostStartupInitializer gpmClassificationUniversePostStartupInitializer;
 	@Autowired GPMSourceIVAUniversePostStartupInitializer gpmSourceIVAUniversePostStartupInitializer;
 	@Autowired QualTXDetailUniversePostStartupInitializer qualTXDetailUniversePostStartupInitializer;
+	@Autowired PartnerDetailUniversePostStartupInitializer ptnrDetailUniversePostStartupInitializer;
 	
 	/**
      *************************************************************************************
@@ -52,18 +53,21 @@ public class UniversePostStartupInitializer
 		Thread gpmClass = new Thread(gpmClassificationUniversePostStartupInitializer);
 		Thread gpmSource = new Thread(gpmSourceIVAUniversePostStartupInitializer);
 		Thread qualtxDetail = new Thread(qualTXDetailUniversePostStartupInitializer);
+		Thread ptnrDetail = new Thread(ptnrDetailUniversePostStartupInitializer);
 		
 		bom.start();
 		gpmClaim.start();
 		gpmClass.start();
 		gpmSource.start();
 		qualtxDetail.start();
+		ptnrDetail.start();
 	
 		bom.join();
 		gpmClaim.join();
 		gpmClass.join();
 		gpmSource.join();
 		qualtxDetail.join();
+		ptnrDetail.join();
 		
 		logger.info("Post startup initialization complete");
 	}

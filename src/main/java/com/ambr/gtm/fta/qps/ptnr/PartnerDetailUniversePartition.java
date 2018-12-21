@@ -1,4 +1,4 @@
-package com.ambr.gtm.fta.qps.gpmclass;
+package com.ambr.gtm.fta.qps.ptnr;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -22,22 +22,19 @@ import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
  * </P>
  *****************************************************************************************
  */
-public class GPMClassificationUniversePartition 
+public class PartnerDetailUniversePartition 
 {
-	static Logger		logger = LogManager.getLogger(GPMClassificationUniversePartition.class);
+	static Logger		logger = LogManager.getLogger(PartnerDetailUniversePartition.class);
 
-	int															rowCount;
-	private ArrayList<GPMClassification>						gpmClassList;
-	private HashMap<Long, GPMClassificationProductContainer>	classByProdTable;
-	private String												loadClassificationSQLText;
-	private String												loadCtrySQLText;
-	private String												loadHeaderSQLText;
-	private int													partitionNum;
-	private int													fetchSize;
-	int															maxCursorDepth;
-	private int													partitionCount;
-	private String												targetSchema;				
-	private String												filterOrgCode;
+	int										rowCount;
+	private HashMap<Long, PartnerDetail>	ptnrDetailTable;
+	private String							loadHeaderSQLText;
+	private int								partitionNum;
+	private int								fetchSize;
+	int										maxCursorDepth;
+	private int								partitionCount;
+	private String							targetSchema;				
+	private String							filterOrgCode;
 	
 	/**
      *************************************************************************************
@@ -45,7 +42,7 @@ public class GPMClassificationUniversePartition
      * </P>
      *************************************************************************************
      */
-	public GPMClassificationUniversePartition()
+	public PartnerDetailUniversePartition()
 		throws Exception
 	{
 		this(0, 0, null);
@@ -60,7 +57,7 @@ public class GPMClassificationUniversePartition
      * @param	thePartitionNum
      *************************************************************************************
      */
-	public GPMClassificationUniversePartition(
+	public PartnerDetailUniversePartition(
 		int 	thePartitionCount, 
 		int 	thePartitionNum,
 		String	theFilterOrgCode)
@@ -72,42 +69,24 @@ public class GPMClassificationUniversePartition
 		this.partitionNum = thePartitionNum;
 		this.partitionCount = thePartitionCount;
 		this.filterOrgCode = theFilterOrgCode;
-		this.gpmClassList = new ArrayList<>();
-		this.classByProdTable = new HashMap<>();
+		this.ptnrDetailTable = new HashMap<>();
 		
-		aSQLLines.add("select alt_key_cmpl, alt_key_prod, alt_key_ctry, ctry_code, effective_from, effective_to, im_hs1, is_active"); 
-		aSQLLines.add("from mdi_prod_ctry_cmpl");
+		aSQLLines.add("select alt_key_ptnr, country_code"); 
+		aSQLLines.add("from mdi_ptnr");
+		aSQLLines.add("where alt_key_ptnr in (select manufacturer_key from mdi_bom_comp)");
 
 		if (this.partitionCount > 1) {
-			aWhereClauseSQLLines.add("mod(alt_key_prod, ?) = ?");
+			aWhereClauseSQLLines.add("mod(alt_key_ptnr, ?) = ?");
 		}
 
 		if (this.filterOrgCode != null) {
 			aWhereClauseSQLLines.add("org_code = ?");
 		}
 
-		this.loadClassificationSQLText = StringUtil.join(aSQLLines.toArray(), " ");
-		if (aWhereClauseSQLLines.size() > 0) {
-			this.loadClassificationSQLText += " where " + StringUtil.join(aWhereClauseSQLLines.toArray(), " and ");
-		}
-
-		aSQLLines.clear();
-		aSQLLines.add("select alt_key_prod, alt_key_ctry, ctry_code, ctry_of_origin"); 
-		aSQLLines.add("from mdi_prod_ctry");
-
-		this.loadCtrySQLText = StringUtil.join(aSQLLines.toArray(), " ");
-		if (aWhereClauseSQLLines.size() > 0) {
-			this.loadCtrySQLText += " where " + StringUtil.join(aWhereClauseSQLLines.toArray(), " and ");
-		}
-
-		aSQLLines.clear();
-		aSQLLines.add("select alt_key_prod, ctry_of_origin"); 
-		aSQLLines.add("from mdi_prod");
-
 		this.loadHeaderSQLText = StringUtil.join(aSQLLines.toArray(), " ");
 		if (aWhereClauseSQLLines.size() > 0) {
 			this.loadHeaderSQLText += " where " + StringUtil.join(aWhereClauseSQLLines.toArray(), " and ");
-		}
+		}		
 		
 		MessageFormatter.info(logger, "constructor", "GPM Classification Universe Partition: Count [{0}] Partition Number [{1}]", this.partitionCount, this.partitionNum);
 	}
@@ -120,98 +99,27 @@ public class GPMClassificationUniversePartition
 	 * @param	theComponent
 	 *************************************************************************************
 	 */
-	void addClassification(GPMClassification theGPMClass)
+	void addPartnerDetail(PartnerDetail thePtnrDetail)
 		throws Exception
 	{
-		GPMClassificationProductContainer	aContainer;
-		
-		this.gpmClassList.add(theGPMClass);
-		
-		aContainer = this.classByProdTable.get(theGPMClass.prodKey);
-		if (aContainer == null) {
-			aContainer = new GPMClassificationProductContainer();
-			aContainer.prodKey = theGPMClass.prodKey;
-			this.classByProdTable.put(aContainer.prodKey, aContainer);
-		}
-		
-		aContainer.add(theGPMClass);
+		this.ptnrDetailTable.put(thePtnrDetail.alt_key_ptnr, thePtnrDetail);
 	}
 
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 * 
-	 * @param	theProdKey
-	 * @param	theGPMCtry
-	 *************************************************************************************
-	 */
-	public void addCountry(Long theProdKey, GPMCountry theGPMCtry)
-		throws Exception
-	{
-		GPMClassificationProductContainer	aContainer;
-		
-		aContainer = this.classByProdTable.get(theProdKey);
-		if (aContainer == null) {
-			aContainer = new GPMClassificationProductContainer();
-			aContainer.prodKey = theProdKey;
-			this.classByProdTable.put(aContainer.prodKey, aContainer);
-		}
-		
-		aContainer.add(theGPMCtry);
-	}
-
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 * 
-	 * @param	theProdKey
-	 * @param	theCtryOfOrigin
-	 *************************************************************************************
-	 */
-	public void addProdCtryOfOrigin(Long theProdKey, String theCtryOfOrigin)
-		throws Exception
-	{
-		GPMClassificationProductContainer	aContainer;
-		
-		aContainer = this.classByProdTable.get(theProdKey);
-		if (aContainer == null) {
-			aContainer = new GPMClassificationProductContainer();
-			aContainer.prodKey = theProdKey;
-			this.classByProdTable.put(aContainer.prodKey, aContainer);
-		}
-		
-		aContainer.ctryOfOrigin = theCtryOfOrigin;
-	}
-
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     *************************************************************************************
-     */
-	public ArrayList<GPMClassification> getGPMClassifications()
-		throws Exception
-	{
-		return this.gpmClassList;
-	}
-	
 	/**
      *************************************************************************************
      * <P>
      * </P>
      * 
-     * @param	theProdKey
+     * @param	thePtnrKey
      *************************************************************************************
      */
-	public GPMClassificationProductContainer getGPMClassificationsByProduct(long theProdKey)
+	public PartnerDetail getPartnerDetail(long thePtnrKey)
 		throws Exception
 	{
-		GPMClassificationProductContainer	aContainer;
+		PartnerDetail	aPtnrDetail;
 		
-		aContainer = this.classByProdTable.get(theProdKey);
-		return aContainer;
+		aPtnrDetail = this.ptnrDetailTable.get(thePtnrKey);
+		return aPtnrDetail;
 	}
 	
 	/**
@@ -220,10 +128,10 @@ public class GPMClassificationUniversePartition
      * </P>
      *************************************************************************************
      */
-	public int getClassificationCount()
+	public int getPtnrDetailCount()
 		throws Exception
 	{
-		return this.gpmClassList.size();
+		return this.ptnrDetailTable.size();
 	}
 	
 	/**
@@ -243,7 +151,7 @@ public class GPMClassificationUniversePartition
 	 * <P>
 	 * </P>
 	 * 
-	 * @param	thePadding
+	 * @param	thePaddingLength
 	 *************************************************************************************
 	 */
 	public String getStatus(int thePaddingLength)
@@ -252,11 +160,10 @@ public class GPMClassificationUniversePartition
 		ParameterizedMessageUtility		aMsgUtil;
 	
 		aMsgUtil = new ParameterizedMessageUtility(thePaddingLength);
-		aMsgUtil.format("GPM Classification Universe Partition [{0}] of [{1}]", false, true, this.partitionNum, this.partitionCount);
-		aMsgUtil.format("   Classification Details: GPMs [{0}] Classifications [{1}]", 
+		aMsgUtil.format("Partner Detail Universe Partition [{0}] of [{1}]", false, true, this.partitionNum, this.partitionCount);
+		aMsgUtil.format("   Partner Count [{0}]", 
 			false, true, 
-			this.classByProdTable.size(), 
-			this.getClassificationCount()
+			this.ptnrDetailTable.size()
 		);
 		
 		System.gc();
@@ -286,8 +193,8 @@ public class GPMClassificationUniversePartition
 		Object[]			aInputList = null;
 		PerformanceTracker	aPerfTracker = new PerformanceTracker(logger, Level.INFO, "load");
 
-		this.gpmClassList.clear();
-		this.gpmClassList = new ArrayList<>();
+		this.ptnrDetailTable.clear();
+		this.ptnrDetailTable = new HashMap<>();
 		
 		aPerfTracker.start();
 		try {
@@ -308,12 +215,10 @@ public class GPMClassificationUniversePartition
 				}
 				
 				if (aInputList == null) {
-					theJdbcTemplate.query(this.loadClassificationSQLText, new GPMClassificationRowCallbackHandler(this));
-					theJdbcTemplate.query(this.loadCtrySQLText, new GPMCountryRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadHeaderSQLText, new PartnerDetailRowCallbackHandler(this));
 				}
 				else {
-					theJdbcTemplate.query(this.loadClassificationSQLText, aInputList,new GPMClassificationRowCallbackHandler(this));
-					theJdbcTemplate.query(this.loadCtrySQLText, aInputList,new GPMCountryRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadHeaderSQLText, aInputList,new PartnerDetailRowCallbackHandler(this));
 				}
 			}
 			catch (DataAccessException e) {
@@ -323,7 +228,7 @@ public class GPMClassificationUniversePartition
 			}
 		}
 		finally {
-			aPerfTracker.stop("GPM Classifications [{0}]", new Object[]{this.getClassificationCount()});
+			aPerfTracker.stop("Partners [{0}]", new Object[]{this.getPtnrDetailCount()});
 		}
 	}
 	
@@ -335,7 +240,7 @@ public class GPMClassificationUniversePartition
 	 * @param	theFetchSize
 	 *************************************************************************************
 	 */
-	public GPMClassificationUniversePartition setFetchSize(int theFetchSize)
+	public PartnerDetailUniversePartition setFetchSize(int theFetchSize)
 		throws Exception
 	{
 		this.fetchSize = theFetchSize;
@@ -351,7 +256,7 @@ public class GPMClassificationUniversePartition
 	 * @param	theMaxCursorDepth
 	 *************************************************************************************
 	 */
-	public GPMClassificationUniversePartition setMaxCursorDepth(int theMaxCursorDepth)
+	public PartnerDetailUniversePartition setMaxCursorDepth(int theMaxCursorDepth)
 		throws Exception
 	{
 		this.maxCursorDepth = theMaxCursorDepth;
@@ -367,7 +272,7 @@ public class GPMClassificationUniversePartition
 	 * @param	theTargetSchema
 	 *************************************************************************************
 	 */
-	public GPMClassificationUniversePartition setTargetSchema(String theTargetSchema)
+	public PartnerDetailUniversePartition setTargetSchema(String theTargetSchema)
 		throws Exception
 	{
 		this.targetSchema = theTargetSchema;
