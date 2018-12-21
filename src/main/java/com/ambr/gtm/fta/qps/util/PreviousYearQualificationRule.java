@@ -44,7 +44,6 @@ public class PreviousYearQualificationRule
 			Date aEffectiveFrom = null;
 			Date aEffectiveTo = null;
 			Date prevYearQualOverrideDate = null;
-
 			// To check for prev Year Qual Override flag and Date
 			ArrayList<GPMSourceCampaignDetail> campDetailList = prodSourceContainer.campDetailList;
 
