@@ -11,6 +11,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
@@ -323,26 +324,31 @@ public class QualTXComponent
 	 * <P>
 	 * </P>
 	 * 
-	 * @param	theClaimDetails
+	 * @param	theClaimDetailsContainer
 	 * @param	theRepos
 	 *************************************************************************************
 	 */
 	public void setClaimDetails(
-		GPMClaimDetails 						theClaimDetails, 
+		GPMClaimDetailsSourceIVAContainer		theClaimDetailsContainer, 
 		DataExtensionConfigurationRepository 	theRepos)
 		throws Exception
 	{
-		Object	aValue;
-		String	aGroupName;
+		Object						aValue;
+		String						aGroupName;
+		GPMClaimDetails				aClaimDetails;
+		GroupNameSpecification		aGroupNameSpec;
 		
-		if (theClaimDetails == null) {
+		if (theClaimDetailsContainer == null) {
 			return;
 		}
-	
-		GroupNameSpecification				aGroupNameSpec;
 		
-		aGroupName = (String)theClaimDetails.getValue("group_name");
-		String aFtaCode = (String)theClaimDetails.getValue("fta_code_group");
+		aClaimDetails = theClaimDetailsContainer.getPrimaryClaimDetails();
+		if (aClaimDetails == null) {
+			return;
+		}
+		
+		aGroupName = (String)aClaimDetails.getValue("group_name");
+		String aFtaCode = (String)aClaimDetails.getValue("fta_code_group");
 		aGroupNameSpec = new GroupNameSpecification("STP", this.qualTX.fta_code_group);
 		if (!aGroupNameSpec.groupName.equalsIgnoreCase(aGroupName)) {
 			return;
@@ -375,8 +381,8 @@ public class QualTXComponent
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 			aCompdtlsDe.setValue("CREATED_DATE", now);
 			aCompdtlsDe.setValue("LAST_MODIFIED_BY", this.last_modified_by);
-			aCompdtlsDe.setValue("FLEXFIELD_VAR12", theClaimDetails.getValue(aCampId));
-			aCompdtlsDe.setValue("FLEXFIELD_VAR13", theClaimDetails.getValue(aresponseId));
+			aCompdtlsDe.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
+			aCompdtlsDe.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
 		}
 		else
 		{
@@ -384,21 +390,21 @@ public class QualTXComponent
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 			qualTXCompDetals.setValue("LAST_MODIFIED_BY", this.last_modified_by);
 			qualTXCompDetals.setValue("LAST_MODIFIED_DATE", now);
-			qualTXCompDetals.setValue("FLEXFIELD_VAR12", theClaimDetails.getValue(aCampId));
-			qualTXCompDetals.setValue("FLEXFIELD_VAR13", theClaimDetails.getValue(aresponseId));
+			qualTXCompDetals.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
+			qualTXCompDetals.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
 
 		}
 
-		aValue = theClaimDetails.getValue("traced_value");
+		aValue = aClaimDetails.getValue("traced_value");
 		if (aValue != null) {
 			this.traced_value = ((Number)aValue).doubleValue();
 		}
 		
-		aValue = theClaimDetails.getValue("cumulation_value");
+		aValue = aClaimDetails.getValue("cumulation_value");
 		if (aValue != null) {
 			this.cumulation_value = ((Number)aValue).doubleValue();
 		}
 		
-		this.cumulation_currency = (String)theClaimDetails.getValue("cumulation_currency");
+		this.cumulation_currency = (String)aClaimDetails.getValue("cumulation_currency");
 	}
 }

@@ -26,15 +26,16 @@ public class GPMClaimDetailsUniversePartition
 {
 	static Logger		logger = LogManager.getLogger(GPMClaimDetailsUniversePartition.class);
 
-	int										rowCount;
-	private HashMap<Long, GPMClaimDetails>	claimDetailByProdSrcIVAKeyTable;
-	private String							loadSQLText;
-	private int								partitionNum;
-	private int								fetchSize;
-	int										maxCursorDepth;
-	private int								partitionCount;
-	private String							targetSchema;
-	private String							filterOrgCode;
+	int															rowCount;
+	private HashMap<Long, GPMClaimDetailsSourceIVAContainer>	claimDetailByProdSrcIVAKeyTable;
+	private String												loadSQLText;
+	private int													partitionNum;
+	private int													fetchSize;
+	int															maxCursorDepth;
+	private int													partitionCount;
+	private String												targetSchema;
+	private String												filterOrgCode;
+	private int													claimDetailCount;
 	
 	/**
      *************************************************************************************
@@ -103,10 +104,19 @@ public class GPMClaimDetailsUniversePartition
      * @param	theGPMClaimDetail
      *************************************************************************************
      */
-	public void addClaimDetail(GPMClaimDetails theGPMClaimDetail)
+	void addClaimDetail(GPMClaimDetails theGPMClaimDetail)
 		throws Exception
 	{
-		this.claimDetailByProdSrcIVAKeyTable.put(theGPMClaimDetail.prodSrcIVAKey, theGPMClaimDetail);
+		GPMClaimDetailsSourceIVAContainer	aContainer;
+		
+		aContainer = this.claimDetailByProdSrcIVAKeyTable.get(theGPMClaimDetail.prodSrcIVAKey);
+		if (aContainer == null) {
+			aContainer = new GPMClaimDetailsSourceIVAContainer(theGPMClaimDetail.prodSrcIVAKey);
+			this.claimDetailByProdSrcIVAKeyTable.put(aContainer.prodSrcIVAKey, aContainer);
+		}
+		
+		aContainer.addClaimDetails(theGPMClaimDetail);
+		this.claimDetailCount++;
 	}
 	
 	/**
@@ -118,7 +128,7 @@ public class GPMClaimDetailsUniversePartition
 	public int getClaimDetailCount()
 		throws Exception
 	{
-		return this.claimDetailByProdSrcIVAKeyTable.size();
+		return this.claimDetailCount;
 	}
 
 	/**
@@ -141,13 +151,14 @@ public class GPMClaimDetailsUniversePartition
      * @param	theProdSrcIVAKey
      *************************************************************************************
      */
-	public GPMClaimDetails getClaimDetails(long theProdSrcIVAKey)
+	public GPMClaimDetailsSourceIVAContainer getClaimDetails(long theProdSrcIVAKey)
 		throws Exception
 	{
-		GPMClaimDetails	aClaimDetail;
+		GPMClaimDetailsSourceIVAContainer	aContainer;
 		
-		aClaimDetail = this.claimDetailByProdSrcIVAKeyTable.get(theProdSrcIVAKey);
-		return aClaimDetail;
+		aContainer = this.claimDetailByProdSrcIVAKeyTable.get(theProdSrcIVAKey);
+		
+		return aContainer;
 	}
 
 	/**

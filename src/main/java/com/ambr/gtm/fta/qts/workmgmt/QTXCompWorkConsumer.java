@@ -20,6 +20,7 @@ import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMComponentDataExtension;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassification;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
@@ -498,12 +499,13 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_TRACE_VALUE_CHANGE))
 				{
-					GPMClaimDetails claimdetails = aClaimsDetailCache.getClaimDetails(compWorkIVA.iva_key);
+					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = aClaimsDetailCache.getClaimDetails(compWorkIVA.iva_key);
+					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
 					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(qualtx.org_code, qualtx.fta_code, qtxBusinessLogicProcessor.propertySheetManager);
 					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
-					qualtxComp.traced_value =(Double) claimdetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
-					qualtxComp.traced_value_currency =(String) claimdetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
-					qualtxComp.include_for_trace_value =(String) claimdetails.claimDetailsValue.get(flexFieldMap.get("INCLUDE_FOR_TRACE_VALUE"));
+					qualtxComp.traced_value =(Double) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
+					qualtxComp.traced_value_currency =(String) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
+					qualtxComp.include_for_trace_value =(String) aClaimDetails.getValue(flexFieldMap.get("INCLUDE_FOR_TRACE_VALUE"));
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE))
 				{

@@ -10,6 +10,7 @@ import java.util.Set;
 import com.ambr.gtm.fta.list.FTAListContainer;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
@@ -135,18 +136,20 @@ public class CumulationComputationRule
 				if (!markAsNonOriginating)
 				{
 					Long theIvakey =  cumulative_fta_iva_key != 0 ? cumulative_fta_iva_key : aQualTXComp.prod_src_iva_key; 
-					GPMClaimDetails claimdetails = claimDetailsCache.getClaimDetails(theIvakey);
-					if (claimdetails == null) return;
+					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(theIvakey);
+					if (claimdetailsContainer == null) return;
+					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
+					if (aClaimDetails == null) return;
 
 					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(aQualTXComp.org_code, aQualTXComp.cumulation_rule_fta_used != null ? aQualTXComp.cumulation_rule_fta_used : aQualTXComp.qualTX.fta_code, propertySheetManager);
 					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
 							
-					String cumulationapplied =(String) claimdetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_APPLIED").toLowerCase());
+					String cumulationapplied =(String) aClaimDetails.getValue(flexFieldMap.get("CUMULATION_APPLIED"));
 					ivaCumulationApplied = "Y".equals(cumulationapplied);
 					
 					if(ivaCumulationApplied)
 					{
-						String suppCtryList = (String) claimdetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CTRY_LIST").toLowerCase());
+						String suppCtryList = (String) aClaimDetails.getValue(flexFieldMap.get("CUMULATION_CTRY_LIST"));
 						if (suppCtryList != null && !suppCtryList.isEmpty())
 						{
 							for (String suppCtry : suppCtryList.split(";"))
@@ -159,7 +162,7 @@ public class CumulationComputationRule
 							}
 						}
 					}
-					String decision = (String) claimdetails.claimDetailsValue.get(flexFieldMap.get("DECISION").toLowerCase());
+					String decision = (String) aClaimDetails.getValue(flexFieldMap.get("DECISION"));
 
 					// Supplier cumulation decision gets the precedence.
 					if (!"Y".equals(decision))
@@ -220,12 +223,15 @@ public class CumulationComputationRule
 		if("Y".equals(aQualTXComp.cumulation_rule_applied))
 		{
 			Long theIvakey =  cumulative_fta_iva_key != 0 ? cumulative_fta_iva_key : aQualTXComp.prod_src_iva_key; 
-			GPMClaimDetails claimdetails = claimDetailsCache.getClaimDetails(theIvakey);
+			GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(theIvakey);
+			if (claimdetailsContainer == null) return;
+			GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
+			if (aClaimDetails == null) return;
 
 			String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(aQualTXComp.org_code, aQualTXComp.cumulation_rule_fta_used != null ? aQualTXComp.cumulation_rule_fta_used : aQualTXComp.qualTX.fta_code, propertySheetManager);
 			Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
 
-			String cumulationCtryList = (String) claimdetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CTRY_LIST").toLowerCase());
+			String cumulationCtryList = (String) aClaimDetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CTRY_LIST").toLowerCase());
 
 			QualTXComponentDataExtension qualTXCompDetals = null;
 			if(aQualTXComp.deList != null && !aQualTXComp.deList.isEmpty())
@@ -251,7 +257,7 @@ public class CumulationComputationRule
 
 			qualTXCompDetals.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
 
-			Double cumulationValue = calculateCumulationValue	(aQualTXComp, claimdetails);
+			Double cumulationValue = calculateCumulationValue	(aQualTXComp, aClaimDetails);
 
 			if(cumulationValue != null){
 				aQualTXComp.cumulation_value = cumulationValue;

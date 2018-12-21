@@ -7,6 +7,7 @@ import java.util.Map;
 import com.ambr.gtm.fta.list.FTAListContainer;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
@@ -101,10 +102,10 @@ public class ConservativeSourceLogic
 			{
 				foundSrcWithFinalDecisionNO = true;
 				double aClaimDetailCumulationValue = 0.0;
-				GPMClaimDetails claimdetails = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
-				if(claimdetails != null)
+				GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
+				if ((claimdetailsContainer != null) && (claimdetailsContainer.getPrimaryClaimDetails() != null)) 
 				{
-					aClaimDetailCumulationValue = (Double)claimdetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_VALUE"));
+					aClaimDetailCumulationValue = (Double)claimdetailsContainer.getPrimaryClaimDetails().getValue(flexFieldMap.get("CUMULATION_VALUE"));
 				}
 				if (aNoDecisionCumulationValue == null || aNoDecisionCumulationValue.doubleValue() > aClaimDetailCumulationValue)
 				{
@@ -121,13 +122,19 @@ public class ConservativeSourceLogic
 				if("NAFTA".equals(theFTACode))
 				{
 					double aTracedValueFromClaimDtls = 0.0;
-					GPMClaimDetails claimdetails = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
-					if(claimdetails != null)
+					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
+					GPMClaimDetails aClaimDetails = null;
+					
+					if (claimdetailsContainer != null) {
+						aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
+					}
+					
+					if(aClaimDetails != null)
 					{
 						
 						//TODO : Write logic for checking if the HS falls in the trace list.
 						boolean fallsInTraceList = false;
-						String hsNum = (String)claimdetails.claimDetailsValue.get(flexFieldMap.get("IMPORT_HS"));
+						String hsNum = (String)aClaimDetails.claimDetailsValue.get(flexFieldMap.get("IMPORT_HS"));
 						if(hsNum != null){
 							//fallsInTraceList = <Utility>.existsInFTAList(theOrgCode, theCOI, hsNum, theFTACode, new Date(), "TRACE");
 						String hsExcpList="ANY_"+theFTACode+"_TRACE";
@@ -137,7 +144,7 @@ public class ConservativeSourceLogic
 
 						if(fallsInTraceList)
 						{
-							aTracedValueFromClaimDtls =(Double)claimdetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
+							aTracedValueFromClaimDtls =(Double)aClaimDetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
 						}
 					}
 					if(aYesDecisionTracedValue == null || aYesDecisionTracedValue.doubleValue() < aTracedValueFromClaimDtls)
