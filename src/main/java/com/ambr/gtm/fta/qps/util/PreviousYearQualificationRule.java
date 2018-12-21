@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qps.util;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceCampaignDetail;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
@@ -43,17 +45,22 @@ public class PreviousYearQualificationRule
 			Date aEffectiveTo = null;
 			Date prevYearQualOverrideDate = null;
 
-			// TODO: To check for prev Year Qual Override flag and Date
-			/*
-			 * if (prodSourceContainer != null) { prodSourceContainer.
-			 * RowDataContainer aGPMSrcCampaignDtlDE =
-			 * aGPMSrcContainer.getChildRecord(aGPMSrcContainer.getTableDef(
-			 * ).getTableName() + "_CAMPAIGN_DETAILS_DEFAULT", 0); if
-			 * (aGPMSrcCampaignDtlDE != null &&
-			 * aGPMSrcCampaignDtlDE.getBooleanValue( "PREV_YEAR_QUAL_OVERRIDE"))
-			 * { prevYearQualOverrideDate = aGPMSrcCampaignDtlDE.getDateValue(
-			 * "PREV_YEAR_QUAL_OVERRIDE_DATE"); } }
-			 */
+			// To check for prev Year Qual Override flag and Date
+			ArrayList<GPMSourceCampaignDetail> campDetailList = prodSourceContainer.campDetailList;
+
+			for (GPMSourceCampaignDetail campDetail : campDetailList)
+			{
+				/*
+				 * if(aQualTXComp.qualTX.fta_code.equals(campDetail.ftaCode) &&
+				 * "Y".equals(campDetail.prevYearQualOverride)) {
+				 */
+				if ("Y".equals(campDetail.prevYearQualOverride))
+				{
+					prevYearQualOverrideDate = campDetail.prevYearQualOverrideDate;
+					break;
+				}
+			}
+
 			Date origEffectiveFrom = aQualTXComp.qualified_from;
 			Date origEffectiveTo = aQualTXComp.qualified_to;
 			Calendar cal = Calendar.getInstance();
@@ -111,7 +118,7 @@ public class PreviousYearQualificationRule
 					{
 						qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
 					}
-					Map<String, String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
+					Map<String, String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX", "COMP_DTLS");
 					qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("PREV_YEAR_QUAL_APPLIED"), "Y");
 					return true;
 				}
