@@ -34,24 +34,23 @@ public class GPMClaimDetailsUniverse
 	
 	public static final String		UNIVERSE_NAME 		= "GPM Claim Detail Universe";
 
-	private int											partitionCount;
-	private int											fetchSize;
-	int													maxCursorDepth;
-	int													memoryMax;
-	int													memoryMin;
-	private String										targetSchema;
-	private String										serviceJarFileName;
-	private SubordinateServiceManager					serviceMgr;
+	private int												partitionCount;
+	private int												fetchSize;
+	int														maxCursorDepth;
+	int														memoryMax;
+	int														memoryMin;
+	private String											targetSchema;
+	private String											serviceJarFileName;
+	private SubordinateServiceManager						serviceMgr;
 	private GPMClaimDetailsUniversePartitionEventHandler	eventHandler;
-	private int											serverPort;
-	private String										dbURL;
-	private String										dbUserName;
-	private String										dbTargetSchema;
-	private String										dbPassword;
-	UniverseStatusEnum									status;
-	GPMClaimDetailsUniversePartition					localPartition;
-
-	private ConfigurationPropertyResolver		propertyResolver;
+	private int												serverPort;
+	private String											dbURL;
+	private String											dbUserName;
+	private String											dbTargetSchema;
+	private String											dbPassword;
+	UniverseStatusEnum										status;
+	GPMClaimDetailsUniversePartition						localPartition;
+	private ConfigurationPropertyResolver					propertyResolver;
 
     /**
      *************************************************************************************
@@ -165,12 +164,12 @@ public class GPMClaimDetailsUniverse
 	 * @param	theProdSrcIvaKey
 	 *************************************************************************************
 	 */
-	public GPMClaimDetails getClaimDetails(long theProdSrcIvaKey)
+	public GPMClaimDetailsSourceIVAContainer getClaimDetails(long theProdSrcIvaKey)
 		throws Exception
 	{
-		int					aErrorCount = 0;
-		GPMClaimDetails		aClaimDetail = null;
-		PerformanceTracker	aPerfTracker = new PerformanceTracker(logger, Level.DEBUG, "getClaimDetails");
+		int										aErrorCount = 0;
+		GPMClaimDetailsSourceIVAContainer		aClaimDetailContainer = null;
+		PerformanceTracker						aPerfTracker = new PerformanceTracker(logger, Level.DEBUG, "getClaimDetails");
 		
 		aPerfTracker.start();
 		
@@ -184,8 +183,8 @@ public class GPMClaimDetailsUniverse
 				try {
 					GetGPMClaimDetailsFromPartitionClientAPI	aAPI = new GetGPMClaimDetailsFromPartitionClientAPI(aServiceRef);
 		
-					aClaimDetail = aAPI.execute(theProdSrcIvaKey);
-					if (aClaimDetail != null) {
+					aClaimDetailContainer = aAPI.execute(theProdSrcIvaKey);
+					if (aClaimDetailContainer != null) {
 						break;
 					}
 				}
@@ -198,12 +197,12 @@ public class GPMClaimDetailsUniverse
 		
 		aPerfTracker.stop("Claim Detail for Product Src IVA [{0,number,#}] Errors [{2}]", new Object[]
 			{
-				(aClaimDetail == null)? -1 : aClaimDetail.prodSrcIVAKey, 
+				(aClaimDetailContainer == null)? -1 : aClaimDetailContainer.prodSrcIVAKey, 
 				aErrorCount
 			}
 		);
 		
-		return aClaimDetail;
+		return aClaimDetailContainer;
 	}
 	
 	/**

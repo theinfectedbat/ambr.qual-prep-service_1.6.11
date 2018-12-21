@@ -13,6 +13,7 @@ import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMPrice;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.TradeLaneStatusTracker;
 import com.ambr.gtm.fta.qps.qualtx.exception.ComponentMaxBatchSizeReachedException;
@@ -438,7 +439,7 @@ public class TradeLaneProcessorTask
 	private void mapClaimDetails()
 		throws Exception
 	{
-		GPMClaimDetails		aClaimDetails;
+		GPMClaimDetailsSourceIVAContainer		aClaimDetails;
 		
 		aClaimDetails = this.componentQueue.queueUniverse.gpmClaimDetailsCache.getClaimDetails(this.srcIVA.ivaKey);
 		if (aClaimDetails == null) {
@@ -446,7 +447,7 @@ public class TradeLaneProcessorTask
 			return;
 		}
 		
-		this.qualTX.fta_code_group = aClaimDetails.fta_code_group;
+		this.qualTX.fta_code_group = aClaimDetails.getFTACodeGroup();
 	}
 
 	/**

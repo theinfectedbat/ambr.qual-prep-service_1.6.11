@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsUniversePartition;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationUniversePartition;
@@ -47,7 +48,7 @@ public class GetGPMClaimDetailsFromPartitionServiceAPI
      *************************************************************************************
      */
 	@RequestMapping(URL_PATH_TEMPLATE)
-	public GPMClaimDetails execute(@PathVariable(name = URL_PATH_VARIABLE_NAME_PROD_SRC_IVA_KEY) long theProdSrcIVAKey)
+	public GPMClaimDetailsSourceIVAContainer execute(@PathVariable(name = URL_PATH_VARIABLE_NAME_PROD_SRC_IVA_KEY) long theProdSrcIVAKey)
 		throws Exception
 	{
 		return this.partition.getClaimDetails(theProdSrcIVAKey);

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.platform.utils.subservice.SubordinateServiceReference;
 
 /**
@@ -69,16 +70,16 @@ public class GetGPMClaimDetailsFromPartitionClientAPI
      * @param	theProdSrcIVAKey
      *************************************************************************************
      */
-	public GPMClaimDetails execute(long theProdSrcIVAKey)
+	public GPMClaimDetailsSourceIVAContainer execute(long theProdSrcIVAKey)
 		throws Exception
 	{
-		RestTemplate					aTemplate = new RestTemplate();
-		ResponseEntity<GPMClaimDetails>	aResponse;
-		GPMClaimDetails					aClaimDetail;
+		RestTemplate										aTemplate = new RestTemplate();
+		ResponseEntity<GPMClaimDetailsSourceIVAContainer>	aResponse;
+		GPMClaimDetailsSourceIVAContainer					aClaimDetail;
 		
 		aResponse = aTemplate.getForEntity(
 			new URI(MessageFormat.format("{0}{1}", this.serviceURL, GetGPMClaimDetailsFromPartitionServiceAPI.GetURLPath(theProdSrcIVAKey))), 
-			GPMClaimDetails.class
+			GPMClaimDetailsSourceIVAContainer.class
 		);
 
 		if (aResponse.getStatusCodeValue() == 200) {

@@ -10,11 +10,11 @@ import org.apache.commons.collections4.map.LRUMap;
  */
 public class GPMClaimDetailsCache 
 {
-	private GPMClaimDetailsUniverse			universe;
-	private long							hits;
-	private long							misses;
-	private LRUMap<Long, GPMClaimDetails> 	claimDetailsTable;
-	private LRUMap<Long, Boolean>			missingClaimDetailsTable;
+	private GPMClaimDetailsUniverse								universe;
+	private long												hits;
+	private long												misses;
+	private LRUMap<Long, GPMClaimDetailsSourceIVAContainer> 	claimDetailsTable;
+	private LRUMap<Long, Boolean>								missingClaimDetailsTable;
 	
 	/**
 	 *************************************************************************************
@@ -43,11 +43,11 @@ public class GPMClaimDetailsCache
 	 * @param	theProdSrcIVAKey
 	 *************************************************************************************
 	 */
-	public GPMClaimDetails getClaimDetails(Long theProdSrcIVAKey)
+	public GPMClaimDetailsSourceIVAContainer getClaimDetails(Long theProdSrcIVAKey)
 		throws Exception
 	{
-		GPMClaimDetails	aClaimDetails;
-		Boolean			aMissingFlag;
+		GPMClaimDetailsSourceIVAContainer	aClaimDetails;
+		Boolean								aMissingFlag;
 		
 		if (theProdSrcIVAKey == null) {
 			return null;

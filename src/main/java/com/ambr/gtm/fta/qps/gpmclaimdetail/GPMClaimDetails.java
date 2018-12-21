@@ -2,7 +2,6 @@ package com.ambr.gtm.fta.qps.gpmclaimdetail;
 
 import java.io.Serializable;
 import java.sql.ResultSet;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,11 +9,7 @@ import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.Table;
 
-import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
-import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
-import com.ambr.platform.rdbms.util.DataRecordUtility;
 import com.ambr.platform.rdbms.util.ResultSetUtility;
-import com.ambr.platform.rdbms.util.bdrp.DataRecordValueMapInterface;
 
 /**
  *****************************************************************************************
@@ -29,6 +24,8 @@ public class GPMClaimDetails
 	@Column(name = "alt_key_ivainst") 			public long 		alt_key_ivainst;
 	@Column(name = "record_key") 				public long			prodSrcIVAKey;
 	@Column(name = "fta_code_group")			public String 		fta_code_group;
+	@Column(name = "seq_num")					public long 		seq_num;
+	@Column(name = "parent_seq_num")			public long 		parent_seq_num;
 
 	private GPMClaimDetailsUniversePartition	partition;
 	public Map<String,Object> 					claimDetailsValue = new HashMap<>();
