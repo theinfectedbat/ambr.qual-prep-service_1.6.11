@@ -642,9 +642,9 @@ public class QTXStageProducer extends QTXProducer
 			}
 		}
 		
-		JSONArray theCooDtls = theProdDtlsObj.getJSONArray("COO_DTLS");
+		JSONArray theCooDtls = theProdDtlsObj.optJSONArray("COO_DTLS");
 		ArrayList<Long> CooDtlsList = null;
-		if (!theCooDtls.isNull(0))
+		if (null != theCooDtls && !theCooDtls.isNull(0))
 		{
 			for (int index = 0; index < theCooDtls.length(); index++)
 			{

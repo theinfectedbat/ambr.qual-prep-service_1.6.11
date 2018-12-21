@@ -590,7 +590,11 @@ public class QTXWorkUniverse
 	private void checkForGPMClassificationResourceCompRequirements(CompWorkPackage compWorkPackage, QTXCompWorkHS compWorkHS)
 	{
 		if (compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) ||
-				compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE))
+				compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG))
 		{
 			this.addGPMClassificationResourceCompRequirement(compWorkPackage, compWorkPackage.compWork.entity_key);
 		}

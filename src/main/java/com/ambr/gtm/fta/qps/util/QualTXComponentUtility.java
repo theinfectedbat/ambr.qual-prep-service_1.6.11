@@ -231,7 +231,8 @@ public class QualTXComponentUtility
 		this.qualTXComp.sub_bom_org_code = this.bomComp.sub_bom_org_code;
 		if(isTopDown)
 			this.qualTXComp.top_down_ind = "Y";
-		this.qualTXComp.unit_cost = QualTXUtility.toDecimalFormat(this.bomComp.unit_cost);
+		if(null != this.bomComp.unit_cost)
+			this.qualTXComp.unit_cost = QualTXUtility.toDecimalFormat(this.bomComp.unit_cost);
 		this.qualTXComp.weight = this.bomComp.unit_weight;
 		this.qualTXComp.weight_uom = this.bomComp.weight_uom;
 		
