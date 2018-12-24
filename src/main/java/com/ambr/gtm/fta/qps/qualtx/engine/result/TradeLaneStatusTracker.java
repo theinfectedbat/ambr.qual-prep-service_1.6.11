@@ -93,6 +93,7 @@ public class TradeLaneStatusTracker
 	private synchronized void addRecordOperation(RecordOperationStatus theStatus)
 		throws Exception
 	{
+		if(this.recOperationList != null)
 		this.recOperationList.add(theStatus);
 		
 		if (theStatus.failureException != null) {
@@ -173,6 +174,7 @@ public class TradeLaneStatusTracker
 	public void classificationPullFailure(QualTXComponent theQualTXComp, Exception theException)
 		throws Exception
 	{
+		if(theQualTXComp != null)
     	this.addRecordOperation(
     		new RecordOperationStatus(
     			RecordTypeEnum.MDI_QUALTX_COMP, 
