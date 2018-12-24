@@ -79,6 +79,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			 tradeQualtxClient.doRecordLevelAudit(audit);
 			
 			String aWorkId = null;
+			boolean statusUpdated = false;
 			if (workPackage.deleteBOMQual)
 			{
 				ArrayList<Long> qualtxKeyList = new ArrayList<Long>();
@@ -94,8 +95,13 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				bomQualtxData.priority = workPackage.bom.priority;
 				bomQualtxData.action="delete";
 				aWorkId = Env.getSingleton().getTradeQualtxClient().createWorkForBOMQualUpdate(bomQualtxData);
+				if(aWorkId != null)
+				{
+					this.updateWorkToSuccess(workPackage, template);
+					statusUpdated = true;
+			    }	
 			}
-			if(aWorkId != null)
+			if(!statusUpdated)
 			this.updateWorkToSuccess(workPackage, template);
 			
 			if (workPackage.lockId != null)
