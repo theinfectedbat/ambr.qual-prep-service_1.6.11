@@ -117,9 +117,10 @@ public class ArQtxWorkUtility
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
 
 		List<QualTX> list = new ArrayList<QualTX>();
-		
+			
 		logger.debug("getImpactedQtxCompKeys reason code " + reasonCode + " key size " + altKeyList.size());
 		
 		this.template.query(sql.toString(), altKeyList.toArray(), new RowCallbackHandler() {
@@ -222,8 +223,7 @@ public class ArQtxWorkUtility
 
 	public List<QualTXComponent> getImpactedQtxCompKeys(ArrayList<Long> altKeyCompList) throws Exception
 	{
-		String sql = "SELECT alt_key_qualtx, ALT_KEY_COMP, ORG_CODE, PROD_KEY, PROD_SRC_KEY, PROD_SRC_IVA_KEY,SUB_PULL_CTRY,PROD_KEY,PROD_CTRY_CMPL_KEY from MDI_QUALTX_COMP where " + this.getSimpleClause("SRC_KEY", "=", "OR", altKeyCompList.size());
-
+		String sql = "SELECT alt_key_qualtx, ALT_KEY_COMP, ORG_CODE, PROD_KEY, PROD_SRC_KEY, PROD_SRC_IVA_KEY,SUB_PULL_CTRY,PROD_KEY,PROD_CTRY_CMPL_KEY from MDI_QUALTX_COMP where " + this.getSimpleClause("SRC_KEY", "=", "OR", altKeyCompList.size()) + " AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null) ";
 		SimpleDataLoaderResultSetExtractor<QualTXComponent> extractor = new SimpleDataLoaderResultSetExtractor<QualTXComponent>(QualTXComponent.class);
 		List<QualTXComponent> qualtxComponentList = this.template.query(sql.toString(), altKeyCompList.toArray(), extractor);
 

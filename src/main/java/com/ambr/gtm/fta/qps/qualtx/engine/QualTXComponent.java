@@ -96,6 +96,7 @@ public class QualTXComponent
 	@Column(name = "weight") 					public Double	weight;
 	@Column(name = "weight_uom") 				public String	weight_uom;
 	@Column(name = "coo_source") 				public int	coo_source;
+	@Column(name = "is_active") 				public String	is_active;
 
 	@OneToMany(targetEntity = QualTXComponentDataExtension.class) public ArrayList<QualTXComponentDataExtension>	deList;
 	@OneToMany(targetEntity = QualTXComponentPrice.class) public ArrayList<QualTXComponentPrice>			priceList;

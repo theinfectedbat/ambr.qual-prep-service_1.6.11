@@ -1005,9 +1005,7 @@ public class QTXStageProducer extends QTXProducer
 
 	private boolean isValidQualtx(QualTX qualtx)
 	{
-//		if (theQualtxChange.optString("BOM_KEY").isEmpty() || theQualtxChange.optString("IVA_CODE").isEmpty() || theQualtxChange.optString("FTA_CODE").isEmpty() || theQualtxChange.optString("CTRY_OF_IMPORT").isEmpty()) return false;
-
-		if (qualtx.src_key == null || qualtx.iva_code == null || qualtx.fta_code == null || qualtx.ctry_of_import == null) return false;
+		if (qualtx.src_key == null || qualtx.iva_code == null || qualtx.fta_code == null || qualtx.ctry_of_import == null || (qualtx.is_active != null && (qualtx.is_active).equalsIgnoreCase("N"))) return false;
 		
 		return true;
 	}
