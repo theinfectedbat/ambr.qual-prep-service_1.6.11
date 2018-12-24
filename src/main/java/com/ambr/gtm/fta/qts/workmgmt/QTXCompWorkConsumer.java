@@ -3,6 +3,7 @@ package com.ambr.gtm.fta.qts.workmgmt;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -46,8 +47,9 @@ import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
-import com.ambr.platform.rdbms.orm.EntityManager;
 import com.ambr.platform.rdbms.schema.SchemaDescriptor;
+import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
+
 
 /*
  * NOTE!!!!!
@@ -387,6 +389,32 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.priceList.removeAll(deleteCompPriceList);
 		}
 		
+		if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
+		if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
+		qualtxComp.qualTX = qualtx;
+		int cooSource = qualtxComp.coo_source;
+		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
+		List<String> propertyValue = Arrays.asList(propertySheet.getStringValueList("COO_DETERMINATION_HIERARCHY"));
+		
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && (cooSource == RequalificationWorkCodes.BOM_COMP_COO_CHG || propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		{
+			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+		}
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && (cooSource == RequalificationWorkCodes.BOM_COMP_COM_COO_CHG || propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		{
+			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+		}
+		
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && (cooSource == RequalificationWorkCodes.COMP_GPM_COO_CHG || propertyValue.indexOf(RequalificationWorkCodes.COMP_GPM_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		{
+			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+		}
+		
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && (cooSource == RequalificationWorkCodes.COMP_GPM_COO_CHG  || propertyValue.indexOf(RequalificationWorkCodes.COMP_STP_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		{
+			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+		}
+		
 		if (work.compWorkHSList != null)
 		{
 			for (QTXCompWorkHS compWorkHS : work.compWorkHSList)
@@ -510,7 +538,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE))
 				{
 				
-					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache ,this.repos);
+					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), aClaimsDetailCache ,this.repos);
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE))
 				{
