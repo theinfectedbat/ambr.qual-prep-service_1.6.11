@@ -258,7 +258,8 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				qualtxComp.net_weight = bomComp.net_weight;
 				qualtxComp.unit_weight = bomComp.unit_weight;
 				qualtxComp.qty_per = bomComp.qty_per;
-				qualtxComp.unit_cost = QualTXUtility.toDecimalFormat(bomComp.unit_cost);
+				if(null != bomComp.unit_cost)
+					qualtxComp.unit_cost = QualTXUtility.toDecimalFormat(bomComp.unit_cost);
 				qualtxComp.qualTX = qualtx;
 				// //if the current analysis method is Top-Down mark the
 				// RM_CONSTRUCTION_STATUS as INIT, if a component
