@@ -147,6 +147,7 @@ public class QTXWorkProducer extends QTXProducer
 		//TODO look to see if the staged work can be returned WorkProducer.  load existing pending ar_qtx_work records then add staged work created by Stage Producer
 		try
 		{
+			if(this.stageProducer == null) throw new Exception("QTXStageProducer is not up!!!");
 			this.stageProducer.executeFindWork();	
 		}
 		catch (Exception e)
