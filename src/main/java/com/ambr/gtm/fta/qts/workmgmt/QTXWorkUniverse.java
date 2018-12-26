@@ -550,7 +550,7 @@ public class QTXWorkUniverse
 	
 	private void checkForIVARequirements(CompWorkPackage compWorkPackage, QTXCompWorkIVA compWorkIVA)
 	{
-		if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_FINAL_DECISION_CHANGE))
+		if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_FINAL_DECISION_CHANGE) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
 		{
 			this.addSourceIVACompRequirement(compWorkPackage);
 		}

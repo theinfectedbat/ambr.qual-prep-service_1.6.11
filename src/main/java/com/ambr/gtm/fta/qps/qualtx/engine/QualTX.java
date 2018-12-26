@@ -78,6 +78,7 @@ public class QualTX
 	@Column(name = "rvc_restricted")				public String	rvc_restricted;
 	@Column(name = "target_roo_id")					public String	target_roo_id;
 	@Column(name = "listed_material")				public String	listed_material;
+	@Column(name = "is_active") 			 	    public String	is_active;
 	
 	@OneToMany(targetEntity = QualTXComponent.class) 		public ArrayList<QualTXComponent>		compList;
 	@OneToMany(targetEntity = QualTXPrice.class) 			public ArrayList<QualTXPrice>			priceList;
