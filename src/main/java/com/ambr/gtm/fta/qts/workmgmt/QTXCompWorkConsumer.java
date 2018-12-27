@@ -519,7 +519,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 
 					if(gpmSourceIVA != null)
 					{
-						String aQualified= ("Y".equals( gpmSourceIVA.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
+						String aQualified= (gpmSourceIVA.finalDecision != null && "Y".equals( gpmSourceIVA.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
 						qualtxComp.qualified_flg = (gpmSourceIVA.finalDecision == null)? "" : aQualified;
 					}else
 					{
