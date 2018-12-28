@@ -497,7 +497,13 @@ public class QTXWorkUniverse
 	{
 		WorkPackage workPackage = this.workByQualtxMap.get(qualtxComp.alt_key_qualtx);
 		QualTX qualtx = this.qualTXMap.get(qualtxComp.alt_key_qualtx);
-
+		
+		if(qualtx == null)
+		{
+			logger.error("Qualtx is not loaded for the component ID :" + qualtxComp.comp_id + " and qualtxComp.tx_id=" + qualtxComp.tx_id +" and qualtxComp.src_key=" + qualtxComp.src_key + " AND QTX_WID=" + workPackage.work.qtx_wid);
+			return ; //Invalid Data, Added for debuggging
+		}
+		
 		// qualtx will not have list of comps - managed separately
 
 		qualtx.addComponent(qualtxComp);
@@ -510,7 +516,13 @@ public class QTXWorkUniverse
 		}
 
 			ArrayList<CompWorkPackage> compWorkList = this.compWorkByQualtxCompMap.get(qualtxComp.alt_key_comp);
-
+			
+			if(compWorkList == null || compWorkList.size() == 0)
+			{
+				logger.error("compWorkByQualtxCompMap returns empty for the component ID :" + qualtxComp.comp_id + " and qualtxComp.tx_id" + qualtxComp.tx_id +" and qualtxComp.src_key" + qualtxComp.src_key + "AND QTX_WID=" + workPackage.work.qtx_wid);
+				return ;  //Invalid, Added for debuggging
+			}
+			
 			// EntityManager<QualTXComponent> entityMgr = new
 			// EntityManager<QualTXComponent>(QualTXComponent.class, this.txMgr,
 			// this.schemaDesc, template);
