@@ -57,28 +57,39 @@ public  class DetermineComponentCOO
 			{
 				aCOO=getSTPCOO(qualtxComp,gpmSourceIVA);
 				if (aCOO!= null && !aCOO.isEmpty())
-					break;			
+				{
+					qualtxComp.coo_source = 0;
+					break;	
+				}
 			}
 			
 			else if ("BOM_COMP_COO".equals(cooOrder))
 			{
 				aCOO=getBOMCompCOO(bomComponent);
 				if ( aCOO!= null && !"".equals(aCOO))
-					break;			
+				{
+					qualtxComp.coo_source = 2;
+					break;	
+				}
+							
 			}
 			else if ("GPM_COO".equals(cooOrder))
 			{
 				aCOO = getGPMCOO(qualtxComp, prodSourceContainer, gpmClassContainer);
-				
-				
 				if (!"".equals(aCOO) && aCOO!= null)
-					break;			
+				{
+					qualtxComp.coo_source = 1;
+					break;
+				}
 			}
 			else if ("BOM_COMP_MANUFACTURER_COO".equals(cooOrder))
 			{
 				aCOO=getBOMCompManufacturerCOO(qualtxComp);
 				if (!"".equals(aCOO) && aCOO!= null)
-					break;			
+				{
+					qualtxComp.coo_source = 3;
+					break;
+				}
 			}
 			
 	      }
