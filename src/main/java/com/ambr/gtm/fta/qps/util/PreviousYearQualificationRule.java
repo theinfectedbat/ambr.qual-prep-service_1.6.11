@@ -100,26 +100,7 @@ public class PreviousYearQualificationRule
 					String aQualifiedFlg = ("Y".equals(aProdSrcIva.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
 					aQualTXComp.qualified_flg = aQualifiedFlg;
 					//aQualTXComp.prod_src_iva_key =aProdSrcIva.ivaKey;
-				
-					QualTXComponentDataExtension qualTXCompDetails = null;
-					if (aQualTXComp.deList != null && !aQualTXComp.deList.isEmpty())
-					{
-						for (QualTXComponentDataExtension qualTXCompDe : aQualTXComp.deList)
-						{
-							if (qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
-							{
-								qualTXCompDetails = qualTXCompDe;
-								break;
-							}
-						}
-					}
-					if (qualTXCompDetails == null)
-					{
-						qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
-					}
-					Map<String, String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX", "COMP_DTLS");
-					qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("PREV_YEAR_QUAL_APPLIED"), "Y");
-					return true;
+					aQualTXComp.prev_year_qual_applied="Y";
 				}
 			}
 		}
