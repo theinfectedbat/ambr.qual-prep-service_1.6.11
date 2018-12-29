@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qps.util;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -38,53 +39,65 @@ public  class DetermineComponentCOO
 		
 		GPMSourceIVA gpmSourceIVA = QualTXUtility.getGPMIVARecord(prodSourceContainer,qualtxComp.qualTX.fta_code, qualtxComp.qualTX.ctry_of_import,qualtxComp.qualTX.effective_from, qualtxComp.qualTX.effective_to); 
 		
-		String aCOOHierchyOrder= null;
-		
+		List<String> propertyValue = null;
 		try
 		{
-			aCOOHierchyOrder = aSPS.getStringValue("COO_DETERMINATION_HIERARCHY");
+			propertyValue = Arrays.asList(aSPS.getStringValueList("COO_DETERMINATION_HIERARCHY"));
 		}
 		catch (PropertyDoesNotExistException p)
 		{
-			aCOOHierchyOrder = null;
+			propertyValue = null;
 		}
 		
-		if (aCOOHierchyOrder == null || aCOOHierchyOrder.isEmpty()) return aCOO;
-		String [] aCOOOrder = aCOOHierchyOrder.split(",");
-		for (String cooOrder: aCOOOrder )
+		if (propertyValue == null || propertyValue.isEmpty()) return aCOO;
+		
+		for (String cooOrder: propertyValue )
 		{
 			if ("STP_COO".equals(cooOrder))
 			{
 				aCOO=getSTPCOO(qualtxComp,gpmSourceIVA);
 				if (aCOO!= null && !aCOO.isEmpty())
-					break;			
+				{
+					qualtxComp.coo_source = propertyValue.indexOf(cooOrder);
+					break;	
+				}
 			}
 			
 			else if ("BOM_COMP_COO".equals(cooOrder))
 			{
 				aCOO=getBOMCompCOO(bomComponent);
 				if ( aCOO!= null && !"".equals(aCOO))
-					break;			
+				{
+					qualtxComp.coo_source = propertyValue.indexOf(cooOrder);
+					break;	
+				}
+							
 			}
 			else if ("GPM_COO".equals(cooOrder))
 			{
 				aCOO = getGPMCOO(qualtxComp, prodSourceContainer, gpmClassContainer);
-				
-				
 				if (!"".equals(aCOO) && aCOO!= null)
-					break;			
+				{
+					qualtxComp.coo_source = propertyValue.indexOf(cooOrder);
+					break;
+				}
 			}
 			else if ("BOM_COMP_MANUFACTURER_COO".equals(cooOrder))
 			{
 				aCOO=getBOMCompManufacturerCOO(qualtxComp);
 				if (!"".equals(aCOO) && aCOO!= null)
-					break;			
+				{
+					qualtxComp.coo_source = propertyValue.indexOf(cooOrder);
+					break;
+				}
 			}
 			
 	      }
+		
 		if (aCOO == null || "".equals(aCOO))
 		{
 			aCOO=getBOMCompCOO(bomComponent);
+			qualtxComp.coo_source = 0;
 		}
 		return aCOO;
 	}
