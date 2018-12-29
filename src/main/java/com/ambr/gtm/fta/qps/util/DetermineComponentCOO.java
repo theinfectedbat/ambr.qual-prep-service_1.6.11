@@ -93,6 +93,7 @@ public  class DetermineComponentCOO
 			}
 			
 	      }
+		
 		if (aCOO == null || "".equals(aCOO))
 		{
 			aCOO=getBOMCompCOO(bomComponent);
