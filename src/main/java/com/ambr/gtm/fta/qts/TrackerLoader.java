@@ -140,31 +140,35 @@ public class TrackerLoader
 	public void startObservers() throws Exception
 	{
 		
-		int qtxObserverInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.QTX_OBSERVER_THREAD_INTERVAL, "30"));
-		int bomObserverInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.BOM_OBSERVER_THREAD_INTERVAL, "45"));
-		int qtxGarbageCollectorInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_GARBAGE_THREAD_INTERVAL, "180"));
-		int qtxReloadInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.QTX_RELOAD_THREAD_INTERVAL, "3600"));
+		int qtxObserverInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.QTX_OBSERVER_THREAD_INTERVAL, "120"));
+		int bomObserverInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.BOM_OBSERVER_THREAD_INTERVAL, "120"));
+		int qtxGarbageCollectorInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_GARBAGE_THREAD_INTERVAL, "300"));
+		int qtxReloadInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.QTX_RELOAD_THREAD_INTERVAL, "28800"));
 
 		Thread aQtxTrackerObserver = new Thread(new QtxStatusObserver(trackerContainer, qtxObserverInterval));
 		aQtxTrackerObserver.setName("QtxTrackerObserver");
+		aQtxTrackerObserver.setDaemon(true);
 		aQtxTrackerObserver.start();
 		MessageFormatter.debug(logger, "startObservers", "Qualtx Tracker Observer started with interval [{0}] seconds", qtxObserverInterval);
 		
 		
 		Thread aBomTrackerObserver = new Thread(new BOMTrackerStatusObserver(trackerContainer, new JdbcTemplate(this.dataSrc), bomObserverInterval));
 		aBomTrackerObserver.setName("BomTrackerObserver");
+		aBomTrackerObserver.setDaemon(true);
 		aBomTrackerObserver.start();
 		MessageFormatter.debug(logger, "startObservers", "BOM Status Tracker Observer started with interval [{0}] seconds", bomObserverInterval);
 		
 		
 		Thread garbaseCollector = new Thread(new TrackerGarbageCollector(trackerContainer, qtxGarbageCollectorInterval));
 		garbaseCollector.setName("TrackerGarbageCollector");
+		garbaseCollector.setDaemon(true);
 		garbaseCollector.start();
 		MessageFormatter.debug(logger, "startObservers", "Tracker Garbage Collector started with interval [{0}] seconds", qtxGarbageCollectorInterval);
 		
 		
 		Thread aReloadQtxWorkObserver = new Thread(new ReloadQtxWorkObserver(trackerContainer, new JdbcTemplate(this.dataSrc), this, qtxReloadInterval));
 		aReloadQtxWorkObserver.setName("ReloadQtxWorkObserver");
+		aReloadQtxWorkObserver.setDaemon(true);
 		aReloadQtxWorkObserver.start();
 		MessageFormatter.debug(logger, "startObservers", "Reload Qualtx Observer started with interval [{0}] seconds", qtxReloadInterval);
 	}
