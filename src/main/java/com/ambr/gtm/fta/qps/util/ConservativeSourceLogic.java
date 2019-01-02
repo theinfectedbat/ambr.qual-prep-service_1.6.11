@@ -119,8 +119,6 @@ public class ConservativeSourceLogic
 			//if the SRC IVA has Y decision, check for SRC with the lowest traced value.
 			if(STPDecisionEnum.valueOf("Y") == aSrcIVA.finalDecision  && (!foundSrcWithFinalDecisionNO || !foundSrcWithEmptyFinalDecision))
 			{
-				if("NAFTA".equals(theFTACode))
-				{
 					double aTracedValueFromClaimDtls = 0.0;
 					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
 					GPMClaimDetails aClaimDetails = null;
@@ -129,7 +127,7 @@ public class ConservativeSourceLogic
 						aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
 					}
 					
-					if(aClaimDetails != null)
+					if(aClaimDetails != null && "NAFTA".equals(theFTACode))
 					{
 						
 						//TODO : Write logic for checking if the HS falls in the trace list.
@@ -153,7 +151,6 @@ public class ConservativeSourceLogic
 						aConservativeSource = aSrc;
 						aYesDecisionTracedValue = aTracedValueFromClaimDtls;
 					}
-				}
 			}
 		}
 		
