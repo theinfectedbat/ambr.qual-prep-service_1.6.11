@@ -43,6 +43,7 @@ public class QualTXBusinessLogicProcessor
 	public FTAHSListCache ftaHSListCache;
 	private  final String	PROD_CTRY_CMP_KEY	= "prod_ctry_cmpl_key";
 	private  final String	HS_NUM				= "hs_num";
+	private  final String	SUB_PULL_CTRY				= "sub_pull_ctry";
 	private  final String	IVA_EFFECTIVE_FROM	= "IVA_EFFECTIVE_FROM";
 	private  final String	CURRENT_DATE		= "CURRENT_DATE";
 	
@@ -288,7 +289,9 @@ public class QualTXBusinessLogicProcessor
 
 	public  void setQualTXHeaderHSNumber(QualTX qualtx, List<GPMClassification> classificationList) throws Exception
 	{
+		
 		String ctryCode = qualtx.ctry_of_import;
+		String manfCtry = null;
 		int size = -1;
 
 		SubPullConfigData subpullConfigDate = getSubPullConfig(qualtx.org_code, qualtx.fta_code, qualtx.ctry_of_import);
@@ -301,29 +304,52 @@ public class QualTXBusinessLogicProcessor
 			String headerHsCtry = subpullConfigDate.getHeaderCtry();
 			String hsFromManufacture = subpullConfigDate.getManufactureCountry();
 
-			if (hsFromManufacture != null && "Y".equalsIgnoreCase(hsFromManufacture)) ctryCode = qualtx.ctry_of_manufacture;
-			else if (headerHsCtry != null && !headerHsCtry.isEmpty()) ctryCode = subpullConfigDate.getHeaderCtry();
+			if (hsFromManufacture != null && "Y".equalsIgnoreCase(hsFromManufacture)) manfCtry = qualtx.ctry_of_manufacture;
+			
+			if (headerHsCtry != null && !headerHsCtry.isEmpty()) ctryCode = subpullConfigDate.getHeaderCtry();
+			
 			if(ctryCode == null || "".equals(ctryCode) || "DEFAULT".equals(ctryCode))
 				ctryCode = qualtx.ctry_of_import;
-		}
-		Map<String, Object> dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
-		if (dataMap.isEmpty() && subpullConfigDate != null)
-		{
-			for (BaseHSFallConfg baseHsconf : subpullConfigDate.getBaseHSfallConfList())
-			{
-				dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, baseHsconf.getHeaderCtry(), Integer.valueOf(baseHsconf.getHeaderHsLength()));
-				if (!dataMap.isEmpty()) break;
-			}
-
-		}
-		if (!dataMap.isEmpty())
-		{
-			qualtx.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
+		
+			Map<String, Object> dataMap = new HashMap<>();
 			
-			//TODO sankar, can now be null, is there a reason to map a null to a zero?
-			qualtx.prod_ctry_cmpl_key = dataMap.get(PROD_CTRY_CMP_KEY) != null ? (Long) dataMap.get(PROD_CTRY_CMP_KEY) : 0;
-			qualtx.sub_pull_ctry = ctryCode;
+			//Check by Manufacturer Country if configured.
+			if(manfCtry != null)
+				dataMap	= getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, manfCtry, size);	
+			
+			//Check by basic Header Country Configuration
+			if(dataMap.isEmpty())
+				dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
+			
+			//Check by fall-back  Header Country Configuration
+			if (dataMap.isEmpty())
+			{
+				for (BaseHSFallConfg baseHsconf : subpullConfigDate.getBaseHSfallConfList())
+				{
+					dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, baseHsconf.getHeaderCtry(), Integer.valueOf(baseHsconf.getHeaderHsLength()));
+					if (!dataMap.isEmpty()) 
+					{
+						ctryCode = baseHsconf.getHeaderCtry();
+						break;
+					}
+				}
+
+			}
+				
+
+			if (!dataMap.isEmpty())
+			{
+				qualtx.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
+				
+				//TODO sankar, can now be null, is there a reason to map a null to a zero?
+				qualtx.prod_ctry_cmpl_key = dataMap.get(PROD_CTRY_CMP_KEY) != null ? (Long) dataMap.get(PROD_CTRY_CMP_KEY) : 0;
+				qualtx.sub_pull_ctry = dataMap.get(SUB_PULL_CTRY) != null ? (String) dataMap.get(SUB_PULL_CTRY) : "";
+			}
+			
+			
 		}
+		
+		
 	}
 
 	public  Map<String, Object> getComplianceHsDate(List<GPMClassification> classificationList, String orgCode, Date ivaEffectiveFrom, Date ivaEffectiveTo, String ctrycode, int size) throws Exception
@@ -351,6 +377,7 @@ public class QualTXBusinessLogicProcessor
 			{
 				dataMap.put(HS_NUM, (size != -1 && pmClassification.imHS1.length() > size ? pmClassification.imHS1.substring(0, size) : pmClassification.imHS1));
 				dataMap.put(PROD_CTRY_CMP_KEY, pmClassification.cmplKey);
+				dataMap.put(SUB_PULL_CTRY, pmClassification.ctryCode);
 				break;
 			}
 		}
@@ -360,6 +387,7 @@ public class QualTXBusinessLogicProcessor
 	public  void setQualTXComponentHSNumber(QualTXComponent aQualTXComp, List<GPMClassification> classificationList) throws Exception
 	{
 		String ctryCode = aQualTXComp.qualTX.ctry_of_import;
+		String manfCtry = null;
 		int size = -1;
 		SubPullConfigData subpullConfigDate = getSubPullConfig(aQualTXComp.org_code, aQualTXComp.qualTX.fta_code, aQualTXComp.qualTX.ctry_of_import);
 		if (subpullConfigDate != null)
@@ -370,29 +398,41 @@ public class QualTXBusinessLogicProcessor
 			String compHsCtry = subpullConfigDate.getCompCtry();
 			String hsFromManufacture = subpullConfigDate.getManufactureCountry();
 
-			if (hsFromManufacture != null && "Y".equalsIgnoreCase(hsFromManufacture)) ctryCode = aQualTXComp.qualTX.ctry_of_manufacture;
-			else if (compHsCtry != null && !compHsCtry.isEmpty()) ctryCode = subpullConfigDate.getCompCtry();
+			if (hsFromManufacture != null && "Y".equalsIgnoreCase(hsFromManufacture)) manfCtry = aQualTXComp.qualTX.ctry_of_manufacture;
+			
+			if (compHsCtry != null && !compHsCtry.isEmpty()) ctryCode = subpullConfigDate.getCompCtry();
+			
 			if(ctryCode == null || "".equals(ctryCode) || "DEFAULT".equals(ctryCode))
 				ctryCode = aQualTXComp.qualTX.ctry_of_import;
-		}
-		Map<String, Object> dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
-		if (dataMap.isEmpty() && subpullConfigDate!= null)
-		{
-			for (BaseHSFallConfg baseHsconf : subpullConfigDate.getBaseHSfallConfList())
-			{
-				dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, baseHsconf.getCompCtry(), Integer.valueOf(baseHsconf.getCompHslength()));
-				if (!dataMap.isEmpty()) break;
-			}
-
-		}
-		if (!dataMap.isEmpty())
-		{
-			aQualTXComp.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
-			if(dataMap.get(PROD_CTRY_CMP_KEY) != null)
-				aQualTXComp.prod_ctry_cmpl_key =  (Long) dataMap.get(PROD_CTRY_CMP_KEY);
 			
-			aQualTXComp.sub_pull_ctry = ctryCode;
+			Map<String, Object> dataMap = new HashMap<>();
+			
+			//Check by Manufacturer Country if configured.
+			if(manfCtry != null)
+				dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
+
+			//Check by basic Component Country Configuration
+			if (dataMap.isEmpty())
+			{
+				for (BaseHSFallConfg baseHsconf : subpullConfigDate.getBaseHSfallConfList())
+				{
+					dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, baseHsconf.getCompCtry(), Integer.valueOf(baseHsconf.getCompHslength()));
+					if (!dataMap.isEmpty()) break;
+				}
+
+			}
+			
+			//Check by fall-back  Component Country Configuration
+			if (!dataMap.isEmpty())
+			{
+				aQualTXComp.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
+				if(dataMap.get(PROD_CTRY_CMP_KEY) != null)
+					aQualTXComp.prod_ctry_cmpl_key =  (Long) dataMap.get(PROD_CTRY_CMP_KEY);
+				
+				aQualTXComp.sub_pull_ctry = dataMap.get(SUB_PULL_CTRY) != null ? (String) dataMap.get(SUB_PULL_CTRY) : "";
+			}
 		}
+		
 	}
 
 	public  SubPullConfigData getSubPullConfig(String orgCode, String ftaCode, String ctryOfImport) throws Exception
