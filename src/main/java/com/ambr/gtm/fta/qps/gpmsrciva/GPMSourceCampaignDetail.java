@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qps.gpmsrciva;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.util.Date;
 
@@ -9,13 +10,22 @@ import java.util.Date;
  * </P>
  *****************************************************************************************
  */
-public class GPMSourceCampaignDetail 
+public class GPMSourceCampaignDetail implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public String		campID;
 	public String		ftaCode;
 	public String		prevYearQualOverride;
 	public Date			prevYearQualOverrideDate;
 	
+	
+	public GPMSourceCampaignDetail()
+	{
+
+	}
 	/**
      *************************************************************************************
      * <P>
