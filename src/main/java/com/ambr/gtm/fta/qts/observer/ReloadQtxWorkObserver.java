@@ -21,6 +21,7 @@ public class ReloadQtxWorkObserver implements Runnable
 	private JdbcTemplate		aTemplate		= null;
 	private TrackerContainer	trackerContainer;
     private TrackerLoader trackerLoader;
+	private volatile boolean	exit			= false;
 	public ReloadQtxWorkObserver(TrackerContainer trackerContainer, JdbcTemplate aTemplate, TrackerLoader trackerLoader,  int reloadInterval)
 
 	{
@@ -34,7 +35,7 @@ public class ReloadQtxWorkObserver implements Runnable
 	{
 		try
 		{
-			while (true)
+			while (!exit)
 			{
 				Set<QtxWorkTracker> qtxReloadList = new HashSet<>();
 
@@ -44,17 +45,22 @@ public class ReloadQtxWorkObserver implements Runnable
 					if (aQtxWorkTracker.isEligibleForReload(RELOAD_INTERVAL)) qtxReloadList.add(aQtxWorkTracker);
 				});
 
-				if (qtxReloadList.size() > 0)
+				if (!qtxReloadList.isEmpty())
 				{
 					
 					this.trackerLoader.reloadTracker(aTemplate, qtxReloadList);
 				}
-				Thread.sleep(RELOAD_INTERVAL * 1000);
+				if (!exit) Thread.sleep(RELOAD_INTERVAL * 1000);
 			}
 		}
 		catch (Exception theException)
 		{
 			MessageFormatter.error(logger, "run", theException, "Error while checking reloading Qtx work status");
 		}
+	}
+	
+	public void shutdown()
+	{
+		exit = true;
 	}
 }

@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
@@ -37,10 +38,11 @@ public class TrackerLoader
 	private static boolean					isloadedFlag		= false;
 	private ConfigurationPropertyResolver	propertyResolver;
 	private DataSource dataSrc;
-    
-	TrackerContainer trackerContainer;
-	
-   
+	private QtxStatusObserver qtxStatusObserver;
+	private BOMTrackerStatusObserver bomTrackerStatusObserver;
+	private TrackerContainer trackerContainer;
+	private TrackerGarbageCollector trackerGarbageCollector;
+	private ReloadQtxWorkObserver reloadQtxWorkObserver;
 	/**
 	 ************************************************************************************* <P>
 	 * </P>
@@ -144,32 +146,28 @@ public class TrackerLoader
 		int bomObserverInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.BOM_OBSERVER_THREAD_INTERVAL, "120"));
 		int qtxGarbageCollectorInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_GARBAGE_THREAD_INTERVAL, "300"));
 		int qtxReloadInterval = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.QTX_RELOAD_THREAD_INTERVAL, "28800"));
-
-		Thread aQtxTrackerObserver = new Thread(new QtxStatusObserver(trackerContainer, qtxObserverInterval));
-		aQtxTrackerObserver.setName("QtxTrackerObserver");
-		aQtxTrackerObserver.setDaemon(true);
-		aQtxTrackerObserver.start();
+	
+		qtxStatusObserver = new QtxStatusObserver(trackerContainer, qtxObserverInterval);
+		Thread aQtxTrackerObserverThread = new Thread(qtxStatusObserver, "QtxTrackerObserver");
+		aQtxTrackerObserverThread.start();
 		MessageFormatter.debug(logger, "startObservers", "Qualtx Tracker Observer started with interval [{0}] seconds", qtxObserverInterval);
 		
-		
-		Thread aBomTrackerObserver = new Thread(new BOMTrackerStatusObserver(trackerContainer, new JdbcTemplate(this.dataSrc), bomObserverInterval));
-		aBomTrackerObserver.setName("BomTrackerObserver");
-		aBomTrackerObserver.setDaemon(true);
-		aBomTrackerObserver.start();
+		bomTrackerStatusObserver = new BOMTrackerStatusObserver(trackerContainer, new JdbcTemplate(this.dataSrc), bomObserverInterval);
+		Thread aBomTrackerObserverThread = new Thread(bomTrackerStatusObserver, "BomTrackerObserver");
+		aBomTrackerObserverThread.start();
 		MessageFormatter.debug(logger, "startObservers", "BOM Status Tracker Observer started with interval [{0}] seconds", bomObserverInterval);
 		
-		
-		Thread garbaseCollector = new Thread(new TrackerGarbageCollector(trackerContainer, qtxGarbageCollectorInterval));
-		garbaseCollector.setName("TrackerGarbageCollector");
-		garbaseCollector.setDaemon(true);
-		garbaseCollector.start();
+		trackerGarbageCollector = new TrackerGarbageCollector(trackerContainer, qtxGarbageCollectorInterval);
+		Thread trackerGarbageCollectorThread = new Thread(trackerGarbageCollector, "TrackerGarbageCollector");
+		trackerGarbageCollectorThread.setDaemon(true);
+		trackerGarbageCollectorThread.start();
 		MessageFormatter.debug(logger, "startObservers", "Tracker Garbage Collector started with interval [{0}] seconds", qtxGarbageCollectorInterval);
 		
+		reloadQtxWorkObserver = new ReloadQtxWorkObserver(trackerContainer, new JdbcTemplate(this.dataSrc), this, qtxReloadInterval);
+		Thread aReloadQtxWorkObserverTread = new Thread(reloadQtxWorkObserver, "ReloadQtxWorkObserver");
+		aReloadQtxWorkObserverTread.setDaemon(true);
+		aReloadQtxWorkObserverTread.start();
 		
-		Thread aReloadQtxWorkObserver = new Thread(new ReloadQtxWorkObserver(trackerContainer, new JdbcTemplate(this.dataSrc), this, qtxReloadInterval));
-		aReloadQtxWorkObserver.setName("ReloadQtxWorkObserver");
-		aReloadQtxWorkObserver.setDaemon(true);
-		aReloadQtxWorkObserver.start();
 		MessageFormatter.debug(logger, "startObservers", "Reload Qualtx Observer started with interval [{0}] seconds", qtxReloadInterval);
 	}
 
@@ -297,6 +295,30 @@ public class TrackerLoader
 		synchronized (reloadWorkList)
 		{
 			this.trackerContainer.deleteQtxWorkTrackers(reloadWorkList);
+		}
+	}
+	@Bean(destroyMethod = "destroy")
+	public void shutdown()
+	{
+		if (bomTrackerStatusObserver != null)
+		{
+			bomTrackerStatusObserver.shutdown();
+			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver has shutdown sunccessfully.");
+		}
+		if (qtxStatusObserver != null)
+		{
+			qtxStatusObserver.shutdown();
+			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver has shutdown sunccessfully.");
+		}
+		if (reloadQtxWorkObserver != null)
+		{
+			reloadQtxWorkObserver.shutdown();
+			MessageFormatter.info(logger, "shutdown", "ReloadQtxWorkObserver has shutdown sunccessfully.");
+		}
+		if (trackerGarbageCollector != null)
+		{
+			trackerGarbageCollector.shutdown();
+			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector has shutdown sunccessfully.");
 		}
 	}
 	
