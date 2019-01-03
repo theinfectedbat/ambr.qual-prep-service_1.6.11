@@ -195,7 +195,10 @@ public class TrackerServiceAPI
     {
     	try
     	{
-    		this.qtxWorkProducer.executeFindWork();
+    		if(this.qtxWorkProducer.getStatus() == qtxWorkProducer.REQUAL_SERVICE_AVAILABLE)
+    			this.qtxWorkProducer.executeFindWork();
+    		else
+    			throw new Exception("Requal serivce is in progress");
     	}
     	catch (Exception e)
     	{

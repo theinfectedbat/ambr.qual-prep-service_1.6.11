@@ -33,6 +33,11 @@ public class QTXWorkProducer extends QTXProducer
 	private GetGPMSourceIVAByProductFromUniverseClientAPI gpmSourceIVAByProductFromUniverseClientAPI;
 	private GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI;
 	
+	private int status;
+	
+	public static final int REQUAL_SERVICE_AVAILABLE = 0;
+	public static final int REQUAL_SERVICE_IN_PROGRESS= 1;
+	
 	public QTXWorkProducer(SchemaDescriptorService schemaService, PlatformTransactionManager txMgr, JdbcTemplate template)
 	{
 		super(schemaService, txMgr, template);
@@ -76,6 +81,16 @@ public class QTXWorkProducer extends QTXProducer
 	public void setQTXStageProducer(QTXStageProducer stageProducer)
 	{
 		this.stageProducer = stageProducer;
+	}
+	
+	public int getStatus()
+	{
+		return this.status;
+	}
+	
+	public void setStatus(int status)
+	{
+		this.status = status ;
 	}
 	
 	//TODO may need to change : have this method return a WorkPackage if the consumer should immediately process.  this ensures a chain of work related to same BOM will be processed as a set and not have each link in the chain pushed to the end of the queue.
@@ -136,7 +151,15 @@ public class QTXWorkProducer extends QTXProducer
 	
 	public void executeFindWork() throws Exception
 	{
-		this.findWork();
+		try
+		{
+			setStatus(REQUAL_SERVICE_IN_PROGRESS);
+			this.findWork();
+		}
+		finally
+		{
+			setStatus(REQUAL_SERVICE_AVAILABLE);
+		}	
 	}
 	
 	@Override
