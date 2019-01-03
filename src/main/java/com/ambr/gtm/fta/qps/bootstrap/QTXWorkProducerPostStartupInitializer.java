@@ -58,6 +58,7 @@ public class QTXWorkProducerPostStartupInitializer
 		this.qtxWorkProducer.setQTXWorkPersistenceProducer(this.qtxWorkPersistenceProducer);
 		this.qtxWorkProducer.setQTXStageProducer(this.qtxStageProducer);
 		this.qtxCompWorkProducer.setQTXWorkProducer(this.qtxWorkProducer);
+		this.qtxWorkProducer.setStatus(qtxWorkProducer.REQUAL_SERVICE_AVAILABLE);
 
 		/*if (requalServiceRequired == true)
 		{
