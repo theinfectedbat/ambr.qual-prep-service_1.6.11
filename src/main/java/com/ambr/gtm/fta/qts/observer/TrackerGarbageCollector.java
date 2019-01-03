@@ -14,10 +14,10 @@ import com.ambr.platform.utils.log.MessageFormatter;
 public class TrackerGarbageCollector implements Runnable
 {
 
-	static Logger	logger			= LogManager.getLogger(TrackerGarbageCollector.class);
-	private int		THREAD_INTERVAL	= 60;
-	private TrackerContainer trackerContainer;
-
+	static Logger				logger			= LogManager.getLogger(TrackerGarbageCollector.class);
+	private int					THREAD_INTERVAL	= 60;
+	private TrackerContainer	trackerContainer;
+	private volatile boolean	exit			= false;
 	public TrackerGarbageCollector(TrackerContainer trackerContainer, int interval)
 	{
 		this.trackerContainer = trackerContainer;
@@ -28,25 +28,29 @@ public class TrackerGarbageCollector implements Runnable
 	{
 		try
 		{
-			// JdbcTemplate aTemplate = new JdbcTemplate(this.dataSrc);
-
-			while (true)
+			while (!exit)
 			{
 				Set<Long> aBOMTrackerKeySet = this.trackerContainer.getBomTrackerMapKeys();
 				Iterator<Long> bomTrackerKey = aBOMTrackerKeySet.iterator();
 				while (bomTrackerKey.hasNext())
 				{
+					if(exit) break;
 					Long bomKey = bomTrackerKey.next();
 					BOMTracker aBOMTracker = this.trackerContainer.getBomTracker(bomKey);
 					this.trackerContainer.deleteBOMTracker(aBOMTracker);
 				}
 
-				Thread.sleep(THREAD_INTERVAL * 1000);
+				if(!exit) Thread.sleep(THREAD_INTERVAL * 1000);
 			}
 		}
 		catch (Exception theException)
 		{
 			MessageFormatter.error(logger, "run",theException, "Error in the Tracker Garbage Collector");
 		}
+	}
+	
+	public void shutdown()
+	{
+		exit = true;
 	}
 }

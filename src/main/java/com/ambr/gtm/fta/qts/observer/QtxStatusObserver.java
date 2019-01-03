@@ -5,7 +5,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.ambr.gtm.fta.qts.QtxTracker;
 import com.ambr.gtm.fta.qts.TrackerCodes;
@@ -19,7 +18,7 @@ public class QtxStatusObserver implements Runnable
 	private static TrackerCodes.QualTrackerStatus	INIT			= TrackerCodes.QualTrackerStatus.INIT;
 	private static int								THREAD_INTERVAL	= 10;
 	private TrackerContainer trackerContainer;
-
+	private volatile boolean exit = false;
 
 	public QtxStatusObserver(TrackerContainer trackerContainer, int interval)
 	{
@@ -31,7 +30,7 @@ public class QtxStatusObserver implements Runnable
 	{
 		try
 		{
-			while (true)
+			while (!exit)
 			{
 				Set<Long> aQtxTrackerKeySet = this.trackerContainer.getQtxTrackerMapKeys();
 				Iterator<Long> qtxTrackerKey = aQtxTrackerKeySet.iterator();
@@ -40,8 +39,9 @@ public class QtxStatusObserver implements Runnable
 					Long qtxKey = qtxTrackerKey.next();
 					QtxTracker aQtxTracker = this.trackerContainer.getQtxTracker(qtxKey);
 					if (!getWaiForNextAnalysisMethodFlg(aQtxTracker) && INIT.equals(aQtxTracker.getQtxStatus())) setEligibleQualtxStatus(aQtxTracker);
+					if (exit) break;
 				}
-				Thread.sleep(THREAD_INTERVAL * 1000);
+				if (!exit) Thread.sleep(THREAD_INTERVAL * 1000);
 			}
 		}
 		catch (Exception theException)
@@ -64,5 +64,9 @@ public class QtxStatusObserver implements Runnable
 		if (aCalculatedStatus != null && !aCalculatedStatus.equals(aCurrentStatus)) qtxTracker.setQtxStatus(aCalculatedStatus);
 	}
 	
+	public void shutdown()
+	{
+		exit = true;
+	}
 	
 }
