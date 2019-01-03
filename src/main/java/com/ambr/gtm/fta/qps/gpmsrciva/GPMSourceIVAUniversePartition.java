@@ -79,26 +79,29 @@ public class GPMSourceIVAUniversePartition
 		this.ivaByProdSrcTable = new HashMap<>();
 		this.ivaByProdTable = new HashMap<>();
 
-		aSQLLines.add("SELECT alt_key_prod, alt_key_src, alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, ctry_of_import, ctry_of_origin, effective_from, effective_to, iva_code"); 
-		aSQLLines.add("FROM mdi_prod_src_iva");
+		aSQLLines.add("SELECT iva.alt_key_prod, iva.alt_key_src, alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, iva.ctry_of_import, iva.ctry_of_origin, effective_from, effective_to, iva_code"); 
+		aSQLLines.add("FROM mdi_prod_src_iva iva");
+		aSQLLines.add("left join mdi_prod_src src");
+		aSQLLines.add("on (iva.alt_key_src = src.alt_key_src)");
 		aSQLLines.add("WHERE ");
 		aSQLLines.add("(");
-		aSQLLines.add("   alt_key_src in ");
+		aSQLLines.add("   iva.alt_key_src in ");
 		aSQLLines.add("   (");
 		aSQLLines.add("     (select prod_src_key from mdi_bom)");
 		aSQLLines.add("     union");
 		aSQLLines.add("     (select prod_src_key from mdi_bom_comp)");
 		aSQLLines.add("   )");
 		aSQLLines.add("   or");
-		aSQLLines.add("   alt_key_prod in (select prod_key from mdi_bom_comp where prod_src_key = -1)");
+		aSQLLines.add("   iva.alt_key_prod in (select prod_key from mdi_bom_comp where prod_src_key = -1)");
 		aSQLLines.add(")");
+		aSQLLines.add("and src.is_active = 'Y'");
 
 		if (this.partitionCount > 1) {
-			aSQLLines.add("and mod(alt_key_src, ?) = ?");
+			aSQLLines.add("and mod(iva.alt_key_src, ?) = ?");
 		}
 		
 		if (this.filterOrgCode != null) {
-			aSQLLines.add("and org_code = ?");
+			aSQLLines.add("and iva.org_code = ?");
 		}
 				
 		this.loadSrcIVASQLText = StringUtil.join(aSQLLines.toArray(), " ");
