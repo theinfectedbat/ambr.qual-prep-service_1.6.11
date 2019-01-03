@@ -364,37 +364,37 @@ public class QualTXComponent
 		
 		String aCampId = flexFieldMap.get("CAMPAIGN_ID");
 		String aresponseId = flexFieldMap.get("RESPONSE_ID");
-		QualTXComponentDataExtension qualTXCompDetals = null;
+		QualTXComponentDataExtension qualTXCompDetails = null;
+		
 		if (aQualTXDataExts != null && !aQualTXDataExts.isEmpty())
 		{
 			for (QualTXComponentDataExtension qualTXCompDe : aQualTXDataExts)
 			{
 				if (qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
 				{
-					qualTXCompDetals = qualTXCompDe;
+					qualTXCompDetails = qualTXCompDe;
 					break;
 				}
 			}
 		}
-		if (qualTXCompDetals == null)
+		if(aClaimDetails.getValue(aCampId) != null || aClaimDetails.getValue(aresponseId) != null)
 		{
-
-			QualTXComponentDataExtension aCompdtlsDe = this.createDataExtension("QUALTX:COMP_DTLS", theRepos, null);
-
 			Timestamp now = new Timestamp(System.currentTimeMillis());
-			aCompdtlsDe.setValue("CREATED_DATE", now);
-			aCompdtlsDe.setValue("LAST_MODIFIED_BY", this.last_modified_by);
-			aCompdtlsDe.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
-			aCompdtlsDe.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
-		}
-		else
-		{
-
-			Timestamp now = new Timestamp(System.currentTimeMillis());
-			qualTXCompDetals.setValue("LAST_MODIFIED_BY", this.last_modified_by);
-			qualTXCompDetals.setValue("LAST_MODIFIED_DATE", now);
-			qualTXCompDetals.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
-			qualTXCompDetals.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
+			if (qualTXCompDetails == null)
+			{
+				qualTXCompDetails = this.createDataExtension("QUALTX:COMP_DTLS", theRepos, null);
+				qualTXCompDetails.setValue("CREATED_DATE", now);
+			}
+			else
+			{
+	
+				qualTXCompDetails.setValue("LAST_MODIFIED_DATE", now);
+	
+			}
+			
+			qualTXCompDetails.setValue("LAST_MODIFIED_BY", this.last_modified_by);
+			qualTXCompDetails.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
+			qualTXCompDetails.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
 
 		}
 

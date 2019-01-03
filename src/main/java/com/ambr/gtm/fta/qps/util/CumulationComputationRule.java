@@ -233,29 +233,33 @@ public class CumulationComputationRule
 
 			String cumulationCtryList = (String) aClaimDetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CTRY_LIST").toLowerCase());
 
-			QualTXComponentDataExtension qualTXCompDetals = null;
+			QualTXComponentDataExtension qualTXCompDetails = null;
 			if(aQualTXComp.deList != null && !aQualTXComp.deList.isEmpty())
 			{
 				for(QualTXComponentDataExtension qualTXCompDe: aQualTXComp.deList)
 				{
 					if(qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
 					{
-						qualTXCompDetals = qualTXCompDe;
+						qualTXCompDetails = qualTXCompDe;
 						break;
 					}
 				}
 			}
-			if(qualTXCompDetals == null)
-			{
-				qualTXCompDetals = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
-			}
+			
 
 			Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 			
 			if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
 				cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
-
-			qualTXCompDetals.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
+			
+			if(cumulationCtryList != null && !cumulationCtryList.isEmpty())
+			{
+				if(qualTXCompDetails == null)
+				{
+					qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
+				}
+				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
+			}
 
 			Double cumulationValue = calculateCumulationValue	(aQualTXComp, aClaimDetails);
 
