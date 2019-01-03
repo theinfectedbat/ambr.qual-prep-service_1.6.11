@@ -306,7 +306,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				boolean isYarnTypeExist = false;
 				for (QualTXComponentDataExtension qualtxYarnDtlsCompDE : qualtxYarnDtlsCompDEs)
 				{
-					if (qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1").equals(bomCompYarnDetail.getValue("FLEXFIELD_VAR1")))
+					if (null != qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1") && qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1").equals(bomCompYarnDetail.getValue("FLEXFIELD_VAR1")))
 					{
 						isYarnTypeExist = true;
 						deleteQualtxYarnDetailsDE.remove(qualtxYarnDtlsCompDE);
