@@ -199,6 +199,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				parentWorkPackage.qualtx.compList.add(qualtxComp);
 				if (parentWork.details.analysis_method == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS)
 				{
+					qualtxComp.top_down_ind = "Y";
 					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				}
