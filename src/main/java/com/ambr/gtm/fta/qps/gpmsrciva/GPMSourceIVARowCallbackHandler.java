@@ -53,9 +53,17 @@ public class GPMSourceIVARowCallbackHandler
 		String				aValue;
 		
 		try {
+
+			aValue = theResultSet.getString("is_active");
+			
 			aGPMSrcIVA = new GPMSourceIVA(this.partition);
-			aGPMSrcIVA.prodKey = theResultSet.getLong("alt_key_prod");
 			aGPMSrcIVA.srcKey = theResultSet.getLong("alt_key_src");
+			if (!"Y".equalsIgnoreCase(aValue)) {
+				this.partition.inactiveSrcTable.put(aGPMSrcIVA.srcKey, true);
+				return;
+			}
+
+			aGPMSrcIVA.prodKey = theResultSet.getLong("alt_key_prod");
 			aGPMSrcIVA.ivaKey = theResultSet.getLong("alt_key_iva");
 			aGPMSrcIVA.ftaEnabledFlag = "Y".equalsIgnoreCase(theResultSet.getString("fta_enabled_flag"));
 			aGPMSrcIVA.ftaCode = theResultSet.getString("fta_code");

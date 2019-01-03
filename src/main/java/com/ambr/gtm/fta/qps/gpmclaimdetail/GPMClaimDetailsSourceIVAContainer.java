@@ -3,6 +3,8 @@ package com.ambr.gtm.fta.qps.gpmclaimdetail;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  *****************************************************************************************
  * <P>
@@ -51,6 +53,7 @@ public class GPMClaimDetailsSourceIVAContainer
 	 * @param	theParentClaimDetails
 	 *************************************************************************************
 	 */
+	@JsonIgnore
 	public ArrayList<GPMClaimDetails> getChildRecords(GPMClaimDetails theParentClaimDetails)
 		throws Exception
 	{
@@ -75,6 +78,7 @@ public class GPMClaimDetailsSourceIVAContainer
      * </P>
      *************************************************************************************
      */
+	@JsonIgnore
 	public String getFTACodeGroup()
 		throws Exception
 	{
@@ -92,6 +96,7 @@ public class GPMClaimDetailsSourceIVAContainer
      * </P>
      *************************************************************************************
      */
+	@JsonIgnore
 	public GPMClaimDetails getPrimaryClaimDetails()
 		throws Exception
 	{

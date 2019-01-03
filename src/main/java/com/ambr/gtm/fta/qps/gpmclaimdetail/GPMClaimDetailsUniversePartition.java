@@ -73,7 +73,7 @@ public class GPMClaimDetailsUniversePartition
 		ArrayList<String> aSQLLines = new ArrayList<>();
 		
 		aSQLLines.add("select"); 
-		aSQLLines.add("d.*, ii.fta_code_group, ii.record_key, si.fta_code");
+		aSQLLines.add("d.*, ii.fta_code_group, ii.record_key, si.fta_code, si.alt_key_src");
 		aSQLLines.add("from (select prod_src_key from mdi_bom union select prod_src_key from mdi_bom_comp) b");
 		aSQLLines.add("inner join mdi_prod_src_iva si on (si.alt_key_src = b.prod_src_key)");
 		aSQLLines.add("inner join mdi_ivainst ii on (si.alt_key_iva = ii.record_key)");

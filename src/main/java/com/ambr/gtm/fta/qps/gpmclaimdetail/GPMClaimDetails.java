@@ -10,6 +10,7 @@ import javax.persistence.Column;
 import javax.persistence.Table;
 
 import com.ambr.platform.rdbms.util.ResultSetUtility;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *****************************************************************************************
@@ -53,6 +54,7 @@ public class GPMClaimDetails
 	public GPMClaimDetails(GPMClaimDetailsUniversePartition thePartition)
 		throws Exception
 	{
+		this();
 		this.partition = thePartition;
 	}
 
@@ -62,6 +64,7 @@ public class GPMClaimDetails
      * </P>
      *************************************************************************************
      */
+	@JsonIgnore
 	public ArrayList<String> getColumnNames()
 		throws Exception
 	{
@@ -76,6 +79,7 @@ public class GPMClaimDetails
      * @param	theColumnName
      *************************************************************************************
      */
+	@JsonIgnore
 	public Object getValue(String theColumnName) 
 		throws Exception 
 	{
