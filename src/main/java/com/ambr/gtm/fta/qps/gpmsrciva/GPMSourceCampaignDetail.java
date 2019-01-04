@@ -12,20 +12,23 @@ import java.util.Date;
  */
 public class GPMSourceCampaignDetail implements Serializable
 {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
+
 	public String		campID;
 	public String		ftaCode;
 	public String		prevYearQualOverride;
 	public Date			prevYearQualOverrideDate;
 	
-	
+	/**
+     *************************************************************************************
+     * <P>
+     * </P>
+     *************************************************************************************
+     */
 	public GPMSourceCampaignDetail()
 	{
-
 	}
+
 	/**
      *************************************************************************************
      * <P>
@@ -37,6 +40,7 @@ public class GPMSourceCampaignDetail implements Serializable
 	public GPMSourceCampaignDetail(ResultSet theResultSet)
 		throws Exception
 	{
+		this();
 		this.campID = theResultSet.getString("camp_id");
 		this.ftaCode = theResultSet.getString("fta_code");
 		this.prevYearQualOverride = theResultSet.getString("prev_year_qual_override");

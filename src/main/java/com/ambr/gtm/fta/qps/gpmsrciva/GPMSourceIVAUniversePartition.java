@@ -40,6 +40,7 @@ public class GPMSourceIVAUniversePartition
 	private int													partitionCount;
 	private String												targetSchema;
 	private String												filterOrgCode;
+	HashMap<Long, Boolean>										inactiveSrcTable;
 	
 	/**
      *************************************************************************************
@@ -78,8 +79,9 @@ public class GPMSourceIVAUniversePartition
 		this.gpmSrcIVAList = new ArrayList<>();
 		this.ivaByProdSrcTable = new HashMap<>();
 		this.ivaByProdTable = new HashMap<>();
+		this.inactiveSrcTable = new HashMap<>();
 
-		aSQLLines.add("SELECT iva.alt_key_prod, iva.alt_key_src, alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, iva.ctry_of_import, iva.ctry_of_origin, effective_from, effective_to, iva_code"); 
+		aSQLLines.add("SELECT iva.alt_key_prod, iva.alt_key_src, alt_key_iva, src.is_active, fta_enabled_flag, fta_code, system_decision, final_decision, iva.ctry_of_import, iva.ctry_of_origin, effective_from, effective_to, iva_code"); 
 		aSQLLines.add("FROM mdi_prod_src_iva iva");
 		aSQLLines.add("left join mdi_prod_src src");
 		aSQLLines.add("on (iva.alt_key_src = src.alt_key_src)");
@@ -94,7 +96,6 @@ public class GPMSourceIVAUniversePartition
 		aSQLLines.add("   or");
 		aSQLLines.add("   iva.alt_key_prod in (select prod_key from mdi_bom_comp where prod_src_key = -1)");
 		aSQLLines.add(")");
-		aSQLLines.add("and src.is_active = 'Y'");
 
 		if (this.partitionCount > 1) {
 			aSQLLines.add("and mod(iva.alt_key_src, ?) = ?");
@@ -190,6 +191,11 @@ public class GPMSourceIVAUniversePartition
 		GPMSourceIVAProductSourceContainer		aSrcContainer;
 		GPMSourceIVAProductContainer			aProdContainer;
 		
+		if (this.inactiveSrcTable.get(theProdSrcKey) != null) {
+			// This source is inactive, so we won't cache the information
+			return;
+		}
+		
 		aSrcContainer = this.ivaByProdSrcTable.get(theProdSrcKey);
 		if (aSrcContainer == null) {
 			aSrcContainer = new GPMSourceIVAProductSourceContainer();
@@ -223,6 +229,11 @@ public class GPMSourceIVAUniversePartition
 	{
 		GPMSourceIVAProductSourceContainer		aSrcContainer;
 		GPMSourceIVAProductContainer			aProdContainer;
+		
+		if (this.inactiveSrcTable.get(theProdSrcKey) != null) {
+			// This source is inactive, so we won't cache the information
+			return;
+		}
 		
 		aSrcContainer = this.ivaByProdSrcTable.get(theProdSrcKey);
 		if (aSrcContainer == null) {
