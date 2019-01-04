@@ -56,7 +56,7 @@ public abstract class QTXConsumer<T> implements Runnable
 				int size = this.workList.size();
 				
 				if (size > 0)
-					this.producer.recordStats(size, System.currentTimeMillis() - start);
+					this.producer.completedStats(size, System.currentTimeMillis() - start);
 			}
 		}
 	}

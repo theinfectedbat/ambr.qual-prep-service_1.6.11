@@ -1,10 +1,15 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
+import java.util.Iterator;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import com.ambr.gtm.fta.qts.RequalificationBOMStatus;
+import com.ambr.gtm.fta.qts.RequalificationTradeLaneStatus;
+import com.ambr.gtm.fta.qts.util.RunnableTuple;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 
 public class QTXWorkPersistenceProducer extends QTXProducer
@@ -29,5 +34,54 @@ public class QTXWorkPersistenceProducer extends QTXProducer
 	protected void findWork() throws Exception
 	{
 		//Does not have a find work method.  work is posted to this producer by QTXWorkProducer as QTXWork/QTXCompWork is completed
+	}
+	
+	public RequalificationBOMStatus getPersistentRequalificationBOMStatus(long bomKey)
+	{
+		RequalificationBOMStatus bomStatus = new RequalificationBOMStatus();
+		
+		bomStatus.bomKey = bomKey;
+		
+		this.getTradeLaneStatsForBOM(bomKey, bomStatus);
+		
+		return bomStatus;
+	}
+	
+	public void getTradeLaneStatsForBOM(long bomKey, RequalificationBOMStatus bomStatus)
+	{
+		int counter = 0;
+		for (Iterator<RunnableTuple> i = this.pendingQueueEntries(); i.hasNext();)
+		{
+			RunnableTuple tuple = i.next();
+			
+			if (tuple.future.isDone() || tuple.future.isCancelled())
+				continue;
+			
+			QTXWorkPersistenceConsumer workConsumer = (QTXWorkPersistenceConsumer) tuple.runnable;
+			
+			if (workConsumer.workList != null)
+			{
+				//TODO need to check for following work package
+				for (WorkPackage workPackage : workConsumer.workList)
+				{
+					if (workPackage.bom != null && workPackage.bom.alt_key_bom == bomKey)
+					{
+						RequalificationTradeLaneStatus tradeLaneStats = new RequalificationTradeLaneStatus();
+						
+						tradeLaneStats.qualtxKey = workPackage.qualtx.alt_key_qualtx;
+						
+						//Calculate estimate based on metrics
+						tradeLaneStats.estimate = System.currentTimeMillis();
+						
+						//TODO fix me - estimate is hard coded count right now - assuming 100 milliseconds wait per position in queue
+						tradeLaneStats.estimate += (counter + 1) * 100;
+						
+						bomStatus.addTradeLaneStatus(tradeLaneStats);
+					}
+				}
+			}
+			
+			counter++;
+		}
 	}
 }

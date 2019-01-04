@@ -14,8 +14,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.ambr.gtm.fta.qps.util.ComponentType;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMComponentDataExtension;
@@ -48,7 +46,6 @@ import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
-import com.ambr.platform.rdbms.schema.SchemaDescriptor;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
 
 
@@ -74,10 +71,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		this.qtxBusinessLogicProcessor = qtxBusinessLogicProcessor;
 	}
 
-	private PlatformTransactionManager txMgr;
-	private JdbcTemplate template;
-	private SchemaDescriptor schemaDesc;
-	
 	public QTXCompWorkConsumer(ArrayList<CompWorkPackage> workList)
 	{
 		super(workList);
@@ -91,22 +84,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 	public void setDataExtensionRepository(DataExtensionConfigurationRepository repos)
 	{
 		this.repos = repos;
-	}
-	
-	
-	public void setPlatformTransactionManager(PlatformTransactionManager platformTransactionManager)
-	{
-		this.txMgr = platformTransactionManager;
-	}
-	
-	public void setJdbcTemplate(JdbcTemplate jdbcTemplate)
-	{
-		this.template = jdbcTemplate;
-	}
-	
-	public void setSchemaDescriptor(SchemaDescriptor schemaDesc)
-	{
-		this.schemaDesc = schemaDesc;
 	}
 	
 	//TODO what if bomcomp is removed then added, merged into one work item.  based on logic below the add will execute then the remove.  consolidation logic might have to detect this and skip the add.
@@ -296,7 +273,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				if(qualtxYarnDtlsCompDE.group_name.equalsIgnoreCase("IMPL_BOM_PROD_FAMILY:TEXTILES")) qualtxYarnDtlsCompDEs.add(qualtxYarnDtlsCompDE);
 			}
 			
-			Set<QualTXComponentDataExtension> deleteQualtxYarnDetailsDE = new HashSet(); 
+			Set<QualTXComponentDataExtension> deleteQualtxYarnDetailsDE = new HashSet<QualTXComponentDataExtension>(); 
 			deleteQualtxYarnDetailsDE.addAll(qualtxYarnDtlsCompDEs);
 			
 			for (BOMComponentDataExtension bomCompYarnDetail : bomCompYarnDetailsList)
@@ -353,7 +330,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			ArrayList<BOMComponentDataExtension> priceDetailsList = bomComp.getDataExtensionByGroupName("BOM_COMP_STATIC:PRICE");
 			parentWorkPackage.entityMgr.getLoader().setIgnoreParentRecordMissingException(true);
 			parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_PRICE");
-			Set<QualTXComponentPrice> deleteCompPriceList = new HashSet(); 
+			Set<QualTXComponentPrice> deleteCompPriceList = new HashSet<QualTXComponentPrice>(); 
 			deleteCompPriceList.addAll(qualtxComp.priceList);
 			
 			for (BOMComponentDataExtension bomCompPrice : priceDetailsList)

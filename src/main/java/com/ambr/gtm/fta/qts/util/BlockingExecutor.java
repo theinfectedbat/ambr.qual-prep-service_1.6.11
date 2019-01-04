@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qts.util;
 
-import java.util.LinkedList;
+import java.util.Iterator;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -23,56 +24,61 @@ public class BlockingExecutor extends ThreadPoolExecutor
 	private static final Logger LOGGER = LoggerFactory.getLogger(BlockingExecutor.class);
 	private final Semaphore semaphore;
   
-	private LinkedList<Future<?>> futures = new LinkedList<Future<?>>();
+	private BlockingQueue<RunnableTuple> taskQueue = new LinkedBlockingQueue<RunnableTuple>();
 	private boolean trackWork = true;
  
-  /**
-   * Creates a BlockingExecutor which will block and prevent further
-   * submission to the pool when the specified queue size has been reached.
-   *
-   * @param poolSize the number of the threads in the pool
-   * @param queueSize the size of the queue
-   */
-  public BlockingExecutor(final int poolSize, final int queueSize)
-  {
-    super(poolSize, poolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
- 
-    // the semaphore is bounding both the number of tasks currently executing
-    // and those queued up
-    semaphore = new Semaphore(poolSize + queueSize);
-  }
+	/**
+	 * Creates a BlockingExecutor which will block and prevent further
+	 * submission to the pool when the specified queue size has been reached.
+	 *
+	 * @param poolSize the number of the threads in the pool
+	 * @param queueSize the size of the queue
+	 */
+	public BlockingExecutor(final int poolSize, final int queueSize)
+	{
+		super(poolSize, poolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		 
+		// the semaphore is bounding both the number of tasks currently executing
+		// and those queued up
+		semaphore = new Semaphore(poolSize + queueSize);
+	}
   
-  public void setTrackWork(boolean track)
-  {
-	  this.trackWork = track;
-  }
+	public Iterator<RunnableTuple> pendingQueueEntries()
+	{
+		return this.taskQueue.iterator();
+	}
   
-  public Future<?> submit(Runnable task)
-  {
-	  Future <?> future = super.submit(task);
-	  
-	  if (this.trackWork)
-		  this.futures.add(future);
-	  
-	  return future;
-  }
+	public void setTrackWork(boolean track)
+	{
+		this.trackWork = track;
+	}
+  
+	public Future<?> submit(Runnable task)
+	{
+		Future <?> future = super.submit(task);
+			  
+		if (this.trackWork)
+			this.taskQueue.add(new RunnableTuple(future, task));
+		  
+		return future;
+	}
  
 	public boolean hasWork()
 	{
-		for (Future<?> future : this.futures)
+		for (RunnableTuple tuple : this.taskQueue)
 		{
-			if (future.isDone() == false)
+			if (tuple.future.isDone() == false)
 				return true;
 		}
 		
-		this.futures.clear();
+		this.taskQueue.clear();
 		
 		return false;
 	}
 	
 	public void clearTrackedWork()
 	{
-		this.futures.clear();
+		this.taskQueue.clear();
 	}
 
 	/**
