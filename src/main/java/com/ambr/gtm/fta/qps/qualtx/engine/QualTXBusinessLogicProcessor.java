@@ -409,8 +409,13 @@ public class QualTXBusinessLogicProcessor
 			
 			//Check by Manufacturer Country if configured.
 			if(manfCtry != null)
+				dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, manfCtry, size);
+			
+			//Check by basic Header Country Configuration
+			if(dataMap.isEmpty())
 				dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
-
+			
+			
 			//Check by basic Component Country Configuration
 			if (dataMap.isEmpty())
 			{
