@@ -213,7 +213,8 @@ public class QualTXComponentUtility
 		this.qualTXComp.ctry_of_origin = this.bomComp.ctry_of_origin;
 		this.qualTXComp.description = this.bomComp.description;
 		this.qualTXComp.essential_character = this.bomComp.essential_character;
-		this.qualTXComp.gross_weight = this.bomComp.unit_weight;
+		this.qualTXComp.unit_weight = this.bomComp.unit_weight;
+		this.qualTXComp.gross_weight = this.bomComp.net_weight == null? this.bomComp.unit_weight:this.bomComp.net_weight;
 		this.qualTXComp.manufacturer_key = this.bomComp.manufacturer_key;
 		this.qualTXComp.make_buy_flg = (this.bomComp.sub_bom_key != null) && (this.bomComp.sub_bom_key > 0)? "M" : "B";
 		this.qualTXComp.net_weight = this.bomComp.net_weight;
