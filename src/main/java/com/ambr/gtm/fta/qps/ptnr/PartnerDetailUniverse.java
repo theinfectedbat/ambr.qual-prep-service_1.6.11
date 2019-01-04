@@ -115,6 +115,8 @@ public class PartnerDetailUniverse
 			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
+					
+					//TODO Claude, Why are we calling GetQualTXCountFromPartitionClientAPI
 					GetQualTXCountFromPartitionClientAPI		aAPI = new GetQualTXCountFromPartitionClientAPI(aServiceRef);
 		
 					aCount += aAPI.execute();
@@ -556,7 +558,7 @@ public class PartnerDetailUniverse
 			throw new IllegalStateException("No partitions have been allocated for this universe.");
 		}
 		
-		this.serviceMgr = new SubordinateServiceManager("QualTXDetailUniverse", this.serverPort, this.propertyResolver);
+		this.serviceMgr = new SubordinateServiceManager("PartnerDetailUniverse", this.serverPort, this.propertyResolver);
 		this.serviceMgr.setMemoryMax(this.memoryMax);
 		this.serviceMgr.setMemoryMin(this.memoryMin);
 		this.serviceMgr.setTargetLibrary(new File(this.serviceJarFileName));
@@ -569,19 +571,19 @@ public class PartnerDetailUniverse
 			
 			// When we start the subprocess, we DON'T want a GPMClassificationUniverse bean to be instantiated
 			// It will cause a recursive launch of processes
-			aServiceRef.setProperty(QualTXDetailUniverseProperties.UNIVERSE_ENABLED, "N");
+			aServiceRef.setProperty(PartnerDetailUniverseProperties.UNIVERSE_ENABLED, "N");
 			
 			// We DO want a BOM Universe Partition object to be created
-			aServiceRef.setProperty(QualTXDetailUniverseProperties.UNIVERSE_PARTITION_ENABLED, "Y");
+			aServiceRef.setProperty(PartnerDetailUniverseProperties.UNIVERSE_PARTITION_ENABLED, "Y");
 			
-			// This is primarily for information purposes to the subprocess
+			// This is primarily for information purposes to the subprocessPartnerDetailUniverseProperties
 			aServiceRef.setProperty(
-				QualTXDetailUniverseProperties.UNIVERSE_PARTITION_COUNT,
+					PartnerDetailUniverseProperties.UNIVERSE_PARTITION_COUNT,
 				String.valueOf(this.partitionCount)
 			);
 			
 			// We need to let the subprocess know which partition it is
-			aServiceRef.setProperty(QualTXDetailUniverseProperties.UNIVERSE_PARTITION_NUM, String.valueOf(aPartitionNum));
+			aServiceRef.setProperty(PartnerDetailUniverseProperties.UNIVERSE_PARTITION_NUM, String.valueOf(aPartitionNum));
 			
 			// The process should run as a SERVICE, which means it will remain online until intentionally shut down
 			aServiceRef.setProperty(QPSProperties.COMMAND, CommandEnum.SERVICE.name());
