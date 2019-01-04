@@ -307,12 +307,23 @@ public class QualTXComponentExpansionUtility
 					QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
 					aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
 					aQualTXComponentUtility.pullComponentData();
-					if(this.isRawMaterialApproach)
+					if(this.isRawMaterialApproach) {
 						aNewQualTXComp.raw_material_ind = "Y";
+						aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
+						aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
+						aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
+						aNewQualTXComp.rm_traced_value =  aNewQualTXComp.traced_value;
+						
+					}	
 				
 					if(this.isIntermediateApproach)
+					{
 						aNewQualTXComp.intermediate_ind = "Y";
-					
+						aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
+						aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
+						aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
+						aNewQualTXComp.in_traced_value =  aNewQualTXComp.traced_value;
+					}
 					aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}",aSubBOMComp.comp_num);
 					theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
 				}
