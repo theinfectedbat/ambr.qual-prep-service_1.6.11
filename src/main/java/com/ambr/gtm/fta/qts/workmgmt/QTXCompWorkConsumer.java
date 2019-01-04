@@ -416,6 +416,24 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
+		{
+			this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+			
+			if (!"Y".equalsIgnoreCase(qualtxComp.cumulation_rule_applied) && ( qualtxComp.qualified_flg == null || "".equalsIgnoreCase(qualtxComp.qualified_flg)))
+			{
+				Date origEffectiveFrom = qualtxComp.qualified_from;
+				Date origEffectiveTo = qualtxComp.qualified_to;
+				boolean isPrevYearQualApplied = this.qtxBusinessLogicProcessor.previousYearQualificationRule.applyPrevYearQualForComponent(bomComp, qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+				if (!isPrevYearQualApplied)
+				{
+					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+					qualtxComp.qualified_from = origEffectiveFrom;
+					qualtxComp.qualified_to = origEffectiveTo;
+				}
+			}
+		}
+		
 		
 		if (work.compWorkHSList != null)
 		{
