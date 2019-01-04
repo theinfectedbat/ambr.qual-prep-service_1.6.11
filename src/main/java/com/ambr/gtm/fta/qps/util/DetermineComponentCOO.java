@@ -12,6 +12,8 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMCountry;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetail;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailCache;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheetManager;
@@ -21,6 +23,12 @@ import com.ambr.platform.utils.log.MessageFormatter;
 public  class DetermineComponentCOO 
 {
 	static Logger		logger = LogManager.getLogger(DetermineComponentCOO.class);
+	private PartnerDetailCache partnerDetailCache;
+
+	public void setPtnrDetailsCache(PartnerDetailCache aPartnerDetailCache)
+	{
+		this.partnerDetailCache = aPartnerDetailCache;
+	}
 	
 	public String determineCOOForComponentSource(QualTXComponent qualtxComp,BOMComponent bomComponent, GPMSourceIVAProductSourceContainer prodSourceContainer, GPMClassificationProductContainer gpmClassContainer, SimplePropertySheetManager propertySheetManager) throws Exception
 	{
@@ -84,15 +92,15 @@ public  class DetermineComponentCOO
 			}
 			else if ("BOM_COMP_MANUFACTURER_COO".equals(cooOrder))
 			{
-				aCOO=getBOMCompManufacturerCOO(qualtxComp);
-				if (!"".equals(aCOO) && aCOO!= null)
+				aCOO = getBOMCompManufacturerCOO(qualtxComp);
+				if (!"".equals(aCOO) && aCOO != null)
 				{
 					qualtxComp.coo_source = propertyValue.indexOf(cooOrder);
 					break;
 				}
 			}
-			
-	      }
+
+		}
 		
 		if (aCOO == null || "".equals(aCOO))
 		{
@@ -117,10 +125,18 @@ public  class DetermineComponentCOO
 		return bomComponent.ctry_of_origin;
 		
 	}
+
 	public String getBOMCompManufacturerCOO(QualTXComponent theBOMComponent) throws Exception
 	{
-		return theBOMComponent.ctry_of_manufacture;
+		String manufactureCtry = theBOMComponent.ctry_of_manufacture;
+		if (manufactureCtry == null)
+		{
+			PartnerDetail ptnrDetail = this.partnerDetailCache.getPtnrDetails(theBOMComponent.manufacturer_key);
+			if (ptnrDetail != null) manufactureCtry = ptnrDetail.country_code;
+		}
+		return manufactureCtry;
 	}
+	
 	public String getGPMCOO(QualTXComponent qualtxComp, GPMSourceIVAProductSourceContainer prodSourceContainer, GPMClassificationProductContainer gpmClassContainer) throws Exception
 	{
 		String aGPMCOO = null;

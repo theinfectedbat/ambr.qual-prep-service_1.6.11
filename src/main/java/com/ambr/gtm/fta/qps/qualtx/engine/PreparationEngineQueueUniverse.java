@@ -1146,6 +1146,7 @@ public class PreparationEngineQueueUniverse
 			throws Exception
 	{
 		this.qtxBusinessLogicProcessor = theBusinessLogicProcessor;
+		this.qtxBusinessLogicProcessor.determineComponentCOO.setPtnrDetailsCache(this.ptnrDetailCache);
 		return this;
 	}
 	
