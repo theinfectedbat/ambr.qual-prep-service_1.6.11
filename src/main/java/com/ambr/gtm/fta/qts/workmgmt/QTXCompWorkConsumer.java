@@ -199,6 +199,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				parentWorkPackage.qualtx.compList.add(qualtxComp);
 				if (parentWork.details.analysis_method == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS)
 				{
+					qualtxComp.top_down_ind = "Y";
 					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				}
@@ -392,7 +393,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		}
 		
 		if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
-		if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
+		if (bomComp == null && !isCompDeleted) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 		qualtxComp.qualTX = qualtx;
 		int cooSource = qualtxComp.coo_source;
 		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
