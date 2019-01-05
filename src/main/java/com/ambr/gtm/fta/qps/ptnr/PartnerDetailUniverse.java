@@ -101,39 +101,6 @@ public class PartnerDetailUniverse
 	 *************************************************************************************
 	 * <P>
 	 * </P>
-	 *************************************************************************************
-	 */
-	public int getPtnrDetailCount()
-		throws Exception
-	{
-		int		aCount = 0;
-		
-		if (this.localPartition != null) {
-			aCount += this.localPartition.getPtnrDetailCount();
-		}
-		else {
-			this.waitUntilAvailable();
-			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
-				try {
-					
-					//TODO Claude, Why are we calling GetQualTXCountFromPartitionClientAPI
-					GetQualTXCountFromPartitionClientAPI		aAPI = new GetQualTXCountFromPartitionClientAPI(aServiceRef);
-		
-					aCount += aAPI.execute();
-				}
-				catch (Exception e) {
-					MessageFormatter.error(logger, "getPtnrDetailCount", e, "Error receiving result from partition [{0}]", aServiceRef.getInstanceID());
-				}
-			}
-		}
-	
-		return aCount;
-	}
-
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
 	 * 
 	 * @param	thePtnrKey
 	 *************************************************************************************
