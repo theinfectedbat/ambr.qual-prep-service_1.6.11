@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +10,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
-import com.ambr.gtm.fta.qps.util.CumulationComputationRule;
+import com.ambr.gtm.fta.qts.RequalificationBOMStatus;
+import com.ambr.gtm.fta.qts.RequalificationTradeLaneStatus;
+import com.ambr.gtm.fta.qts.util.RunnableTuple;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 
@@ -53,17 +56,7 @@ public class QTXCompWorkProducer extends QTXProducer
 	{
 		QTXCompWorkConsumer consumer = new QTXCompWorkConsumer(work);
 		consumer.setQtxBusinessLogicProcessor(qtxBusinessLogicProcessor);
-		consumer.setJdbcTemplate(template);
-		consumer.setPlatformTransactionManager(txMgr);
 		consumer.setDataExtensionRepository(repos);
-		try
-		{
-			consumer.setSchemaDescriptor(schemaService.getPrimarySchemaDescriptor());
-		}
-		catch(Exception e)
-		{
-			logger.error("QTXCompWorkProducer : Error while gettting the setSchemaDescriptor ", e);
-		}
 		
 		this.submit(consumer);
 	}
@@ -113,5 +106,54 @@ public class QTXCompWorkProducer extends QTXProducer
 	protected void findWork() throws Exception
 	{
 		//nothing ... findWork will be a blank message.  items will be submitted directly to this producer from the QTXWorkProducer
+	}
+	
+	public RequalificationBOMStatus getCompRequalificationBOMStatus(long bomKey)
+	{
+		RequalificationBOMStatus bomStatus = new RequalificationBOMStatus();
+		
+		bomStatus.bomKey = bomKey;
+		
+		this.getTradeLaneStatsForBOM(bomKey, bomStatus);
+		
+		return bomStatus;
+	}
+	
+	public void getTradeLaneStatsForBOM(long bomKey, RequalificationBOMStatus bomStatus)
+	{
+		int counter = 0;
+		for (Iterator<RunnableTuple> i = this.pendingQueueEntries(); i.hasNext();)
+		{
+			RunnableTuple tuple = i.next();
+			
+			if (tuple.future.isDone() || tuple.future.isCancelled())
+				continue;
+			
+			QTXCompWorkConsumer workConsumer = (QTXCompWorkConsumer) tuple.runnable;
+			
+			if (workConsumer.workList != null)
+			{
+				for (CompWorkPackage workPackage : workConsumer.workList)
+				{
+					//TODO need to check for following work package
+					if (workPackage.getParentWorkPackage().bom != null && workPackage.getParentWorkPackage().bom.alt_key_bom == bomKey)
+					{
+						RequalificationTradeLaneStatus tradeLaneStats = new RequalificationTradeLaneStatus();
+						
+						tradeLaneStats.qualtxKey = workPackage.qualtxComp.alt_key_qualtx;
+						
+						//Calculate estimate based on metrics
+						tradeLaneStats.estimate = System.currentTimeMillis();
+						
+						//TODO fix me - estimate is hard coded count right now - assuming 100 milliseconds wait per position in queue
+						tradeLaneStats.estimate += (counter + 1) * 100;
+						
+						bomStatus.addTradeLaneStatus(tradeLaneStats);
+					}
+				}
+			}
+			
+			counter++;
+		}
 	}
 }

@@ -19,6 +19,7 @@ import com.ambr.gtm.fta.qts.BOMTracker;
 import com.ambr.gtm.fta.qts.QTXCompWork;
 import com.ambr.gtm.fta.qts.QTXCompWorkHS;
 import com.ambr.gtm.fta.qts.QTXCompWorkIVA;
+import com.ambr.gtm.fta.qts.QTXMonitoredMetrics;
 import com.ambr.gtm.fta.qts.QTXWork;
 import com.ambr.gtm.fta.qts.QTXWorkHS;
 import com.ambr.gtm.fta.qts.QTXWorkRepository;
@@ -27,6 +28,7 @@ import com.ambr.gtm.fta.qts.QtxStatusUpdateRequest;
 import com.ambr.gtm.fta.qts.QtxTracker;
 import com.ambr.gtm.fta.qts.QtxWorkBean;
 import com.ambr.gtm.fta.qts.QtxWorkTracker;
+import com.ambr.gtm.fta.qts.RequalificationBOMStatus;
 import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.WorkManagementException;
 import com.ambr.gtm.fta.qts.config.FTACtryConfigCache;
@@ -221,6 +223,31 @@ public class TrackerServiceAPI
     	}
     	else
     	MessageFormatter.debug(logger, "createUniverse", "Create Universe called on org : [{0}] no tradelanes defined ", org_code);
+    }
+
+    @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_REQUAL_BOM_STATUS, method = RequestMethod.GET)
+    public RequalificationBOMStatus getRequalificationBOMStatus(@PathVariable long bom_key) throws Exception
+    {
+    	MessageFormatter.debug(logger, "getRequalificationBOMStatus", "Fetching status for bom key {0} ", bom_key);
+    	
+    	return this.qtxWorkProducer.getRequalificationBOMStatus(bom_key);
+    }
+
+    @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_REQUAL_METRICS, method = RequestMethod.GET)
+    public ArrayList<QTXMonitoredMetrics> getRequalificationMetrics() throws Exception
+    {
+    	MessageFormatter.debug(logger, "getRequalificationMetrics", "Fetching requal metrics");
+    	
+    	return this.qtxWorkProducer.getMonitoredMetrics();
+    }
+
+    //TODO need to register metrics with all producers, sleep duration, unregister metrics, and return list.
+    @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_REQUAL_MONITORED_METRICS, method = RequestMethod.GET)
+    public ArrayList<QTXMonitoredMetrics> getRequalificationMetrics(@PathVariable Integer duration) throws Exception
+    {
+    	MessageFormatter.debug(logger, "getRequalificationMetrics", "Fetching requal metrics");
+    	
+    	return this.qtxWorkProducer.getMonitoredMetrics();
     }
 
     @RequestMapping(value = "/qts/api/workmgmt/test_work_create", method = RequestMethod.GET)

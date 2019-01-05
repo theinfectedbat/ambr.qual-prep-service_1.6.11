@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -17,6 +18,10 @@ import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromUniverseCl
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.GetCacheRefreshInformationClientAPI;
+import com.ambr.gtm.fta.qts.QTXMonitoredMetrics;
+import com.ambr.gtm.fta.qts.RequalificationBOMStatus;
+import com.ambr.gtm.fta.qts.RequalificationTradeLaneStatus;
+import com.ambr.gtm.fta.qts.util.RunnableTuple;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 
 //TODO stop mutliple requal messages from processing concurrently
@@ -45,7 +50,6 @@ public class QTXWorkProducer extends QTXProducer
 
 	private QualTXBusinessLogicProcessor qtxBusinessLogicProcessor;
 	
-
 	public QualTXBusinessLogicProcessor getQtxBusinessLogicProcessor()
 	{
 		return qtxBusinessLogicProcessor;
@@ -56,6 +60,18 @@ public class QTXWorkProducer extends QTXProducer
 		this.qtxBusinessLogicProcessor = qtxBusinessLogicProcessor;
 	}
 
+	public ArrayList<QTXMonitoredMetrics> getMonitoredMetrics()
+	{
+		ArrayList<QTXMonitoredMetrics> metricList = new ArrayList<QTXMonitoredMetrics>();
+		
+		metricList.add(this.getMetrics());
+		metricList.add(this.stageProducer.getMetrics());
+		metricList.add(this.compWorkProducer.getMetrics());
+		metricList.add(this.workPersistenceProducer.getMetrics());
+		
+		return metricList;
+	}
+	
 	public void setAPI(
 			BOMUniverseBOMClientAPI bomUniverseBOMClientAPI, 
 			GetGPMClassificationsByProductFromUniverseClientAPI gpmClassificationsByProductAPI, 
@@ -213,7 +229,71 @@ public class QTXWorkProducer extends QTXProducer
 			throw e;
 		}
 		
+		//TODO pull out list of work and order by priority then submit
 		for (Iterator<WorkPackage> iterator = stagedWork.values().iterator(); iterator.hasNext();)
 			this.submitWork(iterator.next());
+	}
+	
+	public RequalificationBOMStatus getRequalificationBOMStatus(long bomKey)
+	{
+		RequalificationBOMStatus finalStatus = new RequalificationBOMStatus();
+		
+		finalStatus.bomKey = bomKey;
+		
+		//TODO this isnt right.  duration is header or comp whichever is greater PLUS persistence
+		finalStatus.addTradeLaneStatus(this.getHeaderRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		finalStatus.addTradeLaneStatus(this.compWorkProducer.getCompRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		finalStatus.sumTradeLaneStatus(this.workPersistenceProducer.getPersistentRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		
+		return finalStatus;
+	}
+
+	public RequalificationBOMStatus getHeaderRequalificationBOMStatus(long bomKey)
+	{
+		RequalificationBOMStatus bomStatus = new RequalificationBOMStatus();
+		
+		bomStatus.bomKey = bomKey;
+		
+		this.getTradeLaneStatsForBOM(bomKey, bomStatus);
+		
+		return bomStatus;
+	}
+	
+	public void getTradeLaneStatsForBOM(long bomKey, RequalificationBOMStatus bomStatus)
+	{
+		int counter = 0;
+		for (Iterator<RunnableTuple> i = this.pendingQueueEntries(); i.hasNext();)
+		{
+			RunnableTuple tuple = i.next();
+			
+			if (tuple.future.isDone() || tuple.future.isCancelled())
+				continue;
+			
+			QTXWorkConsumer workConsumer = (QTXWorkConsumer) tuple.runnable;
+			
+			if (workConsumer.workList != null)
+			{
+				//TODO need to check for following work package
+				for (WorkPackage workPackage : workConsumer.workList)
+				{
+					if (workPackage.bom != null && workPackage.bom.alt_key_bom == bomKey)
+					{
+						RequalificationTradeLaneStatus tradeLaneStats = new RequalificationTradeLaneStatus();
+						
+						tradeLaneStats.qualtxKey = workPackage.qualtx.alt_key_qualtx;
+						
+						//Calculate estimate based on metrics
+						tradeLaneStats.estimate = System.currentTimeMillis();
+						
+						//TODO fix me - estimate is hard coded count right now - assuming 100 milliseconds wait per position in queue
+						tradeLaneStats.estimate += (counter + 1) * 100;
+						
+						bomStatus.addTradeLaneStatus(tradeLaneStats);
+					}
+				}
+			}
+			
+			counter++;
+		}
 	}
 }

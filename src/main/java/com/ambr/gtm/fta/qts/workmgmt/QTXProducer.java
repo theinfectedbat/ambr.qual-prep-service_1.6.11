@@ -1,24 +1,24 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import com.ambr.gtm.fta.qts.QTXMonitoredMetrics;
 import com.ambr.gtm.fta.qts.QTXWorkRepository;
 import com.ambr.gtm.fta.qts.WorkManagementException;
 import com.ambr.gtm.fta.qts.trade.MDIQualTxRepository;
 import com.ambr.gtm.fta.qts.util.BlockingExecutor;
+import com.ambr.gtm.fta.qts.util.RunnableTuple;
 import com.ambr.gtm.fta.qts.util.StatisticMonitor;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 import com.ambr.platform.uoid.UniversalObjectIDGenerator;
 
-//TODO expose interface to get producer stats
 //TODO expose interface to stop/start producer
 //TODO expose interface to alter consumer pool size
 //TODO intermediate producers cannot easily submit batches of work to consumer, since work is submitted to them in quantities of 1 ... review further
@@ -33,7 +33,7 @@ public abstract class QTXProducer implements Runnable
 	protected JdbcTemplate template;
 	protected PlatformTransactionManager txMgr;
 	
-	private BlockingExecutor m_pool;
+	private BlockingExecutor threadExecutor;
 	protected int fetchSize;
 	protected int threads;
 	protected int readAhead;
@@ -48,18 +48,44 @@ public abstract class QTXProducer implements Runnable
 	private QTXWorkRepository workRepository;
 	private MDIQualTxRepository qualtxRepository;
 	
-	protected long firstRecordAddedAt;
-	protected long lastRecordAddedAt;
-	protected long firstRecordCompletedAt;
-	protected long lastRecordCompletedAt;
-	protected long recordsAdded;
-	protected long recordsCompleted;
+	protected QTXMonitoredMetrics metrics = new QTXMonitoredMetrics(this.getClass().getSimpleName());
+	protected ArrayList<QTXMonitoredMetrics> monitoredMetrics = new ArrayList<QTXMonitoredMetrics>();
 	
 	public QTXProducer(SchemaDescriptorService schemaService, PlatformTransactionManager txMgr, JdbcTemplate template)
 	{
 		this.schemaService = schemaService;
 		this.template = template;
 		this.txMgr = txMgr;
+	}
+	
+	public QTXMonitoredMetrics getMetrics()
+	{
+		return this.metrics;
+	}
+	
+	public synchronized QTXMonitoredMetrics addMonitoredMetrics()
+	{
+		QTXMonitoredMetrics monitoredMetric = new QTXMonitoredMetrics(this.getClass().getSimpleName());
+		
+		monitoredMetric.start();
+		
+		this.monitoredMetrics.add(monitoredMetric);
+		
+		return monitoredMetric;
+	}
+	
+	public synchronized QTXMonitoredMetrics removeMonitoredMetrics(QTXMonitoredMetrics monitoredMetric)
+	{
+		this.monitoredMetrics.remove(monitoredMetric);
+		
+		monitoredMetric.stop();
+		
+		return monitoredMetric;
+	}
+	
+	public Iterator<RunnableTuple> pendingQueueEntries()
+	{
+		return this.threadExecutor.pendingQueueEntries();
 	}
 	
 	public PlatformTransactionManager getTransactionManager()
@@ -96,7 +122,7 @@ public abstract class QTXProducer implements Runnable
 		
 		if (this.sleepInterval <= 0) throw new WorkManagementException(this.getClass().getName() + " cannot have a sleepInterval <= 0");
 		
-		this.m_pool = new BlockingExecutor(threads, readAhead);
+		this.threadExecutor = new BlockingExecutor(threads, readAhead);
 	}
 	
 	public QTXWorkRepository getWorkRepository()
@@ -109,42 +135,74 @@ public abstract class QTXProducer implements Runnable
 		return this.qualtxRepository;
 	}
 	
-	public synchronized void recordStats(long itemCount, long duration)
+	public synchronized void completedStats(long itemCount, long duration)
 	{
-		if (this.firstRecordCompletedAt == 0) this.firstRecordCompletedAt = System.currentTimeMillis();
-		this.lastRecordCompletedAt = System.currentTimeMillis();
-		this.recordsCompleted = this.recordsCompleted + itemCount;
+		this.updateCompletedStats(this.metrics, itemCount, duration);
+		
+		for (QTXMonitoredMetrics monitoredMetric : this.monitoredMetrics)
+		{
+			this.updateCompletedStats(monitoredMetric, itemCount, duration);
+		}
+	}
+	
+	private void updateCompletedStats(QTXMonitoredMetrics monitoredMetric, long itemCount, long duration)
+	{
+		long time = System.currentTimeMillis();
+		
+		if (monitoredMetric.firstItemCompleted == 0) monitoredMetric.firstItemCompleted = time;
+		monitoredMetric.lastItemCompleted = time;
+		
+		monitoredMetric.completed = monitoredMetric.completed + itemCount;
+		monitoredMetric.aggregatedDuration = monitoredMetric.aggregatedDuration + duration;
 
 		this.processingTime.addStatistic(itemCount, duration);
 		
-		if (this.recordsCompleted == this.recordsAdded)
-		{
-			logger.info(this.getClass().getSimpleName() + " First Record Added\t" + new Date(this.firstRecordAddedAt));
-			logger.info(this.getClass().getSimpleName() + " Last Record Added\t" + new Date(this.lastRecordAddedAt));
-			logger.info(this.getClass().getSimpleName() + " Duration(ms)\t" + (this.lastRecordAddedAt - this.firstRecordAddedAt));
-			
-			logger.info(this.getClass().getSimpleName() + " First Record Completed\t" + new Date(this.firstRecordAddedAt));
-			logger.info(this.getClass().getSimpleName() + " Last Record Completed\t" + new Date(this.lastRecordCompletedAt));
-			logger.info(this.getClass().getSimpleName() + " Duration(ms)\t" + (this.lastRecordCompletedAt - this.firstRecordCompletedAt));
-
-			logger.info(this.getClass().getSimpleName() + " Total Records Added\t" + this.recordsAdded);
-			logger.info(this.getClass().getSimpleName() + " Total Records Completed\t" + this.recordsCompleted);
-		}
+//		if (this.recordsCompleted == this.recordsAdded)
+//		{
+//			logger.info(this.getClass().getSimpleName() + " First Record Added\t" + new Date(this.firstRecordAddedAt));
+//			logger.info(this.getClass().getSimpleName() + " Last Record Added\t" + new Date(this.lastRecordAddedAt));
+//			logger.info(this.getClass().getSimpleName() + " Duration(ms)\t" + (this.lastRecordAddedAt - this.firstRecordAddedAt));
+//			
+//			logger.info(this.getClass().getSimpleName() + " First Record Completed\t" + new Date(this.firstRecordAddedAt));
+//			logger.info(this.getClass().getSimpleName() + " Last Record Completed\t" + new Date(this.lastRecordCompletedAt));
+//			logger.info(this.getClass().getSimpleName() + " Duration(ms)\t" + (this.lastRecordCompletedAt - this.firstRecordCompletedAt));
+//
+//			logger.info(this.getClass().getSimpleName() + " Total Records Added\t" + this.recordsAdded);
+//			logger.info(this.getClass().getSimpleName() + " Total Records Completed\t" + this.recordsCompleted);
+//		}
 	}
 	
 	public synchronized void submit(QTXConsumer<?> task)
 	{
-		if (this.firstRecordAddedAt == 0) this.firstRecordAddedAt = System.currentTimeMillis();
-		this.lastRecordAddedAt = System.currentTimeMillis();
-		this.recordsAdded++;
+		this.addedStats();
 		
 		task.setProducer(this);
-		this.m_pool.submit(task);
+		this.threadExecutor.submit(task);
+	}
+	
+	private synchronized void addedStats()
+	{
+		this.updateAddedStats(this.metrics);
+		
+		for (QTXMonitoredMetrics monitoredMetric : this.monitoredMetrics)
+		{
+			this.updateAddedStats(monitoredMetric);
+		}
+	}
+	
+	private synchronized void updateAddedStats(QTXMonitoredMetrics monitoredMetric)
+	{
+		long time = System.currentTimeMillis();
+		
+		if (monitoredMetric.firstItemAdded == 0) monitoredMetric.firstItemAdded = time;
+		
+		monitoredMetric.lastItemAdded = time;
+		monitoredMetric.added++;
 	}
 	
 	public void setTrackWork(boolean track)
 	{
-		this.m_pool.setTrackWork(track);
+		this.threadExecutor.setTrackWork(track);
 	}
 	
 	public void startup() throws WorkManagementException
@@ -165,7 +223,7 @@ public abstract class QTXProducer implements Runnable
 		logger.debug("Shutdown called");
 		
 		this.isActive = false;
-		this.m_pool.shutdown();
+		this.threadExecutor.shutdown();
 		
 		logger.debug("Shutdown complete ... note that consumers may still be running until completion");
 	}
@@ -173,12 +231,12 @@ public abstract class QTXProducer implements Runnable
 	public void awaitTermination(long time, TimeUnit unit) throws InterruptedException
 	{
 		this.isActive = false;
-		this.m_pool.awaitTermination(time, unit);
+		this.threadExecutor.awaitTermination(time, unit);
 	}
 	
 	public boolean hasWork()
 	{
-		return this.m_pool.hasWork();
+		return this.threadExecutor.hasWork();
 	}
 
 	public void doWork() throws Exception
@@ -188,7 +246,7 @@ public abstract class QTXProducer implements Runnable
 			return;
 		}
 		
-		this.m_pool.clearTrackedWork();
+		this.threadExecutor.clearTrackedWork();
 
 		this.findWork();
 	}
@@ -230,13 +288,10 @@ public abstract class QTXProducer implements Runnable
 		return this.idGenerator;
 	}
 	
-	void resetStats()
+	public synchronized void resetStats()
 	{
-		this.firstRecordAddedAt = 0;
-		this.lastRecordAddedAt = 0;
-		this.firstRecordCompletedAt = 0;
-		this.lastRecordCompletedAt = 0;
-		this.recordsAdded = 0;
-		this.recordsCompleted = 0;
+		this.metrics = new QTXMonitoredMetrics(this.getClass().getSimpleName());
+		
+		this.metrics.start();
 	}
 }

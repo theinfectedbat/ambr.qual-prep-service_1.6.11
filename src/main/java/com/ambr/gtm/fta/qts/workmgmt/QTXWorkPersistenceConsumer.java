@@ -20,7 +20,6 @@ import com.ambr.gtm.fta.qts.QTXCompWork;
 import com.ambr.gtm.fta.qts.QTXWork;
 import com.ambr.gtm.fta.qts.QtxStatusUpdateRequest;
 import com.ambr.gtm.fta.qts.TrackerCodes;
-import com.ambr.gtm.fta.qts.trade.MDIBomRepository;
 import com.ambr.gtm.fta.qts.trade.MDIQualTx;
 import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.fta.trade.BOMQualtxData;
