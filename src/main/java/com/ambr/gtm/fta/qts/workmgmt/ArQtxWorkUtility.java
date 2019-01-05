@@ -87,7 +87,7 @@ public class ArQtxWorkUtility
 	{
 		StringBuilder sql = new StringBuilder("SELECT DISTINCT COMP.ALT_KEY_COMP AS COMP_QUALTX_KEY, COMP.ORG_CODE, COMP.HS_NUM AS COMP_HS_NUM, COMP.PROD_KEY AS COMP_PROD_KEY, "
 				+ " COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, COMP.PROD_SRC_IVA_KEY AS COMP_PROD_SRC_IVA_KEY, COMP.SUB_PULL_CTRY AS COMP_SUB_PULL_CTRY,"
-				+ " COMP.PROD_CTRY_CMPL_KEY AS COMP_PROD_CTRY_CMPL_KEY, COMP.SRC_KEY AS COMP_KEY, QUALTX.ALT_KEY_QUALTX, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY,"
+				+ " COMP.PROD_CTRY_CMPL_KEY AS COMP_PROD_CTRY_CMPL_KEY, COMP.SRC_KEY AS COMP_KEY, COMP.SRC_ID AS COMP_ID , QUALTX.ALT_KEY_QUALTX, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY,"
 				+ " QUALTX.PROD_SRC_KEY, QUALTX.PROD_CTRY_CMPL_KEY, QUALTX.SRC_KEY AS BOM_KEY, QUALTX.SUB_PULL_CTRY, QUALTX.IVA_CODE as HEADER_IVA_CODE, QUALTX.FTA_CODE as HEADER_FTA_CODE, QUALTX.CTRY_OF_IMPORT as HEADER_CTRY_OF_IMPORT "
 				+ " FROM MDI_QUALTX_COMP COMP JOIN MDI_QUALTX QUALTX "
 				+ " ON (QUALTX.ALT_KEY_QUALTX = COMP.ALT_KEY_QUALTX) WHERE ");
@@ -117,7 +117,6 @@ public class ArQtxWorkUtility
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
 
 		List<QualTX> list = new ArrayList<QualTX>();
@@ -156,7 +155,7 @@ public class ArQtxWorkUtility
 		    		qualtxComp.sub_pull_ctry = resultSet.getString("COMP_SUB_PULL_CTRY");
 		    		qualtxComp.prod_ctry_cmpl_key =  DataLoader.getLong(resultSet, "COMP_PROD_CTRY_CMPL_KEY");
 		    		qualtxComp.src_key =  DataLoader.getLong(resultSet, "COMP_KEY");
-		    		
+		    		qualtxComp.src_id = resultSet.getString("COMP_ID");
 		    		qualtx.compList.add(qualtxComp);
 		    		
 		    		list.add(qualtx);
@@ -390,7 +389,6 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) workCode = RequalificationWorkCodes.BOM_COMP_COM_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) workCode = RequalificationWorkCodes.COMP_STP_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) workCode = RequalificationWorkCodes.COMP_GPM_COO_CHG;
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) workCode = RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE;
 
 		return workCode;
 	}

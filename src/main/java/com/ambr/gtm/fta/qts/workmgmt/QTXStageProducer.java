@@ -437,12 +437,18 @@ public class QTXStageProducer extends QTXProducer
 			}
 			else
 			{
+
 				if(qualtx.compList.isEmpty()) 
 				{
 					logger.info("Data issue qualtx =" +qualtx.alt_key_qualtx);
 					continue;
 				}
 				QualTXComponent qualtxComp = qualtx.compList.get(0);	//based on sql there will always be a single QualTXComponent
+				
+			    isValQualtx = isValidQualtxComp(qualtxComp);
+			    if(!isValQualtx) 
+			    	continue;
+
 				if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 				{
 					theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
@@ -1009,7 +1015,16 @@ public class QTXStageProducer extends QTXProducer
 		
 		return true;
 	}
-	
+
+	private boolean isValidQualtxComp(QualTXComponent qualtxComp)
+	{
+		if(qualtxComp != null && qualtxComp.src_id != null)
+		{
+			if((qualtxComp.src_id).contains("~")) return false;
+		}
+		return true;
+	}
+
 	private void getConsolidatedQualtxForConfigUpdates(Map<QTXStage, ArrayList<Long>> configRequalMap, Map<Long, QTXWork> qtxWorkList) throws Exception
 	{
 		for (Map.Entry<QTXStage, ArrayList<Long>> entry : configRequalMap.entrySet())
