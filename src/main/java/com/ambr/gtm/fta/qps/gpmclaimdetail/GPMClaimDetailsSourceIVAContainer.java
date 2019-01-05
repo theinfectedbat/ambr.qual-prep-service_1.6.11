@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qps.gpmclaimdetail;
 
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 
@@ -12,9 +13,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *****************************************************************************************
  */
 public class GPMClaimDetailsSourceIVAContainer 
+	implements Serializable
 {
 	public long 						prodSrcIVAKey;
 	public ArrayList<GPMClaimDetails>	claimDetailList;
+	
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     *************************************************************************************
+     */
+	public GPMClaimDetailsSourceIVAContainer()
+		throws Exception
+	{
+	}
 	
     /**
      *************************************************************************************
