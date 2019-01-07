@@ -400,12 +400,16 @@ public class QualTXComponent
 
 		aValue = aClaimDetails.getValue("traced_value");
 		if (aValue != null) {
-			this.traced_value = ((Number)aValue).doubleValue();
+			this.traced_value = (Double)aValue;
 		}
+		
+		aValue = aClaimDetails.getValue("traced_value_currency");
+		if(aValue != null)
+			this.traced_value_currency = (String)aValue;
 		
 		aValue = aClaimDetails.getValue("cumulation_value");
 		if (aValue != null) {
-			this.cumulation_value = ((Number)aValue).doubleValue();
+			this.cumulation_value = (Double)aValue;
 		}
 		
 		this.cumulation_currency = (String)aClaimDetails.getValue("cumulation_currency");
