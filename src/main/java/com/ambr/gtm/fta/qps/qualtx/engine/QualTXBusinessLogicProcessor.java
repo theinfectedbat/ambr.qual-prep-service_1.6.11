@@ -293,7 +293,7 @@ public class QualTXBusinessLogicProcessor
 		String ctryCode = qualtx.ctry_of_import;
 		String manfCtry = null;
 		int size = -1;
-
+		Map<String, Object> dataMap = new HashMap<>();
 		SubPullConfigData subpullConfigDate = getSubPullConfig(qualtx.org_code, qualtx.fta_code, qualtx.ctry_of_import);
 		if (subpullConfigDate != null)
 		{
@@ -311,8 +311,7 @@ public class QualTXBusinessLogicProcessor
 			if(ctryCode == null || "".equals(ctryCode) || "DEFAULT".equals(ctryCode))
 				ctryCode = qualtx.ctry_of_import;
 		
-			Map<String, Object> dataMap = new HashMap<>();
-			
+						
 			//Check by Manufacturer Country if configured.
 			if(manfCtry != null)
 				dataMap	= getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, manfCtry, size);	
@@ -335,20 +334,19 @@ public class QualTXBusinessLogicProcessor
 				}
 
 			}
-				
-
-			if (!dataMap.isEmpty())
-			{
-				qualtx.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
-				
-				//TODO sankar, can now be null, is there a reason to map a null to a zero?
-				qualtx.prod_ctry_cmpl_key = dataMap.get(PROD_CTRY_CMP_KEY) != null ? (Long) dataMap.get(PROD_CTRY_CMP_KEY) : 0;
-				qualtx.sub_pull_ctry = dataMap.get(SUB_PULL_CTRY) != null ? (String) dataMap.get(SUB_PULL_CTRY) : "";
-			}
-			
-			
+		}
+		else
+		{
+			dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
 		}
 		
+
+		if (!dataMap.isEmpty())
+		{
+			if (dataMap.get(HS_NUM) != null) qualtx.hs_num = (String) dataMap.get(HS_NUM);
+			if (dataMap.get(PROD_CTRY_CMP_KEY) != null) qualtx.prod_ctry_cmpl_key = (Long) dataMap.get(PROD_CTRY_CMP_KEY);
+			if (dataMap.get(SUB_PULL_CTRY) != null) qualtx.sub_pull_ctry = (String) dataMap.get(SUB_PULL_CTRY);
+		}
 		
 	}
 
@@ -389,6 +387,7 @@ public class QualTXBusinessLogicProcessor
 		String ctryCode = aQualTXComp.qualTX.ctry_of_import;
 		String manfCtry = null;
 		int size = -1;
+		Map<String, Object> dataMap = new HashMap<>();
 		SubPullConfigData subpullConfigDate = getSubPullConfig(aQualTXComp.org_code, aQualTXComp.qualTX.fta_code, aQualTXComp.qualTX.ctry_of_import);
 		if (subpullConfigDate != null)
 		{
@@ -404,8 +403,6 @@ public class QualTXBusinessLogicProcessor
 			
 			if(ctryCode == null || "".equals(ctryCode) || "DEFAULT".equals(ctryCode))
 				ctryCode = aQualTXComp.qualTX.ctry_of_import;
-			
-			Map<String, Object> dataMap = new HashMap<>();
 			
 			//Check by Manufacturer Country if configured.
 			if(manfCtry != null)
@@ -424,18 +421,19 @@ public class QualTXBusinessLogicProcessor
 					dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, baseHsconf.getCompCtry(), Integer.valueOf(baseHsconf.getCompHslength()));
 					if (!dataMap.isEmpty()) break;
 				}
+			}
+		}
+		else
+		{
+			dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
+		}
+		
 
-			}
-			
-			//Check by fall-back  Component Country Configuration
-			if (!dataMap.isEmpty())
-			{
-				aQualTXComp.hs_num = dataMap.get(HS_NUM) != null ? (String) dataMap.get(HS_NUM) : "";
-				if(dataMap.get(PROD_CTRY_CMP_KEY) != null)
-					aQualTXComp.prod_ctry_cmpl_key =  (Long) dataMap.get(PROD_CTRY_CMP_KEY);
-				
-				aQualTXComp.sub_pull_ctry = dataMap.get(SUB_PULL_CTRY) != null ? (String) dataMap.get(SUB_PULL_CTRY) : "";
-			}
+		if (!dataMap.isEmpty())
+		{
+			if (dataMap.get(HS_NUM) != null) aQualTXComp.hs_num = (String) dataMap.get(HS_NUM);
+			if (dataMap.get(PROD_CTRY_CMP_KEY) != null) aQualTXComp.prod_ctry_cmpl_key = (Long) dataMap.get(PROD_CTRY_CMP_KEY);
+			if (dataMap.get(SUB_PULL_CTRY) != null) aQualTXComp.sub_pull_ctry = (String) dataMap.get(SUB_PULL_CTRY);
 		}
 		
 	}
