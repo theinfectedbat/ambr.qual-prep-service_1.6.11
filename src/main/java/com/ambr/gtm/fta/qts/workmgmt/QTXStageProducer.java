@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +23,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.ambr.gtm.fta.qps.bom.BOMMetricSetUniverseContainer;
 import com.ambr.gtm.fta.qps.bom.BOMUniverse;
+import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
@@ -43,8 +45,12 @@ import com.ambr.gtm.fta.qts.WorkManagementException;
 import com.ambr.gtm.fta.qts.TrackerCodes.QTXStageStatus;
 import com.ambr.gtm.fta.qts.TrackerCodes.QualtxStatus;
 import com.ambr.gtm.fta.qts.api.TrackerClientAPI;
+import com.ambr.gtm.fta.qts.config.QEConfig;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.trade.MDIQualTxRepository;
+import com.ambr.gtm.fta.qts.util.TradeLane;
+import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
+import com.ambr.gtm.fta.qts.util.TradeLaneData;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 import com.ambr.platform.uoid.UniversalObjectIDGenerator;
 import com.ambr.platform.utils.log.PerformanceTracker;
@@ -64,6 +70,7 @@ public class QTXStageProducer extends QTXProducer
 	
 	private GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI;
 	private TrackerClientAPI trackerClientAPI;
+	private  QEConfigCache		qeConfigCache;
 	
 	public QTXStageProducer(SchemaDescriptorService schemaService, PlatformTransactionManager txMgr, JdbcTemplate template)
 	{
@@ -75,6 +82,7 @@ public class QTXStageProducer extends QTXProducer
 		super.init(threads, readAhead, fetchSize, batchSize, sleepInterval, qualTxRepository, workRepository, idGenerator);
 		
 		this.utility = new ArQtxWorkUtility(this.getWorkRepository(), this.template, bomUniverse, qeConfigCache);
+		this.qeConfigCache = qeConfigCache;
 	}
 	
 	public void setAPI(GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI, TrackerClientAPI trackerClientAPI)
@@ -409,7 +417,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx);
+		    isValQualtx = isValidQualtx(qualtx, true);
 		    if(!isValQualtx) 
 		    	continue;
 		    
@@ -737,7 +745,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx);
+		    isValQualtx = isValidQualtx(qualtx, false);
 		    if(!isValQualtx) 
 		    	continue;
 
@@ -842,7 +850,7 @@ public class QTXStageProducer extends QTXProducer
 			QTXWorkHS theQtxHsWork = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx);
+		    isValQualtx = isValidQualtx(qualtx, false);
 		    if(!isValQualtx)
 		    	continue;
 
@@ -894,7 +902,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx);
+		    isValQualtx = isValidQualtx(qualtx, false);
 		    if(!isValQualtx) 
 		    	continue;
 
@@ -1009,20 +1017,51 @@ public class QTXStageProducer extends QTXProducer
 		}
 	}
 
-	private boolean isValidQualtx(QualTX qualtx)
+	private boolean isValidQualtx(QualTX qualtx, boolean isBOMChange)
 	{
 		if (qualtx.src_key == null || qualtx.iva_code == null || qualtx.fta_code == null || qualtx.ctry_of_import == null || (qualtx.is_active != null && (qualtx.is_active).equalsIgnoreCase("N"))) return false;
-		
+
+		if(!isBOMChange) return true;
+		if (qualtx.fta_code != null && qualtx.ctry_of_import != null)
+		{
+
+			try
+			{
+
+				TradeLane aTradeLane = getTradeLane(qualtx.org_code, qualtx.fta_code, qualtx.ctry_of_import);
+
+				if (aTradeLane != null)
+				{
+					TradeLaneContainer laneContainer = this.qeConfigCache.getQEConfig(qualtx.org_code).getTradeLaneContainer();
+					if (laneContainer != null)
+					{
+						TradeLaneData laneData = laneContainer.getTradeLaneData(aTradeLane);
+						if (null != laneData && !laneData.isRequalification()) return false;
+
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				logger.error("isValidQualtx, Error while getting requalification flag value from QEconfig for qualtx :" + qualtx.alt_key_qualtx);
+			}
+
+		}
+
 		return true;
 	}
 
 	private boolean isValidQualtxComp(QualTXComponent qualtxComp)
 	{
+		boolean isValid = true;
+		
 		if(qualtxComp != null && qualtxComp.src_id != null)
 		{
-			if((qualtxComp.src_id).contains("~")) return false;
+			if((qualtxComp.src_id).contains("~")) 
+				isValid = false;
 		}
-		return true;
+		
+		return isValid;
 	}
 
 	private void getConsolidatedQualtxForConfigUpdates(Map<QTXStage, ArrayList<Long>> configRequalMap, Map<Long, QTXWork> qtxWorkList) throws Exception
@@ -1054,7 +1093,7 @@ public class QTXStageProducer extends QTXProducer
 			QTXWork theQtxWork = null;
 
 			boolean isValQualtx = false;
-			isValQualtx = isValidQualtx(qualtx);
+			isValQualtx = isValidQualtx(qualtx, false);
 			if (!isValQualtx) continue;
 
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
@@ -1088,7 +1127,7 @@ public class QTXStageProducer extends QTXProducer
 			boolean isNewComp = true;
 
 			boolean isValQualtx = false;
-			isValQualtx = isValidQualtx(qualtx);
+			isValQualtx = isValidQualtx(qualtx, false);
 			if (!isValQualtx) continue;
 
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
@@ -1157,6 +1196,17 @@ public class QTXStageProducer extends QTXProducer
 			configRequalMap.put(stageData, ivaKeyList);
 		}
 
+	}
+	
+	private TradeLane getTradeLane(String orgCode, String ftaCode, String coi) throws Exception
+	{
+		List<TradeLane> tradeLaneList = this.qeConfigCache.getQEConfig(orgCode).getTradeLaneList();
+		if (tradeLaneList != null)
+		{
+			Optional<TradeLane> optTradeLane = tradeLaneList.stream().filter(p -> p.getFtaCode().equalsIgnoreCase(ftaCode) && (p.getCtryOfImport().equalsIgnoreCase(coi) || p.getCtryOfImport().equalsIgnoreCase("ALL"))).findFirst();
+			if (optTradeLane.isPresent()) return optTradeLane.get();
+		}
+		return null;
 	}
 
 }
