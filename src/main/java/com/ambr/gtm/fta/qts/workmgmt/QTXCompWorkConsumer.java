@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -529,9 +530,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
 					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(qualtx.org_code, qualtx.fta_code, qtxBusinessLogicProcessor.propertySheetManager);
 					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
-					qualtxComp.traced_value =(Double) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
+					BigDecimal traced_value = (BigDecimal)aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
+					if(traced_value != null )
+					{
+						qualtxComp.traced_value = traced_value.doubleValue();
+					}
 					qualtxComp.traced_value_currency =(String) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
-					qualtxComp.include_for_trace_value =(String) aClaimDetails.getValue(flexFieldMap.get("INCLUDE_FOR_TRACE_VALUE"));
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE))
 				{
