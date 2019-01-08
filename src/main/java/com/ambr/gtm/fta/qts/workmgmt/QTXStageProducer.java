@@ -53,6 +53,7 @@ import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
 import com.ambr.gtm.fta.qts.util.TradeLaneData;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 import com.ambr.platform.uoid.UniversalObjectIDGenerator;
+import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 
 //TODO should priority be used here?  this could cause out of sequence processing : new high priority applied before older lower priority targeting same record.
@@ -1043,7 +1044,8 @@ public class QTXStageProducer extends QTXProducer
 			}
 			catch (Exception e)
 			{
-				logger.error("isValidQualtx, Error while getting requalification flag value from QEconfig for qualtx :" + qualtx.alt_key_qualtx);
+				MessageFormatter.error(logger, "isValidQualtx", e, " Error while getting requalification flag value from QEconfig for qualtx : [{0}] ", qualtx.alt_key_qualtx);
+
 			}
 
 		}
