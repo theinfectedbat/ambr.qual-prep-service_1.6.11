@@ -73,7 +73,8 @@ public class PartnerDetailUniversePartition
 		
 		aSQLLines.add("select alt_key_ptnr, country_code"); 
 		aSQLLines.add("from mdi_ptnr");
-		aSQLLines.add("where alt_key_ptnr in (select manufacturer_key from mdi_bom_comp)");
+
+		aWhereClauseSQLLines.add("alt_key_ptnr in (select manufacturer_key from mdi_bom_comp)");
 
 		if (this.partitionCount > 1) {
 			aWhereClauseSQLLines.add("mod(alt_key_ptnr, ?) = ?");
