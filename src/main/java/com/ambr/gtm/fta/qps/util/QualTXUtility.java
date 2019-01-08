@@ -148,12 +148,6 @@ public class QualTXUtility
 			MessageFormatter.error(logger, "readyForQualificaiton", e, "BOM [{0,number,#}] Qual TX [{1,number,#}]: Failed to post qualification work",  this.qualTX.src_key, this.qualTX.alt_key_qualtx);
 		}
 	}
-	public static double toDecimalFormat(double theDoubleValue) throws Exception
-	{
-		DecimalFormat fourDecimalFormat = new DecimalFormat("#.####");
-		double theReturnValue = Double.valueOf(fourDecimalFormat.format(theDoubleValue));
-		return theReturnValue;
-	}
 }
 	
 	
