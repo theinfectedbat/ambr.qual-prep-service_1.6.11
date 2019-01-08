@@ -48,6 +48,7 @@ import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
+import com.ambr.gtm.utils.legacy.sps.exception.PropertyDoesNotExistException;
 
 
 /*
@@ -374,24 +375,23 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		if (bomComp == null && !isCompDeleted) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 		qualtxComp.qualTX = qualtx;
 		int cooSource = qualtxComp.coo_source;
-		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
-		List<String> propertyValue = Arrays.asList(propertySheet.getStringValueList("COO_DETERMINATION_HIERARCHY"));
+		List<String> propertyValue = getCOODeterminationHierarchy(qualtx);
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && (cooSource == RequalificationWorkCodes.BOM_COMP_COO_CHG || propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && (cooSource == RequalificationWorkCodes.BOM_COMP_COM_COO_CHG || propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) <  propertyValue.indexOf(cooSource)))
-		{
-			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
-		}
-		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && (cooSource == RequalificationWorkCodes.COMP_GPM_COO_CHG || propertyValue.indexOf(RequalificationWorkCodes.COMP_GPM_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_MANUFACTURER_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && (cooSource == RequalificationWorkCodes.COMP_GPM_COO_CHG  || propertyValue.indexOf(RequalificationWorkCodes.COMP_STP_COO_CHG) <  propertyValue.indexOf(cooSource)))
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.GPM_COO) <= cooSource)
+		{
+			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+		}
+		
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.STP_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
@@ -634,6 +634,23 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.created_date = currentDate;
 		}
 	}
+
+	private List<String> getCOODeterminationHierarchy(QualTX qualtx) throws Exception {
+		
+		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
+		String aCOOHierchyOrder= null;
+		try
+		{
+			aCOOHierchyOrder = propertySheet.getStringValue("COO_DETERMINATION_HIERARCHY");
+		}
+		catch (PropertyDoesNotExistException p)
+		{
+			aCOOHierchyOrder = null;
+		}
+		String [] aCOOOrder = aCOOHierchyOrder.split(",");
+		return Arrays.asList(aCOOOrder);
+	}
+	
 	public Map<String, String> getFeildMapping(String deName, String ftaCodeGroup) throws Exception {
 		String groupName = MessageFormat.format("{0}{1}{2}", deName, GroupNameSpecification.SEPARATOR, ftaCodeGroup);
 		DataExtensionConfiguration	aCfg = this.repos.getDataExtensionConfiguration(groupName);
