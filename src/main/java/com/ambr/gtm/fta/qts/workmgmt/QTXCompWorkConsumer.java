@@ -375,34 +375,23 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		if (bomComp == null && !isCompDeleted) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 		qualtxComp.qualTX = qualtx;
 		int cooSource = qualtxComp.coo_source;
-		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
-		String aCOOHierchyOrder= null;
-		try
-		{
-			aCOOHierchyOrder = propertySheet.getStringValue("COO_DETERMINATION_HIERARCHY");
-		}
-		catch (PropertyDoesNotExistException p)
-		{
-			aCOOHierchyOrder = null;
-		}
-		String [] aCOOOrder = aCOOHierchyOrder.split(",");
-		List<String> propertyValue = Arrays.asList(aCOOOrder);
+		List<String> propertyValue = getCOODeterminationHierarchy(qualtx);
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf("BOM_COMP_COO") <= cooSource)
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf("BOM_COMP_MANUFACTURER_COO") <= cooSource)
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_MANUFACTURER_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf("GPM_COO") <= cooSource)
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.GPM_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf("STP_COO") <= cooSource)
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.STP_COO) <= cooSource)
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
@@ -645,6 +634,23 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.created_date = currentDate;
 		}
 	}
+
+	private List<String> getCOODeterminationHierarchy(QualTX qualtx) throws Exception {
+		
+		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
+		String aCOOHierchyOrder= null;
+		try
+		{
+			aCOOHierchyOrder = propertySheet.getStringValue("COO_DETERMINATION_HIERARCHY");
+		}
+		catch (PropertyDoesNotExistException p)
+		{
+			aCOOHierchyOrder = null;
+		}
+		String [] aCOOOrder = aCOOHierchyOrder.split(",");
+		return Arrays.asList(aCOOOrder);
+	}
+	
 	public Map<String, String> getFeildMapping(String deName, String ftaCodeGroup) throws Exception {
 		String groupName = MessageFormat.format("{0}{1}{2}", deName, GroupNameSpecification.SEPARATOR, ftaCodeGroup);
 		DataExtensionConfiguration	aCfg = this.repos.getDataExtensionConfiguration(groupName);
