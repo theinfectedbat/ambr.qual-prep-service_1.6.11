@@ -231,7 +231,7 @@ public class QualTXComponentExpansionUtility
 		
 		if(this.processedSubBOMKeys.contains(theSubBOMKey))
 		{
-			MessageFormatter.debug(logger, "execute", "Sub BOM with Key [{0,number,#}]: is referred multiple times.", theSubBOMKey);
+			MessageFormatter.debug(logger, "flattenSubBOM", "Sub BOM with Key [{0,number,#}]: is referred multiple times.", theSubBOMKey);
 			return true;
 		}
 			
@@ -250,89 +250,100 @@ public class QualTXComponentExpansionUtility
 					return false;
 			}
 		}
-		
-		for(BOMComponent aSubBOMComp : aSubBOM.compList)
+		if (aSubBOM.compList != null)
 		{
-			if(ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(aSubBOMComp.component_type)
-					|| ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(aSubBOMComp.component_type))
-				continue;
-			
-			if(aSubBOMComp.sub_bom_key == null || aSubBOMComp.sub_bom_key == 0) {
-				aUniqueCompKey = new UniqueComponent(aSubBOMComp.prod_key, aSubBOMComp.prod_src_key, aSubBOMComp.unit_cost);
-				QualTXComponent existingQualTXComp = theUniqueComponents.get(aUniqueCompKey.getKey());
-				if(existingQualTXComp != null)
+			for (BOMComponent aSubBOMComp : aSubBOM.compList)
+			{
+				if (ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(aSubBOMComp.component_type) || ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(aSubBOMComp.component_type)) continue;
+
+				if (aSubBOMComp.sub_bom_key == null || aSubBOMComp.sub_bom_key == 0)
 				{
-					if(this.isRawMaterialApproach)
+					aUniqueCompKey = new UniqueComponent(aSubBOMComp.prod_key, aSubBOMComp.prod_src_key, aSubBOMComp.unit_cost);
+					QualTXComponent existingQualTXComp = theUniqueComponents.get(aUniqueCompKey.getKey());
+					if (existingQualTXComp != null)
 					{
-						existingQualTXComp.rm_qty_per = (existingQualTXComp.rm_qty_per != null ? existingQualTXComp.rm_qty_per : 0) + aSubBOMComp.qty_per;
-						existingQualTXComp.rm_cost = aSubBOMComp.unit_cost *  existingQualTXComp.rm_qty_per;
-						existingQualTXComp.rm_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value)/existingQualTXComp.qty_per) *  existingQualTXComp.rm_qty_per;
-						existingQualTXComp.rm_traced_value =  ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value)/existingQualTXComp.qty_per) *  existingQualTXComp.rm_qty_per;
-						existingQualTXComp.raw_material_ind = "Y";
+						if (this.isRawMaterialApproach)
+						{
+							existingQualTXComp.rm_qty_per = (existingQualTXComp.rm_qty_per != null ? existingQualTXComp.rm_qty_per : 0) + aSubBOMComp.qty_per;
+							existingQualTXComp.rm_cost = aSubBOMComp.unit_cost * existingQualTXComp.rm_qty_per;
+							existingQualTXComp.rm_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
+							existingQualTXComp.rm_traced_value = ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
+							existingQualTXComp.raw_material_ind = "Y";
+						}
+						else if (isIntermediateApproach)
+						{
+							existingQualTXComp.in_qty_per = (existingQualTXComp.in_qty_per != null ? existingQualTXComp.in_qty_per : 0) + aSubBOMComp.qty_per;
+							existingQualTXComp.in_cost = aSubBOMComp.unit_cost * existingQualTXComp.in_qty_per;
+							existingQualTXComp.in_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
+							existingQualTXComp.in_traced_value = ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
+							existingQualTXComp.intermediate_ind = "Y";
+						}
 					}
-					else if(isIntermediateApproach)
+					else
 					{
-						existingQualTXComp.in_qty_per = (existingQualTXComp.in_qty_per != null ? existingQualTXComp.in_qty_per : 0) + aSubBOMComp.qty_per;
-						existingQualTXComp.in_cost = aSubBOMComp.unit_cost *  existingQualTXComp.in_qty_per;
-						existingQualTXComp.in_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value)/existingQualTXComp.qty_per) *  existingQualTXComp.in_qty_per;
-						existingQualTXComp.in_traced_value =  ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value)/existingQualTXComp.qty_per) *  existingQualTXComp.in_qty_per;
-						existingQualTXComp.intermediate_ind = "Y";
+						// The component may exist from a previous raw-material
+						// qualification, so can avoid pulling the component
+						// data again but just update the qty_per and unit_cost
+						if (this.isRawMaterialApproach)
+						{
+							QualTXComponent existingRawMaterialQualTXComp = this.rawMaterialComponentList.get(aUniqueCompKey.getKey());
+							if (existingRawMaterialQualTXComp != null)
+							{
+								existingRawMaterialQualTXComp.rm_qty_per = aSubBOMComp.qty_per;
+								existingRawMaterialQualTXComp.rm_cost = existingRawMaterialQualTXComp.unit_cost * existingRawMaterialQualTXComp.rm_qty_per;
+								theUniqueComponents.put(aUniqueCompKey.getKey(), existingRawMaterialQualTXComp);
+								continue;
+							}
+						}
+						else if (isIntermediateApproach)
+						{
+							QualTXComponent existingIntermediateQualTXComp = this.intermediateMaterialComponentList.get(aUniqueCompKey.getKey());
+							if (existingIntermediateQualTXComp != null)
+							{
+								existingIntermediateQualTXComp.in_qty_per = aSubBOMComp.qty_per;
+								existingIntermediateQualTXComp.in_cost = existingIntermediateQualTXComp.unit_cost * existingIntermediateQualTXComp.in_qty_per;
+								theUniqueComponents.put(aUniqueCompKey.getKey(), existingIntermediateQualTXComp);
+								continue;
+							}
+						}
+						// Create the component if it already does not exist and
+						// pull Basic Info, Ctry Cmpl & IVA data.
+						QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
+						QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
+						aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
+						aQualTXComponentUtility.pullComponentData();
+						if (this.isRawMaterialApproach)
+						{
+							aNewQualTXComp.raw_material_ind = "Y";
+							aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
+							aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
+							aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
+							aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
+
+						}
+
+						if (this.isIntermediateApproach)
+						{
+							aNewQualTXComp.intermediate_ind = "Y";
+							aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
+							aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
+							aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
+							aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
+						}
+						aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}", aSubBOMComp.comp_num);
+						theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
 					}
+
 				}
 				else
 				{
-					//The component may exist from a previous raw-material qualification, so can avoid pulling the component data again but just update the qty_per and unit_cost
-					if(this.isRawMaterialApproach)
-					{
-						QualTXComponent existingRawMaterialQualTXComp = this.rawMaterialComponentList.get(aUniqueCompKey.getKey());
-						if(existingRawMaterialQualTXComp != null) {
-							existingRawMaterialQualTXComp.rm_qty_per = aSubBOMComp.qty_per;
-							existingRawMaterialQualTXComp.rm_cost = existingRawMaterialQualTXComp.unit_cost *  existingRawMaterialQualTXComp.rm_qty_per;
-							theUniqueComponents.put(aUniqueCompKey.getKey(), existingRawMaterialQualTXComp);
-							continue;
-						}
-					}
-					else if(isIntermediateApproach)
-					{
-						QualTXComponent existingIntermediateQualTXComp = this.intermediateMaterialComponentList.get(aUniqueCompKey.getKey());
-						if(existingIntermediateQualTXComp != null) {
-							existingIntermediateQualTXComp.in_qty_per = aSubBOMComp.qty_per;
-							existingIntermediateQualTXComp.in_cost = existingIntermediateQualTXComp.unit_cost *  existingIntermediateQualTXComp.in_qty_per;
-							theUniqueComponents.put(aUniqueCompKey.getKey(), existingIntermediateQualTXComp);
-							continue;
-						}
-					}
-					//Create the component if it already does not exist and pull Basic Info, Ctry Cmpl & IVA data.
-					QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
-					QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
-					aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
-					aQualTXComponentUtility.pullComponentData();
-					if(this.isRawMaterialApproach) {
-						aNewQualTXComp.raw_material_ind = "Y";
-						aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
-						aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
-						aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
-						aNewQualTXComp.rm_traced_value =  aNewQualTXComp.traced_value;
-						
-					}	
-				
-					if(this.isIntermediateApproach)
-					{
-						aNewQualTXComp.intermediate_ind = "Y";
-						aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
-						aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
-						aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
-						aNewQualTXComp.in_traced_value =  aNewQualTXComp.traced_value;
-					}
-					aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}",aSubBOMComp.comp_num);
-					theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
+					this.flattenSubBOM(aSubBOMComp.sub_bom_key, theUniqueComponents, !passedViaRVCSatisfied);
 				}
-					
 			}
-			else
-			{
-				this.flattenSubBOM(aSubBOMComp.sub_bom_key, theUniqueComponents, !passedViaRVCSatisfied);
-			}
+		}
+		else
+		{
+			MessageFormatter.debug(logger, "flattenSubBOM", "Sub BOM with Key [{0,number,#}]: has zero componenets.", theSubBOMKey);
 		}
 		return true;
 	}
