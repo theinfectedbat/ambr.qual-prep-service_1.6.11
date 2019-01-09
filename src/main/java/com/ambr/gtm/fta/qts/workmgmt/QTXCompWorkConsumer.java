@@ -530,10 +530,21 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
 					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(qualtx.org_code, qualtx.fta_code, qtxBusinessLogicProcessor.propertySheetManager);
 					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
-					Double traced_value = (Double)aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
-					if(traced_value != null )
+					Object traceValueObject = (Object)aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
+					if(traceValueObject != null)  //TA-82724
 					{
-						qualtxComp.traced_value = traced_value;
+						if(traceValueObject instanceof Integer)
+						{
+							qualtxComp.traced_value = Double.valueOf((Integer)traceValueObject);
+						}
+						else if(traceValueObject instanceof BigDecimal)
+						{
+							qualtxComp.traced_value = ((BigDecimal)traceValueObject).doubleValue();
+						}
+						else if(traceValueObject instanceof Double)
+						{
+							qualtxComp.traced_value = (Double)traceValueObject;
+						}
 					}
 					qualtxComp.traced_value_currency =(String) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
 				}
