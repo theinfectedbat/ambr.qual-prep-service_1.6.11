@@ -26,6 +26,7 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
@@ -397,16 +398,17 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		}
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
 		{
-			this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+			this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
 			
 			if (!"Y".equalsIgnoreCase(qualtxComp.cumulation_rule_applied) && ( qualtxComp.qualified_flg == null || "".equalsIgnoreCase(qualtxComp.qualified_flg)))
 			{
 				Date origEffectiveFrom = qualtxComp.qualified_from;
 				Date origEffectiveTo = qualtxComp.qualified_to;
-				boolean isPrevYearQualApplied = this.qtxBusinessLogicProcessor.previousYearQualificationRule.applyPrevYearQualForComponent(bomComp, qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+				bomComp.setBOM(parentWorkPackage.bom);
+				boolean isPrevYearQualApplied = this.qtxBusinessLogicProcessor.previousYearQualificationRule.applyPrevYearQualForComponent(bomComp, qualtxComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
 				if (!isPrevYearQualApplied)
 				{
-					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVAProductSourceContainerByProdSourceKey(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
+					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
 					qualtxComp.qualified_from = origEffectiveFrom;
 					qualtxComp.qualified_to = origEffectiveTo;
 				}
@@ -530,11 +532,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
 					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(qualtx.org_code, qualtx.fta_code, qtxBusinessLogicProcessor.propertySheetManager);
 					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
-					Double traced_value = (Double)aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
-					if(traced_value != null )
-					{
-						qualtxComp.traced_value = traced_value;
-					}
+					setTracedValue(qualtxComp, aClaimDetails, flexFieldMap); //TA-82724
 					qualtxComp.traced_value_currency =(String) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE))
@@ -635,6 +633,26 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		}
 	}
 
+	private void setTracedValue(QualTXComponent qualtxComp, GPMClaimDetails aClaimDetails,
+			Map<String, String> flexFieldMap) throws Exception {
+		Object traceValueObject = (Object)aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
+		if(traceValueObject != null)  
+		{
+			if(traceValueObject instanceof Integer)
+			{
+				qualtxComp.traced_value = Double.valueOf((Integer)traceValueObject);
+			}
+			else if(traceValueObject instanceof BigDecimal)
+			{
+				qualtxComp.traced_value = ((BigDecimal)traceValueObject).doubleValue();
+			}
+			else if(traceValueObject instanceof Double)
+			{
+				qualtxComp.traced_value = (Double)traceValueObject;
+			}
+		}
+	}
+
 	private List<String> getCOODeterminationHierarchy(QualTX qualtx) throws Exception {
 		
 		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
@@ -668,7 +686,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 			catch (Exception e)
 			{
-				logger.error("Failed processing comp work " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_wid);
+				logger.error("Failed processing comp work, qtx_wid =" + compWorkPackage.compWork.qtx_wid + " and qtx_comp_wid =" + compWorkPackage.compWork.qtx_comp_wid);
 				compWorkPackage.failure = e;
 				
 				throw e;
