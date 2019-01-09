@@ -679,7 +679,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 			catch (Exception e)
 			{
-				logger.error("Failed processing comp work " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_wid);
+				logger.error("Failed processing comp work, qtx_wid =" + compWorkPackage.compWork.qtx_wid + " and qtx_comp_wid =" + compWorkPackage.compWork.qtx_comp_wid);
 				compWorkPackage.failure = e;
 				
 				throw e;
