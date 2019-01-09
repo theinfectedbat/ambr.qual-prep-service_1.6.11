@@ -221,8 +221,8 @@ public class QualTXComponentUtility
 		this.qualTXComp.prod_key = this.bomComp.prod_key;
 		this.qualTXComp.prod_src_key = this.bomComp.prod_src_key;
 		this.qualTXComp.qty_per = this.bomComp.qty_per;
-		this.qualTXComp.qualified_from = this.bomComp.effective_from;
-		this.qualTXComp.qualified_to = this.bomComp.effective_to;
+		//this.qualTXComp.qualified_from = this.bomComp.effective_from;
+		//this.qualTXComp.qualified_to = this.bomComp.effective_to;
 		this.qualTXComp.seller_key = this.bomComp.seller_key;
 		this.qualTXComp.supplier_key = this.bomComp.supplier_key;
 		this.qualTXComp.src_key = this.bomComp.alt_key_comp;

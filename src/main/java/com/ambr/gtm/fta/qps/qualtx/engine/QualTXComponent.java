@@ -146,6 +146,8 @@ public class QualTXComponent
 		this.alt_key_qualtx = this.qualTX.alt_key_qualtx;
 		this.source_of_data = this.qualTX.source_of_data;
 		this.tx_id = this.qualTX.tx_id;
+		this.qualified_from = this.qualTX.effective_from;
+		this.qualified_to = this.qualTX.effective_to;
 
 		this.taskDesc = "QTX." + this.alt_key_qualtx + ".COMP" + this.alt_key_comp;
 	}
