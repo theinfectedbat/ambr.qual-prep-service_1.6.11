@@ -63,6 +63,7 @@ public class FTACtryConfigCache
 	
 	public synchronized FTACountryContainer getFTACountryContainer(String orgCode) throws Exception
 	{
+		if (this.orgFTACountryData == null) return null;
 		FTACountryContainer ftaCountryContainer = this.orgFTACountryData.getFTACountryContainer(orgCode);
 		if (ftaCountryContainer == null)
 		{
