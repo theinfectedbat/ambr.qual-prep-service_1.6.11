@@ -2,7 +2,10 @@ package com.ambr.gtm.fta.qps.bom.qualstatus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.MessageFormat;
+import java.time.Duration;
 
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,8 +15,9 @@ import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.BOMStatusManager;
-import com.ambr.gtm.fta.qps.qualtx.engine.result.QualTXUniversePreparationProgressManager;
 import com.ambr.platform.rdbms.util.DataRecordUtility;
+import com.ambr.platform.utils.queue.TaskQueueProgressSummary;
+import com.ambr.platform.utils.queue.TaskQueueThroughputUtility;
 
 /**
  *****************************************************************************************
@@ -28,6 +32,8 @@ public class BOMQualificationStatusGenerator
 	private BOMQualificationStatus				statusObj;
 	private PreparationEngineQueueUniverse		queueUniverse;
 	private JdbcTemplate						jdbcTemplate;
+	private long								bomKey;
+	private int									measurmentPeriodInSecs;
 	
 	/**
 	 *************************************************************************************
@@ -147,6 +153,7 @@ public class BOMQualificationStatusGenerator
 	{
 		this.queueUniverse = theQueueUniverse;
 		this.jdbcTemplate = new JdbcTemplate(this.queueUniverse.dataSrc);
+		this.measurmentPeriodInSecs = 5;
 	}
 	
 	/**
@@ -184,6 +191,7 @@ public class BOMQualificationStatusGenerator
 			aStatusDetail.status = QualificationPreparationStatusEnum.IN_PROGRESS;
 			aStatusDetail.startTime = aStatusMgr.getStartTime();
 			aStatusDetail.endTime = aStatusMgr.getEndTime();
+			aStatusDetail.setDuration(this.queueUniverse.getThroughputUtility(), this.bomKey);
 		}
 		catch (IllegalStateException e) {
 			if (this.queueUniverse.qtxDetailUniverse.getQualTXCount() == 0) {
@@ -232,5 +240,35 @@ public class BOMQualificationStatusGenerator
 		aSqlText += "where alt_key_src = (select prod_src_key from mdi_bom where alt_key_bom = ?)";
 		
 		this.jdbcTemplate.query(aSqlText, new Object[]{this.statusObj.bomKey}, new TradeLaneLoader());
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 *	@param	theBOMKey
+	 *************************************************************************************
+	 */
+	public BOMQualificationStatusGenerator setBOM(long theBOMKey)
+		throws Exception
+	{
+		this.bomKey = theBOMKey;
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 *	@param	thePeriodIsSecs
+	 *************************************************************************************
+	 */
+	public BOMQualificationStatusGenerator setMeasurementPeriod(int thePeriodIsSecs)
+		throws Exception
+	{
+		this.measurmentPeriodInSecs = thePeriodIsSecs;
+		return this;
 	}
 }
