@@ -49,10 +49,12 @@ public class QualTX
 	@Column(name = "hs_num") 						public String	hs_num;
 	@Column(name = "in_construction_status") 		public Integer	in_construction_status;
 	@Column(name = "include_for_trace_value") 		public String	include_for_trace_value;
+	@Column(name = "is_active") 			 	    public String	is_active;
 	@Column(name = "iva_code") 						public String	iva_code;
 	@Column(name = "knit_to_shape") 				public String	knit_to_shape;
 	@Column(name = "last_modified_by") 				public String	last_modified_by;
 	@Column(name = "last_modified_date") 			public Date		last_modified_date;
+	@Column(name = "listed_material")				public String	listed_material;
 	@Column(name = "manufacturer_key") 				public Long		manufacturer_key;
 	@Column(name = "org_code") 						public String	org_code;
 	@Column(name = "prod_ctry_cmpl_key")			public Long		prod_ctry_cmpl_key;
@@ -77,8 +79,6 @@ public class QualTX
 	@Column(name = "rvc_threshold_safety_factor")	public Double	rvc_threshold_safety_factor;
 	@Column(name = "rvc_restricted")				public String	rvc_restricted;
 	@Column(name = "target_roo_id")					public String	target_roo_id;
-	@Column(name = "listed_material")				public String	listed_material;
-	@Column(name = "is_active") 			 	    public String	is_active;
 	
 	@OneToMany(targetEntity = QualTXComponent.class) 		public ArrayList<QualTXComponent>		compList;
 	@OneToMany(targetEntity = QualTXPrice.class) 			public ArrayList<QualTXPrice>			priceList;

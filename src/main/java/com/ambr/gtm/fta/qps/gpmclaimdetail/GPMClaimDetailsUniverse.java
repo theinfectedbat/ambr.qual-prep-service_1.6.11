@@ -3,14 +3,16 @@ package com.ambr.gtm.fta.qps.gpmclaimdetail;
 import java.io.File;
 import java.text.MessageFormat;
 
+import javax.sql.DataSource;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.api.GetGPMClaimDetailsFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.api.GetGPMClaimDetailsStatusFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
@@ -51,6 +53,7 @@ public class GPMClaimDetailsUniverse
 	UniverseStatusEnum										status;
 	GPMClaimDetailsUniversePartition						localPartition;
 	private ConfigurationPropertyResolver					propertyResolver;
+	private DataSource										dataSrc;
 
     /**
      *************************************************************************************
@@ -261,6 +264,21 @@ public class GPMClaimDetailsUniverse
 		}
 	}
 
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theDataSrc
+	 *************************************************************************************
+	 */
+	public GPMClaimDetailsUniverse setDataSource(DataSource theDataSrc)
+		throws Exception
+	{
+		this.dataSrc = theDataSrc;
+		return this;
+	}
+	
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -501,6 +519,8 @@ public class GPMClaimDetailsUniverse
 		SubordinateServiceReference		aServiceRef;
 		
 		if (this.localPartition != null) {
+			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
 			return;
 		}
 		

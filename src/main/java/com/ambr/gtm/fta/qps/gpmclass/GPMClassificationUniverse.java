@@ -3,14 +3,16 @@ package com.ambr.gtm.fta.qps.gpmclass;
 import java.io.File;
 import java.text.MessageFormat;
 
+import javax.sql.DataSource;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.gpmclass.api.GetGPMClassStatusFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmclass.api.GetGPMClassificationsByProductFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
@@ -48,8 +50,8 @@ public class GPMClassificationUniverse
 	private String											dbPassword;
 	UniverseStatusEnum										status;
 	GPMClassificationUniversePartition						localPartition;
-
-	private ConfigurationPropertyResolver		propertyResolver;
+	private ConfigurationPropertyResolver					propertyResolver;
+	private DataSource										dataSrc;
 
     /**
      *************************************************************************************
@@ -265,6 +267,21 @@ public class GPMClassificationUniverse
 		}
 	}
 
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theDataSrc
+	 *************************************************************************************
+	 */
+	public GPMClassificationUniverse setDataSource(DataSource theDataSrc)
+		throws Exception
+	{
+		this.dataSrc = theDataSrc;
+		return this;
+	}
+	
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -505,6 +522,8 @@ public class GPMClassificationUniverse
 		SubordinateServiceReference		aServiceRef;
 		
 		if (this.localPartition != null) {
+			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
 			return;
 		}
 		

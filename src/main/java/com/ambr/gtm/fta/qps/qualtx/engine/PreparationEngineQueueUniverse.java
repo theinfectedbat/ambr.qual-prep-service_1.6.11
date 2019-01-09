@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
@@ -203,6 +204,58 @@ public class PreparationEngineQueueUniverse
 	 * <P>
 	 * </P>
 	 * 
+	 * @param	theMeasurmentPeriodInSecs
+	 *************************************************************************************
+	 */
+	public String getPerformanceStatus(int theMeasurmentPeriodInSecs)
+		throws Exception
+	{
+		ParameterizedMessageUtility		aMsgUtil = new ParameterizedMessageUtility();
+		TaskQueueThroughputUtility		aThroughputUtil;
+		
+		aMsgUtil.format("BOM Processor Queue Universe Performance : BOMs [{0}] Components [{1}] measurement period (secs) [{2}]", false, true,
+			this.bomQueue.getCumulativeTaskCount(),
+			this.bomQueue.getCumulativeComponentCount(),
+			theMeasurmentPeriodInSecs
+		);
+		
+		aThroughputUtil = new TaskQueueThroughputUtility();
+		aThroughputUtil.addQueue(this.bomQueue);
+		aThroughputUtil.addQueue(this.tradeLaneQueue);
+		aThroughputUtil.addQueue(this.compQueue);
+		aThroughputUtil.addQueue(this.compIVAPullQueue);
+		aThroughputUtil.addQueue(this.classificationQueue);
+		aThroughputUtil.addQueue(this.persistenceRetryQueue);
+		aThroughputUtil.addQueues(this.qualTXQueue.getInternalQueues());
+		aThroughputUtil.addQueues(this.qualTXPriceQueue.getInternalQueues());
+		aThroughputUtil.addQueues(this.qualTXComponentQueue.getInternalQueues());
+		aThroughputUtil.addQueues(this.qualTXComponentPriceQueue.getInternalQueues());
+		
+		for (TypedPersistenceQueue<?> aQueue : this.qualTXdataExtQueue.getInternalQueues()) {
+			aThroughputUtil.addQueues(aQueue.getInternalQueues());
+		}
+	
+		for (TypedPersistenceQueue<?> aQueue : this.qualTXComponentdataExtQueue.getInternalQueues()) {
+			aThroughputUtil.addQueues(aQueue.getInternalQueues());
+		}
+		
+		aThroughputUtil.measureThroughput(theMeasurmentPeriodInSecs);
+	
+		for (String aQueueName : aThroughputUtil.getQueueNames()) {
+			aMsgUtil.format("   Queue [{0}]: throughput [{1,number,0.##}/sec]", false, true, 
+				aQueueName, 
+				aThroughputUtil.getThroughput(aQueueName)
+			);
+		}
+		
+		return aMsgUtil.getMessage();
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
 	 * @param	theMaxTasksToReport
 	 *************************************************************************************
 	 */
@@ -283,52 +336,35 @@ public class PreparationEngineQueueUniverse
 	 *************************************************************************************
 	 * <P>
 	 * </P>
-	 * 
-	 * @param	theMeasurmentPeriodInSecs
 	 *************************************************************************************
 	 */
-	public String getPerformanceStatus(int theMeasurmentPeriodInSecs)
+	public TaskQueueThroughputUtility getThroughputUtility()
 		throws Exception
 	{
-		ParameterizedMessageUtility		aMsgUtil = new ParameterizedMessageUtility();
-		TaskQueueThroughputUtility		aThroughputUtil;
+		TaskQueueThroughputUtility		aUtil;
 		
-		aMsgUtil.format("BOM Processor Queue Universe Performance : BOMs [{0}] Components [{1}] measurement period (secs) [{2}]", false, true,
-			this.bomQueue.getCumulativeTaskCount(),
-			this.bomQueue.getCumulativeComponentCount(),
-			theMeasurmentPeriodInSecs
-		);
+		aUtil = new TaskQueueThroughputUtility();
+		aUtil.addQueue(this.bomQueue);
+		aUtil.addQueue(this.tradeLaneQueue);
+		aUtil.addQueue(this.compQueue);
+		aUtil.addQueue(this.classificationQueue);
+		aUtil.addQueue(this.compIVAPullQueue);
+		aUtil.addQueue(this.persistenceRetryQueue);
 		
-		aThroughputUtil = new TaskQueueThroughputUtility();
-		aThroughputUtil.addQueue(this.bomQueue);
-		aThroughputUtil.addQueue(this.tradeLaneQueue);
-		aThroughputUtil.addQueue(this.compQueue);
-		aThroughputUtil.addQueue(this.compIVAPullQueue);
-		aThroughputUtil.addQueue(this.classificationQueue);
-		aThroughputUtil.addQueue(this.persistenceRetryQueue);
-		aThroughputUtil.addQueues(this.qualTXQueue.getInternalQueues());
-		aThroughputUtil.addQueues(this.qualTXPriceQueue.getInternalQueues());
-		aThroughputUtil.addQueues(this.qualTXComponentQueue.getInternalQueues());
-		aThroughputUtil.addQueues(this.qualTXComponentPriceQueue.getInternalQueues());
+		aUtil.addQueues(this.qualTXQueue.getInternalQueues());
+		aUtil.addQueues(this.qualTXPriceQueue.getInternalQueues());
+		aUtil.addQueues(this.qualTXComponentQueue.getInternalQueues());
+		aUtil.addQueues(this.qualTXComponentPriceQueue.getInternalQueues());
 		
 		for (TypedPersistenceQueue<?> aQueue : this.qualTXdataExtQueue.getInternalQueues()) {
-			aThroughputUtil.addQueues(aQueue.getInternalQueues());
+			aUtil.addQueues(aQueue.getInternalQueues());
 		}
 
 		for (TypedPersistenceQueue<?> aQueue : this.qualTXComponentdataExtQueue.getInternalQueues()) {
-			aThroughputUtil.addQueues(aQueue.getInternalQueues());
+			aUtil.addQueues(aQueue.getInternalQueues());
 		}
 		
-		aThroughputUtil.measureThroughput(theMeasurmentPeriodInSecs);
-
-		for (String aQueueName : aThroughputUtil.getQueueNames()) {
-			aMsgUtil.format("   Queue [{0}]: throughput [{1,number,0.##}/sec]", false, true, 
-				aQueueName, 
-				aThroughputUtil.getThroughput(aQueueName)
-			);
-		}
-		
-		return aMsgUtil.getMessage();
+		return aUtil;
 	}
 	
 	/**
@@ -546,50 +582,55 @@ public class PreparationEngineQueueUniverse
 	private void refreshCaches()
 		throws Exception
 	{
-		ExecutorService 		aExecService = Executors.newFixedThreadPool(6);
-		ArrayList<Future>		aFutureList = new ArrayList<>();
+		ExecutorService aExecService = Executors.newFixedThreadPool(6);
 
 		MessageFormatter.info(logger, "refreshCaches", "start.");
 		this.cacheRefreshStart = System.currentTimeMillis();
 
 		if (this.bomUniverse != null) {
-			aFutureList.add(aExecService.submit(()->{try {this.bomUniverse.ensureAvailable();} catch (Exception e) {
-				MessageFormatter.error(logger, "refreshCaches", e, "BOM Universe unavailable");}})
+			aExecService.submit(()->{try {this.bomUniverse.ensureAvailable();} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "BOM Universe unavailable");}}
 			);
 		}
 
 		if (this.gpmClassCache != null) {
-			aFutureList.add(aExecService.submit(()->{try {this.gpmClassCache.refresh(true);} catch (Exception e) {
-				MessageFormatter.error(logger, "refreshCaches", e, "GPM Classification Cache unavailable");}})
+			aExecService.submit(()->{try {this.gpmClassCache.refresh(true);} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "GPM Classification Cache unavailable");}}
 			);
 		}
 
 		if (this.ivaCache != null) {
-			aFutureList.add(aExecService.submit(()->{try {this.ivaCache.refresh(true);} catch (Exception e) {
-				MessageFormatter.error(logger, "refreshCaches", e, "GPM Source IVA Cache unavailable");}})
+			aExecService.submit(()->{try {this.ivaCache.refresh(true);} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "GPM Source IVA Cache unavailable");}}
 			);
 		}
 		
 		if (this.gpmClaimDetailsCache != null) {
-			aFutureList.add(aExecService.submit(()->{try {this.gpmClaimDetailsCache.refresh(true);} catch (Exception e) {
-				MessageFormatter.error(logger, "refreshCaches", e, "GPM Claim Details Cache unavailable");}})
+			aExecService.submit(()->{try {this.gpmClaimDetailsCache.refresh(true);} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "GPM Claim Details Cache unavailable");}}
 			);
 		}
 		
 		if (this.qtxDetailUniverse != null) {
-			aFutureList.add(aExecService.submit(()->{try {this.qtxDetailUniverse.ensureAvailable();} catch (Exception e) {
-				MessageFormatter.error(logger, "refreshCaches", e, "QTX Detail Universe unavailable");}})
+			aExecService.submit(()->{try {this.qtxDetailUniverse.ensureAvailable();} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "QTX Detail Universe unavailable");}}
 			);
 		}
 
 		if (this.ptnrDetailCache != null) {
-			aFutureList.add(aExecService.submit(()->{try {this.ptnrDetailCache.refresh(true);} catch (Exception e) {
-				MessageFormatter.error(logger, "refreshCaches", e, "Partner Details Cache unavailable");}})
+			aExecService.submit(()->{try {this.ptnrDetailCache.refresh(true);} catch (Exception e) {
+				MessageFormatter.error(logger, "refreshCaches", e, "Partner Details Cache unavailable");}}
 			);
 		}
 		
-		for (Future<?> aFuture : aFutureList) {
-			aFuture.get();
+		aExecService.shutdown();
+		while (!aExecService.isTerminated()) {
+			try {
+				aExecService.awaitTermination(1, TimeUnit.MINUTES);
+			}
+			catch (Exception e) {
+				MessageFormatter.debug(logger, "completeInitialization", e, "exception while waiting for cache refresh tasks to complete");
+			}
 		}
 		
 		this.cacheRefreshComplete = System.currentTimeMillis();
