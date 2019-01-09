@@ -12,6 +12,10 @@ import com.ambr.gtm.fta.qps.bom.BOM;
 import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMPrice;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassification;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
+import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXDataExtension;
@@ -223,8 +227,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 			}
 		}
 
-		if ( work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I)
-				|| work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_IVA_DELETED))
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_IVA_DELETED))
 		{
 			workPackage.deleteBOMQual = true;
 		}
@@ -260,6 +263,33 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_NEW_HEADER_IVA_IDENTIFED) == true) {
 			// prep service will create a qualtx and qualtx comp table data,we
 			// are not processing this reason code.
+		}
+
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
+		{
+			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache = ((QTXWorkProducer)(this.producer)).queueUniverse.ivaCache;
+
+
+			Long prodSourceKey = qualtx.prod_src_key;
+
+			if (prodSourceKey == null) throw new Exception("Error attempting to pull comp IVA data with invalid prod source key ");
+
+			GPMSourceIVAProductContainer aContainer = aGPMSourceIVAContainerCache.getSourceIVAByProduct(qualtx.prod_key);
+			aContainer.indexByProdSourceKey();
+			GPMSourceIVA gpmSourceIVA = aContainer.getGPMSourceIVA(prodSourceKey, qualtx.prod_src_iva_key);
+
+			if (gpmSourceIVA != null)
+			{
+				if (STPDecisionEnum.M.equals(gpmSourceIVA.systemDecision))
+				{
+					qualtx.is_active = "Y";
+				}
+				else if (STPDecisionEnum.I.equals(gpmSourceIVA.systemDecision))
+				{
+					qualtx.is_active = "N";
+				}
+			}
+
 		}
 
 		if (work.workHSList != null)
