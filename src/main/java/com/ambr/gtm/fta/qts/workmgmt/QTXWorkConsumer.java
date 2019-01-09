@@ -268,15 +268,18 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
 		{
 			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache = ((QTXWorkProducer)(this.producer)).queueUniverse.ivaCache;
-
+			GPMSourceIVA gpmSourceIVA = null;
 
 			Long prodSourceKey = qualtx.prod_src_key;
 
-			if (prodSourceKey == null) throw new Exception("Error attempting to pull comp IVA data with invalid prod source key ");
+			if (prodSourceKey == null) throw new Exception("Error attempting to pull comp IVA data with invalid prod source key for qualtx : " + qualtx.alt_key_qualtx);
 
 			GPMSourceIVAProductContainer aContainer = aGPMSourceIVAContainerCache.getSourceIVAByProduct(qualtx.prod_key);
-			aContainer.indexByProdSourceKey();
-			GPMSourceIVA gpmSourceIVA = aContainer.getGPMSourceIVA(prodSourceKey, qualtx.prod_src_iva_key);
+			if(null != aContainer)
+			{
+				aContainer.indexByProdSourceKey();
+			    gpmSourceIVA = aContainer.getGPMSourceIVA(prodSourceKey, qualtx.prod_src_iva_key);
+			}
 
 			if (gpmSourceIVA != null)
 			{
