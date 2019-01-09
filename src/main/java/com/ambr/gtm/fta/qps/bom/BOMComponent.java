@@ -97,7 +97,7 @@ public class BOMComponent
      * </P>
      *************************************************************************************
      */
-	void setBOM(BOM theBOM)
+	public void setBOM(BOM theBOM)
 		throws Exception
 	{
 		this.bom = theBOM;
