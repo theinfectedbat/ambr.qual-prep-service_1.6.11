@@ -114,10 +114,6 @@ public class BOMUniverse
 		BOM						aBOM = null;
 		PerformanceTracker		aPerfTracker = new PerformanceTracker(logger, Level.DEBUG, "getBOM");
 		
-		if (this.status != UniverseStatusEnum.AVAILABLE) {
-			throw new IllegalStateException("BOM Universe is unavailable");
-		}
-		
 		aPerfTracker.start();
 		
 		if (this.localPartition != null) {
