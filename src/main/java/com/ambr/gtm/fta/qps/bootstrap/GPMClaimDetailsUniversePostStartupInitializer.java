@@ -125,8 +125,8 @@ public class GPMClaimDetailsUniversePostStartupInitializer implements Runnable
 		if ("Y".equalsIgnoreCase(aLocalPartitionEnabledFlag)) {
 			GPMClaimDetailsUniversePartition	aPartition = new GPMClaimDetailsUniversePartition(1, 1, aFilterOrgCode);
 			
-			aPartition.load(new JdbcTemplate(this.dataSrc));
 			this.gpmClaimDetailsUniverse.setLocalPartition(aPartition);
+			this.gpmClaimDetailsUniverse.setDataSource(this.dataSrc);
 		}
 		
 		try {

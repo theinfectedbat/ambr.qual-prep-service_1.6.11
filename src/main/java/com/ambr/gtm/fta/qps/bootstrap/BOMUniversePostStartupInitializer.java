@@ -129,8 +129,8 @@ public class BOMUniversePostStartupInitializer implements Runnable
 		if ("Y".equalsIgnoreCase(aLocalPartitionEnabledFlag)) {
 			BOMUniversePartition	aPartition = new BOMUniversePartition(1, 1, aFilterOrgCode);
 			
-			aPartition.load(new JdbcTemplate(this.dataSrc));
 			this.bomUniverse.setLocalPartition(aPartition);
+			this.bomUniverse.setDataSource(this.dataSrc);
 		}
 		
 		try {

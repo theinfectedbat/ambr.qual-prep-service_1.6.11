@@ -3,14 +3,16 @@ package com.ambr.gtm.fta.qps.gpmsrciva;
 import java.io.File;
 import java.text.MessageFormat;
 
+import javax.sql.DataSource;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVABySourceFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAStatusFromPartitionClientAPI;
@@ -49,8 +51,8 @@ public class GPMSourceIVAUniverse
 	private String										dbPassword;
 	UniverseStatusEnum									status;
 	GPMSourceIVAUniversePartition						localPartition;
-
-	private ConfigurationPropertyResolver		propertyResolver;
+	private ConfigurationPropertyResolver				propertyResolver;
+	private DataSource									dataSrc;
 
     /**
      *************************************************************************************
@@ -320,6 +322,21 @@ public class GPMSourceIVAUniverse
 			aPerfTracker.stop("GPM Source IVA Universe status [{0}].", new Object[]{this.status.name()});
 		}
 	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theDataSrc
+	 *************************************************************************************
+	 */
+	public GPMSourceIVAUniverse setDataSource(DataSource theDataSrc)
+		throws Exception
+	{
+		this.dataSrc = theDataSrc;
+		return this;
+	}
 
 	/**
 	 *************************************************************************************
@@ -561,6 +578,8 @@ public class GPMSourceIVAUniverse
 		SubordinateServiceReference		aServiceRef;
 		
 		if (this.localPartition != null) {
+			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
 			return;
 		}
 		

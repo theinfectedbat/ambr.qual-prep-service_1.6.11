@@ -3,9 +3,12 @@ package com.ambr.gtm.fta.qps.qualtx.universe;
 import java.io.File;
 import java.text.MessageFormat;
 
+import javax.sql.DataSource;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
@@ -48,9 +51,8 @@ public class QualTXDetailUniverse
 	private String										dbPassword;
 	UniverseStatusEnum									status;
 	QualTXDetailUniversePartition						localPartition;
-
-	private ConfigurationPropertyResolver		propertyResolver;
-	
+	private ConfigurationPropertyResolver				propertyResolver;
+	private DataSource									dataSrc;
 
     /**
      *************************************************************************************
@@ -303,6 +305,21 @@ public class QualTXDetailUniverse
 			aPerfTracker.stop("Qual TX Detail Universe status [{0}].", new Object[]{this.status.name()});
 		}
 	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theDataSrc
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setDataSource(DataSource theDataSrc)
+		throws Exception
+	{
+		this.dataSrc = theDataSrc;
+		return this;
+	}
 
 	/**
 	 *************************************************************************************
@@ -544,6 +561,9 @@ public class QualTXDetailUniverse
 		SubordinateServiceReference		aServiceRef;
 		
 		if (this.localPartition != null) {
+			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
+			this.status = UniverseStatusEnum.AVAILABLE;
 			return;
 		}
 		

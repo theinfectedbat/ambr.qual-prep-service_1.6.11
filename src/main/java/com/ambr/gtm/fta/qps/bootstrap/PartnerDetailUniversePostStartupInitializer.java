@@ -111,8 +111,8 @@ public class PartnerDetailUniversePostStartupInitializer implements Runnable
 		if ("Y".equalsIgnoreCase(aLocalPartitionEnabledFlag)) {
 			PartnerDetailUniversePartition	aPartition = new PartnerDetailUniversePartition(1, 1, aFilterOrgCode);
 			
-			aPartition.load(new JdbcTemplate(this.dataSrc));
 			this.universe.setLocalPartition(aPartition);
+			this.universe.setDataSource(this.dataSrc);
 		}
 		
 		try {

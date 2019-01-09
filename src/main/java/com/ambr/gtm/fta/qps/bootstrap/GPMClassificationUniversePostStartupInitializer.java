@@ -126,8 +126,8 @@ public class GPMClassificationUniversePostStartupInitializer implements Runnable
 		if ("Y".equalsIgnoreCase(aLocalPartitionEnabledFlag)) {
 			GPMClassificationUniversePartition	aPartition = new GPMClassificationUniversePartition(1, 1, aFilterOrgCode);
 			
-			aPartition.load(new JdbcTemplate(this.dataSrc));
 			this.gpmClassUniverse.setLocalPartition(aPartition);
+			this.gpmClassUniverse.setDataSource(this.dataSrc);
 		}
 		
 		try {

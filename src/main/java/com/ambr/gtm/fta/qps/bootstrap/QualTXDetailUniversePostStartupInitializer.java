@@ -126,8 +126,8 @@ public class QualTXDetailUniversePostStartupInitializer implements Runnable
 		if ("Y".equalsIgnoreCase(aLocalPartitionEnabledFlag)) {
 			QualTXDetailUniversePartition	aPartition = new QualTXDetailUniversePartition(1, 1, aFilterOrgCode);
 			
-			aPartition.load(new JdbcTemplate(this.dataSrc));
 			this.universe.setLocalPartition(aPartition);
+			this.universe.setDataSource(this.dataSrc);
 		}
 		
 		try {

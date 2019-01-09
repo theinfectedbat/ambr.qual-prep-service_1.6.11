@@ -54,6 +54,7 @@ public class BOMUniverse
 	DataExtensionConfigurationRepository		dataExtensionRepos;
 	BOMUniversePartition						localPartition;
 	private ConfigurationPropertyResolver		propertyResolver;
+	private DataSource							dataSrc;
 
     /**
      *************************************************************************************
@@ -146,8 +147,11 @@ public class BOMUniverse
 			}
 		);
 		
-		aBOM.initializeComponentBOMReferences();
-		aBOM.setDataExtensionRepository(this.dataExtensionRepos);
+		if (aBOM != null) {
+			aBOM.initializeComponentBOMReferences();
+			aBOM.setDataExtensionRepository(this.dataExtensionRepos);
+		}
+		
 		return aBOM;
 	}
 
@@ -367,8 +371,7 @@ public class BOMUniverse
 	public BOMUniverse setDataSource(DataSource theDataSrc)
 		throws Exception
 	{
-		this.dataExtensionRepos = new DataExtensionConfigurationRepository();
-		this.dataExtensionRepos.load(new JdbcTemplate(theDataSrc), this.fetchSize, this.targetSchema);
+		this.dataSrc = theDataSrc;
 		return this;
 	}
 
@@ -615,6 +618,7 @@ public class BOMUniverse
 		
 		if (this.localPartition != null) {
 			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
 			this.status = UniverseStatusEnum.AVAILABLE;
 			return;
 		}

@@ -11,6 +11,7 @@ public class QPSProperties
 	public static final String BATCH_INSERT_MAX_WAIT_PERIOD		= "com.ambr.gtm.fta.qps.batch_insert_max_wait_period";
 	public static final String BATCH_INSERT_CONCURRENCY_COUNT 	= "com.ambr.gtm.fta.qps.batch_insert_concurrency_count";
 	public static final String IS_LOCAL_UNIVERSE_ENABLED 		= "com.ambr.gtm.fta.qps.is_local_universe_enabled";
+	public static final String IS_LOCAL_UNIVERSE_MULTITHREADED	= "com.ambr.gtm.fta.qps.is_local_universe_multithreaded";
 	public static final String FILTER_ORG_CODE					= "com.ambr.gtm.fta.qps.filter_org_code";
 	public static final String IGNORE_TRADE_LANE_CONFIGURATION	= "com.ambr.gtm.fta.qps.ignore_trade_lane_cfg";
 }

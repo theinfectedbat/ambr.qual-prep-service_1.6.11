@@ -127,8 +127,8 @@ public class GPMSourceIVAUniversePostStartupInitializer implements Runnable
 		if ("Y".equalsIgnoreCase(aLocalPartitionEnabledFlag)) {
 			GPMSourceIVAUniversePartition	aPartition = new GPMSourceIVAUniversePartition(1, 1, aFilterOrgCode);
 			
-			aPartition.load(new JdbcTemplate(this.dataSrc));
 			this.gpmSrcIVAUniverse.setLocalPartition(aPartition);
+			this.gpmSrcIVAUniverse.setDataSource(this.dataSrc);
 		}
 		
 		try {

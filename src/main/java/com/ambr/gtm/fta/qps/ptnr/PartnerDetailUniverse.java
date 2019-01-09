@@ -3,19 +3,18 @@ package com.ambr.gtm.fta.qps.ptnr;
 import java.io.File;
 import java.text.MessageFormat;
 
+import javax.sql.DataSource;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.bom.api.GetBOMStatusFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.ptnr.api.GetPartnerDetailFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.ptnr.api.GetPartnerDetailStatusFromPartitionClientAPI;
-import com.ambr.gtm.fta.qps.qualtx.universe.QualTXDetailUniversePartition;
-import com.ambr.gtm.fta.qps.qualtx.universe.QualTXDetailUniverseProperties;
-import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXCountFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
@@ -52,6 +51,7 @@ public class PartnerDetailUniverse
 	UniverseStatusEnum									status;
 	PartnerDetailUniversePartition						localPartition;
 	private ConfigurationPropertyResolver				propertyResolver;
+	private DataSource									dataSrc;
 
     /**
      *************************************************************************************
@@ -272,6 +272,21 @@ public class PartnerDetailUniverse
 		finally {
 			aPerfTracker.stop("Qual TX Detail Universe status [{0}].", new Object[]{this.status.name()});
 		}
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theDataSrc
+	 *************************************************************************************
+	 */
+	public PartnerDetailUniverse setDataSource(DataSource theDataSrc)
+		throws Exception
+	{
+		this.dataSrc = theDataSrc;
+		return this;
 	}
 
 	/**
@@ -514,6 +529,9 @@ public class PartnerDetailUniverse
 		SubordinateServiceReference		aServiceRef;
 		
 		if (this.localPartition != null) {
+			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
+			this.status = UniverseStatusEnum.AVAILABLE;
 			return;
 		}
 		

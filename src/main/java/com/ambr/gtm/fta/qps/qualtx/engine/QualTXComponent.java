@@ -38,6 +38,7 @@ public class QualTXComponent
 	@Column(name = "area") 						public Double	area;
 	@Column(name = "area_uom") 					public String	area_uom;
 	@Column(name = "comp_id") 					public String	comp_id;
+	@Column(name = "coo_source") 				public int		coo_source;
 	@Column(name = "cost") 						public Double	cost;
 	@Column(name = "component_type") 			public String	component_type;
 	@Column(name = "created_by") 				public String	created_by;
@@ -59,6 +60,7 @@ public class QualTXComponent
 	@Column(name = "in_qty_per") 				public Double	in_qty_per;
 	@Column(name = "in_traced_value") 			public Double	in_traced_value;
 	@Column(name = "intermediate_ind") 			public String	intermediate_ind;
+	@Column(name = "is_active") 				public String	is_active;
 	@Column(name = "last_modified_by") 			public String	last_modified_by;
 	@Column(name = "last_modified_date")		public Date		last_modified_date;
 	@Column(name = "make_buy_flg") 				public String	make_buy_flg;
@@ -95,8 +97,6 @@ public class QualTXComponent
 	@Column(name = "unit_weight")				public Double	unit_weight;
 	@Column(name = "weight") 					public Double	weight;
 	@Column(name = "weight_uom") 				public String	weight_uom;
-	@Column(name = "coo_source") 				public int		coo_source;
-	@Column(name = "is_active") 				public String	is_active;
 	@Column(name = "prev_year_qual_applied") 	public String	prev_year_qual_applied;
 
 	@OneToMany(targetEntity = QualTXComponentDataExtension.class) public ArrayList<QualTXComponentDataExtension>	deList;
