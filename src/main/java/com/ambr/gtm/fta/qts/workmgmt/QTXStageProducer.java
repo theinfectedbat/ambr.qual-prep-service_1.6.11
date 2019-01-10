@@ -776,6 +776,7 @@ public class QTXStageProducer extends QTXProducer
 			{
 
 			QualTXComponent qualtxComp = qualtx.compList.get(0);	//There will always be one QualTXComponent present (as defined by sql that pulled this data
+			if(!isValidQualtxComp(qualtxComp)) continue;
 			if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
@@ -906,7 +907,9 @@ public class QTXStageProducer extends QTXProducer
 		    isValQualtx = isValidQualtx(qualtx, false);
 		    if(!isValQualtx) 
 		    	continue;
-
+		    
+		    if(!isValidQualtxComp(qualtxComp)) continue;
+		    
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
@@ -1123,6 +1126,7 @@ public class QTXStageProducer extends QTXProducer
 		for (QualTX qualtx : qualtxList)
 		{
 			QualTXComponent qualtxComp = qualtx.compList.get(0);
+			if(!isValidQualtxComp(qualtxComp)) continue;
 			QTXWork theQtxWork = null;
 			QTXCompWork theQtxCompWork = null;
 			List<QTXCompWork> theQtxCompList = null;
