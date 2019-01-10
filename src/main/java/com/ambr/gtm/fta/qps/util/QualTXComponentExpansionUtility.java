@@ -250,7 +250,7 @@ public class QualTXComponentExpansionUtility
 					return false;
 			}
 		}
-		if (aSubBOM.compList != null)
+		if (aSubBOM != null && aSubBOM.compList != null)
 		{
 			for (BOMComponent aSubBOMComp : aSubBOM.compList)
 			{
