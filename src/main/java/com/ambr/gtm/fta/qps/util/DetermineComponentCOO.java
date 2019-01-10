@@ -128,11 +128,11 @@ public  class DetermineComponentCOO
 	public String getBOMCompManufacturerCOO(QualTXComponent theBOMComponent) throws Exception
 	{
 		String manufactureCtry = theBOMComponent.ctry_of_manufacture;
-		/*if (manufactureCtry == null)
+		if (manufactureCtry == null)
 		{
 			PartnerDetail ptnrDetail = this.partnerDetailCache.getPtnrDetails(theBOMComponent.manufacturer_key);
 			if (ptnrDetail != null) manufactureCtry = ptnrDetail.country_code;
-		}*/
+		}
 		return manufactureCtry;
 	}
 	
