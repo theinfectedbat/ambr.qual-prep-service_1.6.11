@@ -9,6 +9,7 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationUniverse;
 import com.ambr.gtm.fta.qps.ptnr.PartnerDetail;
 import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverse;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniversePartition;
 
 /**
  *****************************************************************************************
@@ -25,7 +26,7 @@ public class GetPartnerDetailFromPartitionServiceAPI
 	public static final String	URL_PATH_TEMPLATE					= URL_PATH_PREFIX + URL_PATH_VARIABLE_SPEC_PTNR_KEY;
 	
 	@Autowired
-	private PartnerDetailUniverse	universe;
+	private PartnerDetailUniversePartition	universePartition;
 
 	/**
      *************************************************************************************
@@ -50,7 +51,7 @@ public class GetPartnerDetailFromPartitionServiceAPI
 	public PartnerDetail execute(@PathVariable(name = URL_PATH_VARIABLE_NAME_PTNR_KEY) long thePtnrKey)
 		throws Exception
 	{
-		return this.universe.getPartnerDetail(thePtnrKey);
+		return this.universePartition.getPartnerDetail(thePtnrKey);
 	}
 	
 	/**
