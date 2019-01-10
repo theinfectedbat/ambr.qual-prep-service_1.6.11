@@ -22,7 +22,8 @@ import com.ambr.gtm.fta.qts.RequalificationWorkCodes;
 import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.fta.trade.client.TradeQualtxClient;
 
-public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
+public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
+{
 	private static Logger logger = LogManager.getLogger(QTXWorkConsumer.class);
 
 	private QualTXBusinessLogicProcessor qtxBusinessLogicProcessor;
@@ -57,6 +58,9 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage> {
 	//TODO there could be multiple work items loaded into memory that target the same qualtx.  these will be processed serially.  need to keep the qualtx up to date so following work items will have accurate info when generating audit
 	public void doWork(WorkPackage workPackage) throws Exception
 	{
+		//TODO JTB DO NOT CHECK THIS IN
+		Thread.sleep(10000);
+		
 		//An error occurred while staging the data for this WorkPackage (usually resource data failed to pull)
 		if (workPackage.failure != null)
 			throw workPackage.failure;
