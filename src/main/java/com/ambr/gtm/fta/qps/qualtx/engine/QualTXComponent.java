@@ -400,20 +400,22 @@ public class QualTXComponent
 
 		}
 
-		aValue = aClaimDetails.getValue("traced_value");
+		aValue = aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
 		if (aValue != null) {
 			this.traced_value = ((Number)aValue).doubleValue();
+			this.include_for_trace_value = "Y";
 		}
 		
-		aValue = aClaimDetails.getValue("traced_value_currency");
+		aValue = aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
 		if(aValue != null)
 			this.traced_value_currency = (String)aValue;
 		
-		aValue = aClaimDetails.getValue("cumulation_value");
-		if (aValue != null) {
+		aValue = aClaimDetails.getValue(flexFieldMap.get("CUMULATION_VALUE"));
+		if (aValue != null)
 			this.cumulation_value = ((Number)aValue).doubleValue();
-		}
 		
-		this.cumulation_currency = (String)aClaimDetails.getValue("cumulation_currency");
+		aValue = aClaimDetails.getValue(flexFieldMap.get("CUMULATION_CURRENCY"));
+		if (aValue != null)
+			this.cumulation_currency = (String)aValue;
 	}
 }
