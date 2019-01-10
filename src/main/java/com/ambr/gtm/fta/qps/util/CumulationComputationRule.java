@@ -245,22 +245,20 @@ public class CumulationComputationRule
 					}
 				}
 			}
-			
 
 			Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 			
 			if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
 				cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
 			
-			if(cumulationCtryList != null && !cumulationCtryList.isEmpty())
-			{
-				if(qualTXCompDetails == null)
-				{
-					qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
-				}
-				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
-			}
+			if(qualTXCompDetails == null)
+				qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
 
+			if(cumulationCtryList != null && !cumulationCtryList.isEmpty())
+				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
+
+			qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_RULE_APPLIED"), aQualTXComp.cumulation_rule_applied);
+			
 			Double cumulationValue = calculateCumulationValue	(aQualTXComp, aClaimDetails);
 
 			if(cumulationValue != null){
