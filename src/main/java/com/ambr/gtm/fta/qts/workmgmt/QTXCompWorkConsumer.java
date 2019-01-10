@@ -96,6 +96,11 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		if (compWorkPackage.failure != null)
 			throw compWorkPackage.failure;
 		WorkPackage parentWorkPackage = compWorkPackage.getParentWorkPackage();
+		if(parentWorkPackage.bom == null) 
+		{
+			logger.error("Bom not found in the Universe for the key :" +parentWorkPackage.work.bom_key);
+			return;
+		}
 		QTXWork parentWork = parentWorkPackage.work;
 		QTXCompWork work = compWorkPackage.compWork;
 		QualTX qualtx = parentWorkPackage.qualtx;

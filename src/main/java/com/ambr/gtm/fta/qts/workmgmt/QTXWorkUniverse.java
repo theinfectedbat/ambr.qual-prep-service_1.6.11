@@ -847,7 +847,7 @@ public class QTXWorkUniverse
 				{
 					BOM bom = this.bomUniverseBOMClientAPI.execute(bomKey);
 					 
-					if(bom == null) continue;
+					if(bom == null) throw new Exception("Bom not found for the key : "+bomKey);
 					bom.indexByAltKeyBOMComponent();
 					
 					for (WorkPackage workPackage : this.workByBOMMap.get(bomKey).values())
