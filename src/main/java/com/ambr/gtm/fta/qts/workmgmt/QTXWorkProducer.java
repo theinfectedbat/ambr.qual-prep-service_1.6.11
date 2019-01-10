@@ -18,13 +18,11 @@ import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromUniverseCl
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.GetCacheRefreshInformationClientAPI;
-import com.ambr.gtm.fta.qts.QTXMonitoredMetrics;
 import com.ambr.gtm.fta.qts.RequalificationBOMStatus;
 import com.ambr.gtm.fta.qts.RequalificationTradeLaneStatus;
 import com.ambr.gtm.fta.qts.util.RunnableTuple;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 
-//TODO stop mutliple requal messages from processing concurrently
 public class QTXWorkProducer extends QTXProducer
 {
 	private static final Logger logger = LogManager.getLogger(QTXWorkProducer.class);
@@ -111,7 +109,6 @@ public class QTXWorkProducer extends QTXProducer
 	
 	//TODO may need to change : have this method return a WorkPackage if the consumer should immediately process.  this ensures a chain of work related to same BOM will be processed as a set and not have each link in the chain pushed to the end of the queue.
 	//TODO difficult to determine when a BOM will be complete.
-	//TODO checkWorkForCompleteness submit should return the next work for the consumer to process and also submit compwork to head of queue
 	protected synchronized void registeredWorkCompleted(WorkPackage workPackage)
 	{
 		logger.debug("Registering work completed " + workPackage.work.qtx_wid);
@@ -239,10 +236,12 @@ public class QTXWorkProducer extends QTXProducer
 		RequalificationBOMStatus finalStatus = new RequalificationBOMStatus();
 		
 		finalStatus.bomKey = bomKey;
+		finalStatus.requestTime = System.currentTimeMillis();
 		
 		//TODO this isnt right.  duration is header or comp whichever is greater PLUS persistence
-		finalStatus.addTradeLaneStatus(this.getHeaderRequalificationBOMStatus(bomKey).tradeLaneStatusList);
-		finalStatus.addTradeLaneStatus(this.compWorkProducer.getCompRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		//TODO plus the throughput of the persistence guy factored by lane position in work/comp_work queue
+		finalStatus.setTradeLaneStatus(this.getHeaderRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		finalStatus.setTradeLaneStatus(this.compWorkProducer.getCompRequalificationBOMStatus(bomKey).tradeLaneStatusList);
 		finalStatus.sumTradeLaneStatus(this.workPersistenceProducer.getPersistentRequalificationBOMStatus(bomKey).tradeLaneStatusList);
 		
 		return finalStatus;
@@ -259,8 +258,10 @@ public class QTXWorkProducer extends QTXProducer
 		return bomStatus;
 	}
 	
+	//TODO can this be a generic method at QTXProducer level - method is currently a "copy" in qtxworkproducer/qtxworkpersistenceproducer/qtxcompworkproducer
 	public void getTradeLaneStatsForBOM(long bomKey, RequalificationBOMStatus bomStatus)
 	{
+		long requestTime = System.currentTimeMillis();
 		int counter = 0;
 		for (Iterator<RunnableTuple> i = this.pendingQueueEntries(); i.hasNext();)
 		{
@@ -274,6 +275,7 @@ public class QTXWorkProducer extends QTXProducer
 			if (workConsumer.workList != null)
 			{
 				//TODO need to check for following work package
+				//TODO get number of linked packages and comp count to estimate duration
 				for (WorkPackage workPackage : workConsumer.workList)
 				{
 					if (workPackage.bom != null && workPackage.bom.alt_key_bom == bomKey)
@@ -281,14 +283,20 @@ public class QTXWorkProducer extends QTXProducer
 						RequalificationTradeLaneStatus tradeLaneStats = new RequalificationTradeLaneStatus();
 						
 						tradeLaneStats.qualtxKey = workPackage.qualtx.alt_key_qualtx;
+						tradeLaneStats.requestTime = requestTime;
 						
 						//Calculate estimate based on metrics
 						tradeLaneStats.estimate = System.currentTimeMillis();
 						
-						//TODO fix me - estimate is hard coded count right now - assuming 100 milliseconds wait per position in queue
-						tradeLaneStats.estimate += (counter + 1) * 100;
+						double throughput = this.getThroughput(1);  //returns throughput per millisecond
 						
-						bomStatus.addTradeLaneStatus(tradeLaneStats);
+						logger.info(bomKey + " found at " + counter + " throughput " + throughput + " at " + tradeLaneStats.estimate);
+						
+						tradeLaneStats.position = counter;
+						tradeLaneStats.duration = (long) ((double) tradeLaneStats.position / throughput);
+						tradeLaneStats.estimate += tradeLaneStats.duration;
+						
+						bomStatus.setTradeLaneStatus(tradeLaneStats);
 					}
 				}
 			}

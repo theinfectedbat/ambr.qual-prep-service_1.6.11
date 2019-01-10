@@ -85,6 +85,20 @@ public class WorkPackage
 			return this;
 	}
 	
+	public int getLinkedPackageLength()
+	{
+		int length = 0;
+		
+		WorkPackage workPackage = this.linkedPackage;
+		while (workPackage != null)
+		{
+			length++;
+			workPackage = workPackage.linkedPackage;
+		}
+		
+		return length;
+	}
+	
 	public Exception getFailure()
 	{
 		if (this.failure != null)

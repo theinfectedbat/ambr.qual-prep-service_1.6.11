@@ -49,6 +49,7 @@ public class QTXWorkPersistenceProducer extends QTXProducer
 	
 	public void getTradeLaneStatsForBOM(long bomKey, RequalificationBOMStatus bomStatus)
 	{
+		long requestTime = System.currentTimeMillis();
 		int counter = 0;
 		for (Iterator<RunnableTuple> i = this.pendingQueueEntries(); i.hasNext();)
 		{
@@ -69,14 +70,20 @@ public class QTXWorkPersistenceProducer extends QTXProducer
 						RequalificationTradeLaneStatus tradeLaneStats = new RequalificationTradeLaneStatus();
 						
 						tradeLaneStats.qualtxKey = workPackage.qualtx.alt_key_qualtx;
+						tradeLaneStats.requestTime = requestTime;
 						
 						//Calculate estimate based on metrics
 						tradeLaneStats.estimate = System.currentTimeMillis();
+										
+						double throughput = this.getThroughput(1);  //returns throughput per millisecond
 						
-						//TODO fix me - estimate is hard coded count right now - assuming 100 milliseconds wait per position in queue
-						tradeLaneStats.estimate += (counter + 1) * 100;
+						logger.info(bomKey + " found at " + counter + " throughput " + throughput + " at " + tradeLaneStats.estimate);
 						
-						bomStatus.addTradeLaneStatus(tradeLaneStats);
+						tradeLaneStats.position = counter;
+						tradeLaneStats.duration = (long) ((double) tradeLaneStats.position / throughput);
+						tradeLaneStats.estimate += tradeLaneStats.duration;
+						
+						bomStatus.setTradeLaneStatus(tradeLaneStats);
 					}
 				}
 			}

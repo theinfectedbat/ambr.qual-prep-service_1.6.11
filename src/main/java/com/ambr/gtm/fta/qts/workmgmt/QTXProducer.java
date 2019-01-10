@@ -9,11 +9,11 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import com.ambr.gtm.fta.qts.QTXMonitoredMetrics;
 import com.ambr.gtm.fta.qts.QTXWorkRepository;
 import com.ambr.gtm.fta.qts.WorkManagementException;
 import com.ambr.gtm.fta.qts.trade.MDIQualTxRepository;
 import com.ambr.gtm.fta.qts.util.BlockingExecutor;
+import com.ambr.gtm.fta.qts.util.LongStatistic;
 import com.ambr.gtm.fta.qts.util.RunnableTuple;
 import com.ambr.gtm.fta.qts.util.StatisticMonitor;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
@@ -42,13 +42,13 @@ public abstract class QTXProducer implements Runnable
 	
 	private boolean isActive;
 	
-	private StatisticMonitor processingTime;
+	private StatisticMonitor processingTimes;
 	
 	private UniversalObjectIDGenerator idGenerator;
 	private QTXWorkRepository workRepository;
 	private MDIQualTxRepository qualtxRepository;
 	
-	protected QTXMonitoredMetrics metrics = new QTXMonitoredMetrics(this.getClass().getSimpleName());
+	protected QTXMonitoredMetrics metrics;
 	protected ArrayList<QTXMonitoredMetrics> monitoredMetrics = new ArrayList<QTXMonitoredMetrics>();
 	
 	public QTXProducer(SchemaDescriptorService schemaService, PlatformTransactionManager txMgr, JdbcTemplate template)
@@ -56,11 +56,18 @@ public abstract class QTXProducer implements Runnable
 		this.schemaService = schemaService;
 		this.template = template;
 		this.txMgr = txMgr;
+		
+		this.initializeStats();
 	}
 	
 	public QTXMonitoredMetrics getMetrics()
 	{
 		return this.metrics;
+	}
+	
+	public double getThroughput(long perUnitTime)
+	{
+		return this.processingTimes.getThroughput(perUnitTime);
 	}
 	
 	public synchronized QTXMonitoredMetrics addMonitoredMetrics()
@@ -100,7 +107,7 @@ public abstract class QTXProducer implements Runnable
 	
 	public void init(int threads, int readAhead, int fetchSize, int batchSize, int sleepInterval, MDIQualTxRepository qualTxRepository, QTXWorkRepository workRepository, UniversalObjectIDGenerator idGenerator) throws WorkManagementException
 	{
-		this.processingTime = new StatisticMonitor("ConsumerProcessingTime", 15);
+		this.processingTimes = new StatisticMonitor("ConsumerProcessingTime", 60, 5000);
 		
 		this.idGenerator = idGenerator;
 		this.workRepository = workRepository;
@@ -155,21 +162,8 @@ public abstract class QTXProducer implements Runnable
 		monitoredMetric.completed = monitoredMetric.completed + itemCount;
 		monitoredMetric.aggregatedDuration = monitoredMetric.aggregatedDuration + duration;
 
-		this.processingTime.addStatistic(itemCount, duration);
-		
-//		if (this.recordsCompleted == this.recordsAdded)
-//		{
-//			logger.info(this.getClass().getSimpleName() + " First Record Added\t" + new Date(this.firstRecordAddedAt));
-//			logger.info(this.getClass().getSimpleName() + " Last Record Added\t" + new Date(this.lastRecordAddedAt));
-//			logger.info(this.getClass().getSimpleName() + " Duration(ms)\t" + (this.lastRecordAddedAt - this.firstRecordAddedAt));
-//			
-//			logger.info(this.getClass().getSimpleName() + " First Record Completed\t" + new Date(this.firstRecordAddedAt));
-//			logger.info(this.getClass().getSimpleName() + " Last Record Completed\t" + new Date(this.lastRecordCompletedAt));
-//			logger.info(this.getClass().getSimpleName() + " Duration(ms)\t" + (this.lastRecordCompletedAt - this.firstRecordCompletedAt));
-//
-//			logger.info(this.getClass().getSimpleName() + " Total Records Added\t" + this.recordsAdded);
-//			logger.info(this.getClass().getSimpleName() + " Total Records Completed\t" + this.recordsCompleted);
-//		}
+		LongStatistic longStat = new LongStatistic(duration);
+		this.processingTimes.addStatistic(itemCount, longStat);
 	}
 	
 	public synchronized void submit(QTXConsumer<?> task)
@@ -288,7 +282,7 @@ public abstract class QTXProducer implements Runnable
 		return this.idGenerator;
 	}
 	
-	public synchronized void resetStats()
+	public synchronized void initializeStats()
 	{
 		this.metrics = new QTXMonitoredMetrics(this.getClass().getSimpleName());
 		
