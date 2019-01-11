@@ -501,6 +501,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			{
 				logger.debug("Processing ar_qtx_comp_work_iva " + compWorkIVA.qtx_comp_iva_wid);
 
+				if(bomComp != null && (bomComp.prod_src_key == null || bomComp.prod_src_key <= 0))
+				{
+					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.pullIVAData();
+				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_FINAL_DECISION_CHANGE))
 				{
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
@@ -548,7 +554,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE))
 				{
-					Long prodSourceKey = (qualtxComp != null) ? qualtxComp.prod_src_key : ((bomComp.prod_src_key != 0) ? new Long(bomComp.prod_src_key) : null);
+					Long prodSourceKey = qualtxComp.prod_src_key;
 					
 					if (prodSourceKey == null)
 						throw new Exception("Error attempting to pull comp IVA data with invalid prod source key " + prodSourceKey + " for comp iva work " + compWorkIVA.qtx_wid + ":" + compWorkIVA.qtx_comp_wid + ":" + compWorkIVA.qtx_comp_iva_wid);
@@ -610,7 +616,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				{
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 
-					qualtxComp.prod_src_key = null;
+					qualtxComp.prod_src_key = -1l;
 					qualtxComp.supplier_key = null;
 					qualtxComp.manufacturer_key = null;
 					qualtxComp.prod_src_iva_key = null;
