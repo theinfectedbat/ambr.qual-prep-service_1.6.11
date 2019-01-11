@@ -62,6 +62,21 @@ public class ArQtxWorkUtility
 		return qualtxList;
 	}
 
+	public List<QualTX> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
+	{
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE from MDI_QUALTX WHERE ");
+
+		ArrayList<Object> paramList = new ArrayList<>();
+		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(" AND "+this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+		paramList.addAll(altKeyList);
+		paramList.addAll(ftaList);
+		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
+		List<QualTX> qualtxList = this.template.query(sql.toString(), paramList.toArray(), extractor);
+
+		return qualtxList;
+	}
+	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
 		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE from MDI_QUALTX WHERE ");
@@ -74,7 +89,7 @@ public class ArQtxWorkUtility
 		if (reasonCode == ReQualificationReasonCodes.GPM_SRC_DELETED) sql.append(this.getSimpleClause("PROD_SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG) sql.append(this.getSimpleClause("ALT_KEY_QUALTX", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
 
 		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
@@ -391,6 +406,7 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) workCode = RequalificationWorkCodes.COMP_STP_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) workCode = RequalificationWorkCodes.COMP_GPM_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) workCode = RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
 
 		return workCode;
 	}

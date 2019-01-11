@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -205,7 +206,7 @@ public class QTXStageProducer extends QTXProducer
 		Map<Long, ArrayList<Long>> prodRequalMap = new HashMap<>();
 		Map<Long, String> newCtryCmpMap = new HashMap<>();
 		Map<Long, QualTX> contentRequalList = new HashMap<>();
- 		Map<QTXStage, ArrayList<Long>> configRequalMap = new HashMap<>();
+		Map<Long, QtxStageData> configRequalMap = new HashMap<>();
 		Map<Long, QTXConsolWork> bomConsolMap = new HashMap<>();
 		Map<Long, QTXConsolWork> prodConsolMap = new HashMap<>();
 		
@@ -221,9 +222,9 @@ public class QTXStageProducer extends QTXProducer
 			{
 				processContentRequalWork(stageData, workData, contentRequalList, bomConsolMap);
 			}
-			else if (workData.opt("CONFIG_DTLS") != null)
+			else if (workData.opt("MASS_QUALIFICATION") != null)
 			{
-				processConfigRequalWork(stageData, workData, configRequalMap);
+				processConfigRequalWork(stageData, workData, configRequalMap, bomConsolMap);
 			}
     		else
 			{
@@ -234,7 +235,7 @@ public class QTXStageProducer extends QTXProducer
 		this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap);
 		this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap);
 		this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap);
-		this.getConsolidatedQualtxForConfigUpdates(configRequalMap, consolidatedWork);
+		this.getConsolidatedQualtxForMassQual(configRequalMap, consolidatedWork, bomConsolMap);
 
 		return consolidatedWork;
 	}
@@ -252,12 +253,12 @@ public class QTXStageProducer extends QTXProducer
 				{
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList, reasonCode);
 					
-					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
+					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false);
 				}
 				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION)
 				{
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
-					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap);
+					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false);
 				}
 				else
 				{
@@ -271,7 +272,7 @@ public class QTXStageProducer extends QTXProducer
 						compChanges = this.utility.getImpactedQtxCompKeys(theAltKeyList, reasonCode);
 					}
 	
-					this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap);
+					this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap, false);
 				}
 			}catch(Exception e){
 				logger.error("getConsolidatedQualtxForBomUpdate, Error while processing the reasonCode:" + reasonCode + "bomRequalMap ="+bomRequalMap.keySet());
@@ -405,7 +406,7 @@ public class QTXStageProducer extends QTXProducer
 
 	}
 
-	public void createArQtxBomCompBean(List<QualTX> qualtxList, Map<Long, QTXWork> consolidatedWork, long reasonCode, boolean isHeader, Map<Long, QTXConsolWork> bomConsolMap) throws Exception
+	public void createArQtxBomCompBean(List<QualTX> qualtxList, Map<Long, QTXWork> consolidatedWork, long reasonCode, boolean isHeader, Map<Long, QTXConsolWork> bomConsolMap, boolean isForceQualification) throws Exception
 	{
 
 		long workReasonCode = this.utility.getQtxWorkReasonCodes(reasonCode);
@@ -439,7 +440,7 @@ public class QTXStageProducer extends QTXProducer
 					theQtxWork = this.utility.createQtxWorkObj(qualtx, workReasonCode, bomConsolMap, qualtx.src_key);
 				}
 
-				if (theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_TXREF_CHG || theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_QUAL_MPQ_CHG)
+				if (theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_TXREF_CHG || theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_QUAL_MPQ_CHG || (theQtxWork.details.reason_code == RequalificationWorkCodes.HEADER_CONFIG_CHANGE && !isForceQualification))
 				{
 					theQtxWork.setWorkStatus(QualtxStatus.READY_FOR_QUALIFICATION);
 				}
@@ -776,6 +777,7 @@ public class QTXStageProducer extends QTXProducer
 			{
 
 			QualTXComponent qualtxComp = qualtx.compList.get(0);	//There will always be one QualTXComponent present (as defined by sql that pulled this data
+			
 			if(!isValidQualtxComp(qualtxComp)) continue;
 			if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 			{
@@ -907,7 +909,7 @@ public class QTXStageProducer extends QTXProducer
 		    isValQualtx = isValidQualtx(qualtx, false);
 		    if(!isValQualtx) 
 		    	continue;
-		    
+
 		    if(!isValidQualtxComp(qualtxComp)) continue;
 		    
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
@@ -1069,137 +1071,72 @@ public class QTXStageProducer extends QTXProducer
 		return isValid;
 	}
 
-	private void getConsolidatedQualtxForConfigUpdates(Map<QTXStage, ArrayList<Long>> configRequalMap, Map<Long, QTXWork> qtxWorkList) throws Exception
+	private void getConsolidatedQualtxForMassQual(Map<Long, QtxStageData> configRequalMap, Map<Long, QTXWork> qtxWorkList,  Map<Long, QTXConsolWork> bomConsolMap) throws Exception
 	{
-		for (Map.Entry<QTXStage, ArrayList<Long>> entry : configRequalMap.entrySet())
+		for (Map.Entry<Long, QtxStageData> entry : configRequalMap.entrySet())
 		{
 			try{
-				QTXStage stage = entry.getKey();
+				long reasonCode = entry.getKey();
 	
-				ArrayList<Long> keyList = entry.getValue();
+				QtxStageData stageData = entry.getValue();
 	
-				List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
+				List<QualTX> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
 	
-				buildCompConfigQtxWorkBean(qualtxCompList, qtxWorkList, stage);
-	
-				List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE);
-				buildheaderConfigQtxWorkBean(qualtxList, qtxWorkList, stage);
+				boolean isForceQualification = stageData.isforceQualification;
+				createArQtxBomCompBean(qualtxList, qtxWorkList, reasonCode, true, bomConsolMap, isForceQualification);
+		
 			}catch(Exception e){
 				logger.error("getConsolidatedQualtxForConfigUpdates, Error while processing the configRequalMap:" + configRequalMap);
 			}
 		}
 
 	}
-	
-	private void buildheaderConfigQtxWorkBean(List<QualTX> qualtxList, Map<Long, QTXWork> qtxWorkList, QTXStage stage) throws Exception
+
+	private void processConfigRequalWork(QTXStage stageData, JSONObject workData, Map<Long, QtxStageData> configRequalMap, Map<Long, QTXConsolWork> bomConsolMap)
 	{
-		for (QualTX qualtx : qualtxList)
+		if (workData.isNull("MASS_QUALIFICATION")) return;
+
+		JSONObject theMassQualDtlsObj = workData.getJSONObject("MASS_QUALIFICATION");
+		String isForceQualification = theMassQualDtlsObj.optString("FORCE_RUN_QUALIFICATION");
+		JSONArray theBomDtls = theMassQualDtlsObj.optJSONArray("BOM_DTLS");
+		if (null != theBomDtls)
 		{
-			QTXWork theQtxWork = null;
-
-			boolean isValQualtx = false;
-			isValQualtx = isValidQualtx(qualtx, false);
-			if (!isValQualtx) continue;
-
-			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
+			ArrayList<Long> bomKeyList = null;
+			bomKeyList = new ArrayList<>();
+			for (int index = 0; index < theBomDtls.length(); index++)
 			{
-				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
-				theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.HEADER_CONFIG_CHANGE);
+				JSONObject theBomDtl = theBomDtls.getJSONObject(index);
+				bomKeyList.add(theBomDtl.optLong("BOM_KEY"));
 
-			}
-			else
-			{
-				theQtxWork = this.utility.createQtxWorkObj(qualtx, RequalificationWorkCodes.HEADER_CONFIG_CHANGE, null, 0);
-			}
-			theQtxWork.time_stamp = stage.time_stamp;
-			theQtxWork.status.time_stamp = stage.time_stamp;
-			theQtxWork.details.time_stamp = stage.time_stamp;
-			theQtxWork.userId = stage.user_id;
-
-			qtxWorkList.put(qualtx.alt_key_qualtx, theQtxWork);
-		}
-
-	}
-	
-	private void buildCompConfigQtxWorkBean(List<QualTX> qualtxList, Map<Long, QTXWork> qtxWorkList, QTXStage stage) throws Exception
-	{
-		for (QualTX qualtx : qualtxList)
-		{
-			QualTXComponent qualtxComp = qualtx.compList.get(0);
-			if(!isValidQualtxComp(qualtxComp)) continue;
-			QTXWork theQtxWork = null;
-			QTXCompWork theQtxCompWork = null;
-			List<QTXCompWork> theQtxCompList = null;
-			boolean isNewComp = true;
-
-			boolean isValQualtx = false;
-			isValQualtx = isValidQualtx(qualtx, false);
-			if (!isValQualtx) continue;
-
-			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
-			{
-				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
-				theQtxCompList = theQtxWork.compWorkList;
-
-				for (QTXCompWork compWork : theQtxCompList)
+				QTXConsolWork qtxConsolWork = bomConsolMap.get(theBomDtl.optLong("BOM_KEY"));
+				if (qtxConsolWork == null)
 				{
-					if (compWork.qualtx_comp_key == qualtxComp.alt_key_comp)
-					{
-						compWork.setReasonCodeFlag(RequalificationWorkCodes.COMP_CONFIG_CHANGE);
-						compWork.time_stamp = theQtxWork.time_stamp;
-						compWork.status.time_stamp = theQtxWork.time_stamp;
-						isNewComp = false;
-					}
-
+					qtxConsolWork = new QTXConsolWork();
+					qtxConsolWork.user_id = stageData.user_id;
+					qtxConsolWork.priority = stageData.priority;
+					qtxConsolWork.time_stamp = stageData.time_stamp;
+					bomConsolMap.put(theBomDtl.optLong("BOM_KEY"), qtxConsolWork);
 				}
-
-				if (isNewComp)
+				else
 				{
-					theQtxCompWork = this.utility.createQtxCompWorkObj(qualtx, qualtxComp, RequalificationWorkCodes.COMP_CONFIG_CHANGE, theQtxWork.qtx_wid);
-					theQtxCompWork.time_stamp = theQtxWork.time_stamp;
-					theQtxCompWork.status.time_stamp = theQtxWork.time_stamp;
-					theQtxWork.compWorkList.add(theQtxCompWork);
+					qtxConsolWork.priority = (qtxConsolWork.priority < stageData.priority) ? stageData.priority : qtxConsolWork.priority;
 				}
 
 			}
-			else
+
+			QtxStageData stageDatabean = new QtxStageData();
+			String agreementCodes = theMassQualDtlsObj.optString("AGREEMENT_CODES");
+
+			if (null != agreementCodes && !agreementCodes.isEmpty())
 			{
-				theQtxWork = this.utility.createQtxWorkObj(qualtx, 0, null, qualtxComp.prod_key);
-				theQtxWork.time_stamp = stage.time_stamp;
-				theQtxWork.status.time_stamp = stage.time_stamp;
-				theQtxWork.details.time_stamp = stage.time_stamp;
-				theQtxWork.userId = stage.user_id;
-
-				theQtxCompWork = this.utility.createQtxCompWorkObj(qualtx, qualtxComp, RequalificationWorkCodes.COMP_CONFIG_CHANGE, theQtxWork.qtx_wid);
-				theQtxCompWork.time_stamp = theQtxWork.time_stamp;
-				theQtxCompWork.status.time_stamp = theQtxWork.time_stamp;
-				theQtxWork.compWorkList.add(theQtxCompWork);
-
+				ArrayList<String> ftaList = new ArrayList<String>(Arrays.asList(agreementCodes.split(",")));
+			
+				stageDatabean.agreementList = ftaList;
 			}
+			stageDatabean.altKeylist = bomKeyList;
 
-			qtxWorkList.put(qualtx.alt_key_qualtx, theQtxWork);
-		}
-	}
-
-	private void processConfigRequalWork(QTXStage stageData, JSONObject workData, Map<QTXStage, ArrayList<Long>> configRequalMap)
-	{
-		if (workData.isNull("CONFIG_DTLS")) return;
-
-		JSONObject theConfigDtlsObj = workData.getJSONObject("CONFIG_DTLS");
-
-		JSONArray theIvaDtls = theConfigDtlsObj.optJSONArray("IVA_DTLS");
-		if (null != theIvaDtls)
-		{
-			ArrayList<Long> ivaKeyList = null;
-			ivaKeyList = new ArrayList<>();
-			for (int index = 0; index < theIvaDtls.length(); index++)
-			{
-				JSONObject theIvaDtl = theIvaDtls.getJSONObject(index);
-				ivaKeyList.add(theIvaDtl.optLong("IVA_KEY"));
-
-			}
-
-			configRequalMap.put(stageData, ivaKeyList);
+			stageDatabean.isforceQualification = (isForceQualification != null && isForceQualification.equalsIgnoreCase("Y")) ? true : false;
+			configRequalMap.put(ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE, stageDatabean);
 		}
 
 	}
