@@ -244,6 +244,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				qualtxComp.net_weight = bomComp.net_weight;
 				qualtxComp.unit_weight = bomComp.unit_weight;
 				qualtxComp.qty_per = bomComp.qty_per;
+				qualtxComp.essential_character = bomComp.essential_character;
 				if(null != bomComp.unit_cost)
 					qualtxComp.unit_cost = bomComp.unit_cost;
 				qualtxComp.qualTX = qualtx;
