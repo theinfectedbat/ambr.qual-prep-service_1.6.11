@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qps.bom.qualstatus;
 
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.Date;
@@ -14,14 +15,15 @@ import com.ambr.platform.utils.queue.TaskQueueThroughputUtility;
  *****************************************************************************************
  */
 public class QualificationPreparationStatusDetail 
+	implements Serializable
 {
-	public QualificationPreparationStatusEnum 	status;
-	public Date									startTime;
-	public Date									endTime;
-	public long									overallEstimatedTimeRemaining;
-	public long									bomSpecificEstimatedTimeRemaining;
-	public Date									nextScheduledExecutionTime;
-	public long									timeUntilNextExecution;
+	public String 	statusText;
+	public Date		startTime;
+	public Date		endTime;
+	public long		overallEstimatedTimeRemaining;
+	public long		bomSpecificEstimatedTimeRemaining;
+	public Date		nextScheduledExecutionTime;
+	public long		timeUntilNextExecution;
 	
 	/**
 	 *************************************************************************************
@@ -42,7 +44,7 @@ public class QualificationPreparationStatusDetail
 		
 		this.bomSpecificEstimatedTimeRemaining = 0;
 		for (TaskQueueProgressSummary aSummary : theUtil.getProgressSummaryList()) {
-			aDuration = (long)((((double)aSummary.filteredMaxSubmittedPosInQueue)/aSummary.throughput) * 1000);
+			aDuration = (long)((((double)aSummary.filteredMaxSubmittedPosInQueue)/aSummary.throughput));
 			if (aDuration > this.bomSpecificEstimatedTimeRemaining) {
 				this.bomSpecificEstimatedTimeRemaining = aDuration;
 			}

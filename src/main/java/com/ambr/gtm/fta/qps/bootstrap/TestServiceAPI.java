@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatus;
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusGenerator;
+import com.ambr.gtm.fta.qps.bom.qualstatus.api.GetBOMQualificationStatusClientAPI;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
@@ -489,5 +490,10 @@ public class TestServiceAPI
 		
 		aContainer = this.queueUniverse.gpmClaimDetailsCache.getClaimDetails(522920762L);
 		System.out.println("done");
+	}
+	
+	public void test11()
+		throws Exception
+	{
 	}
 }

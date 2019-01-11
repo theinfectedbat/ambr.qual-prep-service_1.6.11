@@ -188,17 +188,17 @@ public class BOMQualificationStatusGenerator
 		aStatusDetail = new QualificationPreparationStatusDetail();
 		try {
 			aStatusMgr = this.queueUniverse.qtxPrepProgressMgr.getStatusManager();
-			aStatusDetail.status = QualificationPreparationStatusEnum.IN_PROGRESS;
+			aStatusDetail.statusText = QualificationPreparationStatusEnum.IN_PROGRESS.name();
 			aStatusDetail.startTime = aStatusMgr.getStartTime();
 			aStatusDetail.endTime = aStatusMgr.getEndTime();
 			aStatusDetail.setDuration(this.queueUniverse.getThroughputUtility(), this.bomKey);
 		}
 		catch (IllegalStateException e) {
 			if (this.queueUniverse.qtxDetailUniverse.getQualTXCount() == 0) {
-				aStatusDetail.status = QualificationPreparationStatusEnum.PENDING;
+				aStatusDetail.statusText = QualificationPreparationStatusEnum.PENDING.name();
 			}
 			else {
-				aStatusDetail.status = QualificationPreparationStatusEnum.COMPLETED;
+				aStatusDetail.statusText = QualificationPreparationStatusEnum.COMPLETED.name();
 			}
 		}
 		this.statusObj.setPrepStatusDetail(aStatusDetail);

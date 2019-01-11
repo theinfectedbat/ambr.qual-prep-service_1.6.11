@@ -106,9 +106,9 @@ public class QualTXUtility
 		boolean isMatched = false;
 		for(GPMSourceIVA gpmSRCIva : prodSourceContainer.ivaList)
 		{
-			isMatched = gpmSRCIva.ftaCode.equals(fta_code);
+			isMatched = fta_code.equals(gpmSRCIva.ftaCode);
 			if(ctry_of_import != null)
-				isMatched = isMatched && gpmSRCIva.ctryOfImport.equals(ctry_of_import);
+				isMatched = isMatched && ctry_of_import.equals(gpmSRCIva.ctryOfImport);
 
 			isMatched = isMatched && (gpmSRCIva.effectiveFrom.before(effective_from) || gpmSRCIva.effectiveFrom.equals(effective_from)) && (gpmSRCIva.effectiveTo.after(effective_to) || gpmSRCIva.effectiveTo.equals(effective_to));
 			

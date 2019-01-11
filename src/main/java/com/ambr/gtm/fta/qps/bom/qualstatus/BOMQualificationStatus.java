@@ -1,5 +1,6 @@
 package com.ambr.gtm.fta.qps.bom.qualstatus;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -13,14 +14,15 @@ import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
  * </P>
  *****************************************************************************************
  */
-public class BOMQualificationStatus 
+public class BOMQualificationStatus
+	implements Serializable
 {
-	public final long									bomKey;
-	private long										currentTime;
-	private QualificationPreparationStatusDetail		prepStatusDetail;
-	private Duration									requalEstimatedTimeRemaining;
-	private Duration									qualEngineEvalEstimatedTimeRemaining;
-	private ArrayList<TradeLaneDetail>					tradeLaneDetailList;
+	public final long								bomKey;
+	public long										currentTime;
+	public QualificationPreparationStatusDetail		prepStatusDetail;
+	public Duration									requalEstimatedTimeRemaining;
+	public Duration									qualEngineEvalEstimatedTimeRemaining;
+	public ArrayList<TradeLaneDetail>				tradeLaneDetailList;
 	
 	/**
      *************************************************************************************
@@ -109,7 +111,7 @@ public class BOMQualificationStatus
 			aMsgUtil.format("Current Time: {0}", false,  true, new Timestamp(this.currentTime));
 			
 			aMsgUtil.format("Qualification Preparation Status: Status [{0}] Start [{1}] End [{2}]", false,  true,
-				this.prepStatusDetail.status.name(),
+				this.prepStatusDetail.statusText,
 				this.prepStatusDetail.startTime,
 				this.prepStatusDetail.endTime
 			);
