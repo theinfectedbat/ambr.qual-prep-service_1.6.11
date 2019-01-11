@@ -240,8 +240,8 @@ public class QTXWorkProducer extends QTXProducer
 		
 		//TODO this isnt right.  duration is header or comp whichever is greater PLUS persistence
 		//TODO plus the throughput of the persistence guy factored by lane position in work/comp_work queue
-		finalStatus.setTradeLaneStatus(this.getHeaderRequalificationBOMStatus(bomKey).tradeLaneStatusList);
-		finalStatus.setTradeLaneStatus(this.compWorkProducer.getCompRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		finalStatus.putTradeLaneStatus(this.getHeaderRequalificationBOMStatus(bomKey).tradeLaneStatusList);
+		finalStatus.putTradeLaneStatus(this.compWorkProducer.getCompRequalificationBOMStatus(bomKey).tradeLaneStatusList);
 		finalStatus.sumTradeLaneStatus(this.workPersistenceProducer.getPersistentRequalificationBOMStatus(bomKey).tradeLaneStatusList);
 		
 		return finalStatus;
@@ -296,7 +296,7 @@ public class QTXWorkProducer extends QTXProducer
 						tradeLaneStats.duration = (long) ((double) tradeLaneStats.position / throughput);
 						tradeLaneStats.estimate += tradeLaneStats.duration;
 						
-						bomStatus.setTradeLaneStatus(tradeLaneStats);
+						bomStatus.putTradeLaneStatus(tradeLaneStats);
 					}
 				}
 			}
