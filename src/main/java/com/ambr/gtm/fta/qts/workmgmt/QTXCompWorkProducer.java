@@ -155,7 +155,7 @@ public class QTXCompWorkProducer extends QTXProducer
 						tradeLaneStats.duration = (long) ((double) tradeLaneStats.position / throughput);
 						tradeLaneStats.estimate += tradeLaneStats.duration;
 						
-						bomStatus.setTradeLaneStatus(tradeLaneStats);
+						bomStatus.putTradeLaneStatus(tradeLaneStats);
 					}
 				}
 			}
