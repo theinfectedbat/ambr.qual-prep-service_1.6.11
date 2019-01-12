@@ -15,6 +15,7 @@ import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
+import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.config.FTAHSListCache;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.CumulationConfigContainer.CumulationRule;
@@ -262,7 +263,23 @@ public class CumulationComputationRule
 			Double cumulationValue = calculateCumulationValue	(aQualTXComp, aClaimDetails);
 
 			if(cumulationValue != null){
-				aQualTXComp.cumulation_value = cumulationValue;
+				if(aQualTXComp.qualTX.analysis_method == null 
+						|| "".equals(aQualTXComp.qualTX.analysis_method))
+				{
+					String analysisMethod =  this.qeConfigCache.getQEConfig(aQualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
+					if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+						aQualTXComp.td_cumulation_value = cumulationValue;
+					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+							aQualTXComp.rm_cumulation_value = cumulationValue;
+					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+							aQualTXComp.in_cumulation_value = cumulationValue;
+				}
+				else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+					aQualTXComp.td_cumulation_value = cumulationValue;
+				else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+					aQualTXComp.rm_cumulation_value = cumulationValue;
+				else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+					aQualTXComp.in_cumulation_value = cumulationValue;
 			}
 		}
 	}
@@ -272,11 +289,8 @@ public class CumulationComputationRule
 		Double convertedCumulationValue = 0.0;
 		String headerCurrencyCode = aQualTXComp.qualTX.currency_code; 
 		
-		String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(aQualTXComp.org_code, aQualTXComp.cumulation_rule_fta_used != null ? aQualTXComp.cumulation_rule_fta_used : aQualTXComp.qualTX.fta_code, propertySheetManager);
-		Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
-
-		Object value = claimdetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_VALUE").toLowerCase());
-		Object cumulationCurrency =  claimdetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CURRENCY").toLowerCase());
+		Double value = aQualTXComp.cumulation_value;
+		String cumulationCurrency = aQualTXComp.cumulation_currency;
 		
 		if(!"Y".equalsIgnoreCase(aQualTXComp.cumulation_rule_applied) 
 				&& null == value 
@@ -286,10 +300,29 @@ public class CumulationComputationRule
 				return convertedCumulationValue;
 		
 		double claimCumulationValue = Double.valueOf(value.toString());
-		double aQtyPer = aQualTXComp.qty_per;
+		double aQtyPer = 0.0;
+		
+		if(aQualTXComp.qualTX.analysis_method == null 
+				|| "".equals(aQualTXComp.qualTX.analysis_method))
+		{
+			String analysisMethod =  this.qeConfigCache.getQEConfig(aQualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
+			if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+				aQtyPer = aQualTXComp.qty_per;
+			else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+				aQtyPer = aQualTXComp.rm_qty_per;
+			else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+				aQtyPer = aQualTXComp.in_qty_per;
+		}
+		else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+			aQtyPer = aQualTXComp.qty_per;
+		else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+			aQtyPer = aQualTXComp.rm_qty_per;
+		else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+			aQtyPer = aQualTXComp.in_qty_per;
+		
 		double cumulationValue = claimCumulationValue * aQtyPer;
 		 
-		 double exchangeRate  = beanCurrencyExchangeRate.getExchangeRate((String)cumulationCurrency,headerCurrencyCode); 
+		 double exchangeRate  = beanCurrencyExchangeRate.getExchangeRate(cumulationCurrency,headerCurrencyCode); 
 		 
 		 return cumulationValue * exchangeRate;
 	}

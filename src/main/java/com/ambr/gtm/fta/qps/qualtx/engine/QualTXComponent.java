@@ -402,22 +402,35 @@ public class QualTXComponent
 
 		}
 
-		aValue = aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
-		if (aValue != null) {
-			this.traced_value = ((Number)aValue).doubleValue();
-			//this.include_for_trace_value = "Y";
+		String aLogicalColumnName = flexFieldMap.get("TRACED_VALUE");
+		if(aLogicalColumnName != null)
+		{
+			aValue = aClaimDetails.getValue(aLogicalColumnName);
+			if (aValue != null)
+				this.traced_value = ((Number)aValue).doubleValue();
 		}
 		
-		aValue = aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
-		if(aValue != null)
-			this.traced_value_currency = (String)aValue;
+		aLogicalColumnName = flexFieldMap.get("TRACED_VALUE_CURRENCY");
+		if(aLogicalColumnName != null)
+		{
+			aValue = aClaimDetails.getValue(aLogicalColumnName);
+			if(aValue != null)
+				this.traced_value_currency = (String)aValue;
+		}
 		
-		aValue = aClaimDetails.getValue(flexFieldMap.get("CUMULATION_VALUE"));
-		if (aValue != null)
-			this.cumulation_value = ((Number)aValue).doubleValue();
-		
-		aValue = aClaimDetails.getValue(flexFieldMap.get("CUMULATION_CURRENCY"));
-		if (aValue != null)
-			this.cumulation_currency = (String)aValue;
+		aLogicalColumnName = flexFieldMap.get("CUMULATION_VALUE");
+		if(aLogicalColumnName != null)
+		{
+			aValue = aClaimDetails.getValue(aLogicalColumnName);
+			if (aValue != null)
+				this.cumulation_value = ((Number)aValue).doubleValue();
+		}
+		aLogicalColumnName = flexFieldMap.get("CUMULATION_CURRENCY");
+		if(aLogicalColumnName != null)
+		{
+			aValue = aClaimDetails.getValue(aLogicalColumnName);
+			if (aValue != null)
+				this.cumulation_currency = (String)aValue;
+		}
 	}
 }
