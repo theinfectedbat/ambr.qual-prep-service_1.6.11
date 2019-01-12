@@ -54,7 +54,6 @@ public class GPMClaimDetailsRowCallbackHandler
 			aClaimDetail.alt_key_ivainst = theResultSet.getLong("alt_key_ivainst");
 			aClaimDetail.prodSrcIVAKey = theResultSet.getLong("record_key");
 			aClaimDetail.fta_code_group = theResultSet.getString("fta_code_group");
-			aClaimDetail.parent_seq_num = theResultSet.getLong("parent_seq_num");
 			
 			aClaimDetail.loadData(theResultSet);
 			
