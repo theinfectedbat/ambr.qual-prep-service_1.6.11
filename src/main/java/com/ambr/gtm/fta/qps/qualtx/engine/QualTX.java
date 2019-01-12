@@ -458,4 +458,24 @@ public class QualTX
 	{
 		this.persistFailedFlag = true;
 	}
+	
+	public QualTXPrice getQualtxPrice(String priceType)
+	{
+		if (priceType == null) return null;
+		QualTXPrice qtxPrice = null;
+		if (this.priceList != null)
+		{
+			for (QualTXPrice qualTXPrice : priceList)
+			{
+				if (priceType.equalsIgnoreCase(qualTXPrice.price_type))
+				{
+					qtxPrice = qualTXPrice;
+					break;
+				}
+			}
+		}
+		return qtxPrice;
+	}
+	
+	
 }
