@@ -98,6 +98,8 @@ public class QualTXComponent
 	@Column(name = "weight") 					public Double	weight;
 	@Column(name = "weight_uom") 				public String	weight_uom;
 	@Column(name = "prev_year_qual_applied") 	public String	prev_year_qual_applied;
+	@Column(name = "td_traced_value") 			public Double	td_traced_value;
+	@Column(name = "td_cumulation_value") 		public Double	td_cumulation_value;
 
 	@OneToMany(targetEntity = QualTXComponentDataExtension.class) public ArrayList<QualTXComponentDataExtension>	deList;
 	@OneToMany(targetEntity = QualTXComponentPrice.class) public ArrayList<QualTXComponentPrice>			priceList;
@@ -403,7 +405,7 @@ public class QualTXComponent
 		aValue = aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE"));
 		if (aValue != null) {
 			this.traced_value = ((Number)aValue).doubleValue();
-			this.include_for_trace_value = "Y";
+			//this.include_for_trace_value = "Y";
 		}
 		
 		aValue = aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
