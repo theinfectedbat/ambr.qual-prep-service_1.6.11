@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qps.qualtx.engine;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -482,5 +483,89 @@ public class QualTXBusinessLogicProcessor
 		return false;
 	}
 	
+	public void populateRollupPriceDetails(BOM theBOM, QualTX theQualtx, String theRequestedPriceType) throws Exception
+	{
+		
+		List<BOMDataExtension> appBOMDEList = getApplicableBomDEs(theBOM.deList, theQualtx.fta_code, theQualtx.ctry_of_import, theQualtx.effective_from, theQualtx.effective_to);
+
+		if (appBOMDEList != null && !appBOMDEList.isEmpty())
+		{
+			DataExtensionConfiguration aDEConfig = this.dataExtensionConfigRepos.getDataExtensionConfiguration("BOM_STATIC:COST_ELEMENT");
+			Map<String, String> deColumnMap = aDEConfig.getFlexColumnMapping();
+			if (deColumnMap != null)
+			{
+				for (BOMDataExtension bomDataExtension : appBOMDEList)
+				{
+					
+					String cctPhyColumnName = deColumnMap.get("COST_CATEGORY");
+					String priceType = (String) bomDataExtension.getValue(cctPhyColumnName);
+					if(!"ALL".equalsIgnoreCase(theRequestedPriceType) && !priceType.equalsIgnoreCase(theRequestedPriceType)) continue;
+					
+					QualTXPrice aQualTXPrice = theQualtx.getQualtxPrice(priceType);
+					if(aQualTXPrice == null) aQualTXPrice = theQualtx.createPrice();
+
+					
+					String cvPhyColumnName = deColumnMap.get("CONVERTED_VALUE");
+					String rawValue = (String) bomDataExtension.getValue(cvPhyColumnName);
+					
+					Double deValue = null;
+					if(rawValue != null) deValue = Double.valueOf(rawValue);
+					
+					aQualTXPrice.price_type = priceType;
+					aQualTXPrice.price = deValue;
+					aQualTXPrice.currency_code = theBOM.currency_code;
+
+					if ("TRANSACTION_VALUE".equalsIgnoreCase(priceType) && theQualtx.value == null && deValue != null)
+					{
+						theQualtx.value = deValue;
+					}
+
+					if ("NET_COST".equalsIgnoreCase(priceType) && theQualtx.cost == null && deValue != null)
+					{
+						theQualtx.cost = deValue;
+					}
+				}
+			}
+		}
+	}
+	
+	public List<BOMDataExtension> getApplicableBomDEs(List<BOMDataExtension> deList, String ftaCode, String coi, Date effectiveFrom, Date effectiveTO) throws Exception
+	{
+		List<BOMDataExtension> appBOMDEs = new ArrayList<BOMDataExtension>();
+		if (deList != null && !deList.isEmpty())
+		{
+			DataExtensionConfiguration aDEConfig = this.dataExtensionConfigRepos.getDataExtensionConfiguration("BOM_STATIC:COST_ELEMENT");
+			Map<String, String> deColumnMap = aDEConfig.getFlexColumnMapping();
+			if (deColumnMap != null)
+			{
+				for (BOMDataExtension aBOMDE : deList)
+				{
+					if (!"BOM_STATIC:COST_ELEMENT".equalsIgnoreCase(aBOMDE.group_name)) continue;
+
+					String ctPhyColumnName = deColumnMap.get("COST_TYPE");
+					String costType = (String) aBOMDE.getValue(ctPhyColumnName);
+					if (!"ROLLUP".equalsIgnoreCase(costType)) continue;
+
+					String ftaPhyColumnName = deColumnMap.get("FTA");
+					String coiPhyColumnName = deColumnMap.get("COI");
+					String deFtaCode = (String) aBOMDE.getValue(ftaPhyColumnName);
+					String deCOI = (String) aBOMDE.getValue(coiPhyColumnName);
+					if (!ftaCode.equalsIgnoreCase(deFtaCode) || !coi.equalsIgnoreCase(deCOI)) continue;
+
+					String eFromPhyColumnName = deColumnMap.get("EFFECTIVE_FROM");
+					String eToPhyColumnName = deColumnMap.get("EFFECTIVE_TO");
+					Date eFromDate = (Date) aBOMDE.getValue(eFromPhyColumnName);
+					Date eToDate = (Date) aBOMDE.getValue(eToPhyColumnName);
+					if (DateUtils.isSameDay(effectiveFrom, eFromDate) 
+							&& (DateUtils.isSameDay(eToDate, effectiveTO)))
+					{
+						appBOMDEs.add(aBOMDE);
+					}
+
+				}
+			}
+		}
+		return appBOMDEs;
+	}
 		
 }

@@ -3,6 +3,9 @@ package com.ambr.gtm.fta.qps.qualtx.engine;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,7 +15,6 @@ import com.ambr.gtm.fta.qps.bom.BOM;
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMPrice;
-import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.TradeLaneStatusTracker;
@@ -59,6 +61,7 @@ public class TradeLaneProcessorTask
 	private TradeLaneStatusTracker				statusTracker;
 	private PersistenceTaskHandler				taskHandler;
 	private DataExtensionConfigurationRepository dataExtCfgRepos;
+	private QualTXBusinessLogicProcessor        qtxBusinessLogicProcessor;
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -158,7 +161,9 @@ public class TradeLaneProcessorTask
 		this.dataExtCfgRepos = this.tradeLaneQueue.queueUniverse.dataExtCfgRepos;
 		this.newQualTXKey = theNewQualTXKey;
 		this.qeConfigCache = this.tradeLaneQueue.queueUniverse.qeConfigCache;
-		this.propertySheetManager = this.tradeLaneQueue.queueUniverse.qtxBusinessLogicProcessor.propertySheetManager;
+		this.qtxBusinessLogicProcessor = this.tradeLaneQueue.queueUniverse.qtxBusinessLogicProcessor;
+		this.propertySheetManager = this.qtxBusinessLogicProcessor.propertySheetManager;
+		
 		this.description = "BOM." + this.bom.alt_key_bom + "QTX." + this.newQualTXKey;
 		this.taskHandler = new PersistenceTaskHandler();
 	}
@@ -227,7 +232,10 @@ public class TradeLaneProcessorTask
 				this.mapPriceFields(aQualTXPrice, aBOMPrice);
 			}
 			
+			this.qtxBusinessLogicProcessor.populateRollupPriceDetails(this.bom, this.qualTX, "ALL");
+			
 			for (BOMDataExtension aBOMDE : this.bom.deList) {
+				
 				if (!this.tradeLaneQueue.isDECopyEnabled(aBOMDE.group_name)) {
 					continue;
 				}
@@ -245,6 +253,11 @@ public class TradeLaneProcessorTask
 		finally {
 		}
 	}
+	
+	
+	
+	
+				
 
 	/**
 	 *************************************************************************************
