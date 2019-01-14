@@ -58,9 +58,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 	//TODO there could be multiple work items loaded into memory that target the same qualtx.  these will be processed serially.  need to keep the qualtx up to date so following work items will have accurate info when generating audit
 	public void doWork(WorkPackage workPackage) throws Exception
 	{
-		//TODO JTB DO NOT CHECK THIS IN
-		Thread.sleep(10000);
-		
 		//An error occurred while staging the data for this WorkPackage (usually resource data failed to pull)
 		if (workPackage.failure != null)
 			throw workPackage.failure;
