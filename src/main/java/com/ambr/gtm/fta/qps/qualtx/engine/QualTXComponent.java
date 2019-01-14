@@ -100,7 +100,9 @@ public class QualTXComponent
 	@Column(name = "prev_year_qual_applied") 	public String	prev_year_qual_applied;
 	@Column(name = "td_traced_value") 			public Double	td_traced_value;
 	@Column(name = "td_cumulation_value") 		public Double	td_cumulation_value;
+	@Column(name = "rvc") 						public String	rvc;
 
+	
 	@OneToMany(targetEntity = QualTXComponentDataExtension.class) public ArrayList<QualTXComponentDataExtension>	deList;
 	@OneToMany(targetEntity = QualTXComponentPrice.class) public ArrayList<QualTXComponentPrice>			priceList;
 	
@@ -431,6 +433,15 @@ public class QualTXComponent
 			aValue = aClaimDetails.getValue(aLogicalColumnName);
 			if (aValue != null)
 				this.cumulation_currency = (String)aValue;
+		}
+		
+		
+		aLogicalColumnName = flexFieldMap.get("RVC");
+		if(aLogicalColumnName != null)
+		{
+			aValue = aClaimDetails.getValue(aLogicalColumnName);
+			if (aValue != null)
+				this.rvc = (String)aValue;
 		}
 	}
 }
