@@ -50,6 +50,7 @@ import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
 import com.ambr.gtm.utils.legacy.sps.SimplePropertySheet;
 import com.ambr.gtm.utils.legacy.sps.exception.PropertyDoesNotExistException;
+import com.ambr.gtm.utils.legacy.sps.exception.PropertyValueException;
 
 
 /*
@@ -668,6 +669,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 	private List<String> getCOODeterminationHierarchy(QualTX qualtx) throws Exception {
 		
 		SimplePropertySheet propertySheet = qtxBusinessLogicProcessor.propertySheetManager.getPropertySheet(qualtx.org_code, "BOM_SCREENING_CONFIG");
+		List<String> cooList = new ArrayList<String>();
 		String aCOOHierchyOrder= null;
 		try
 		{
@@ -677,6 +679,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			aCOOHierchyOrder = null;
 		}
+		catch (PropertyValueException p)
+		{
+			aCOOHierchyOrder = null;
+		}
+		
+		if(aCOOHierchyOrder == null ||  "".equals(aCOOHierchyOrder)) return cooList;
 		String [] aCOOOrder = aCOOHierchyOrder.split(",");
 		return Arrays.asList(aCOOOrder);
 	}
