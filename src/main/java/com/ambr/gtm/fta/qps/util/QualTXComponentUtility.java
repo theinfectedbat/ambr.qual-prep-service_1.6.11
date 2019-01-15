@@ -2,6 +2,7 @@ package com.ambr.gtm.fta.qps.util;
 
 import java.text.MessageFormat;
 import java.util.Date;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -171,12 +172,13 @@ public class QualTXComponentUtility
 		String							aPriceDE 			= "BOM_COMP_STATIC:PRICE";
 		QualTXComponentDataExtension	aQualTXCompDE;
 		
+		Map<String, String> deCompPriceColumnMap = this.dataExtCfgRepos.getDataExtensionConfiguration("BOM_COMP_STATIC:PRICE").getFlexColumnMapping();
 		for (BOMComponentDataExtension aBOMCompDE : this.bomComp.deList) {
 			
 			if (aBOMCompDE.group_name.equalsIgnoreCase(aPriceDE)) {
 				
-				Number price = (Number)aBOMCompDE.getValue("PRICE");
-				String priceType = (String)aBOMCompDE.getValue("PRICE_TYPE");
+				Number price = (Number)aBOMCompDE.getValue(deCompPriceColumnMap.get("VALUE"));
+				String priceType = (String)aBOMCompDE.getValue(deCompPriceColumnMap.get("TYPE"));
 				if(price == null || priceType == null || priceType.isEmpty())
 					continue;
 					
