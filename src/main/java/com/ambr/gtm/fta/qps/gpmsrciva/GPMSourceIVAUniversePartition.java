@@ -108,7 +108,7 @@ public class GPMSourceIVAUniversePartition
 		this.loadSrcIVASQLText = StringUtil.join(aSQLLines.toArray(), " ");
 
 		aSQLLines = new ArrayList<>();
-		aSQLLines.add("SELECT alt_key_prod, alt_key_src, ctry_of_origin"); 
+		aSQLLines.add("SELECT alt_key_prod, alt_key_src, ctry_of_origin, is_active"); 
 		aSQLLines.add("FROM mdi_prod_src");
 	
 		if (this.partitionCount > 1) {

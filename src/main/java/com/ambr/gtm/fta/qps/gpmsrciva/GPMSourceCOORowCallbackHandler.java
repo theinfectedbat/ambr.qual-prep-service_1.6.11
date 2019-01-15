@@ -56,10 +56,17 @@ public class GPMSourceCOORowCallbackHandler
 		String				aCOO;
 		
 		try {
+			
+			aValue = theResultSet.getString("is_active");
 			aGPMSrcIVA = new GPMSourceIVA(this.partition);
 			aProdKey = theResultSet.getLong("alt_key_prod");
 			aProdSrcKey = theResultSet.getLong("alt_key_src");
 			aCOO = theResultSet.getString("ctry_of_origin");
+
+			if (!"Y".equalsIgnoreCase(aValue)) {
+				this.partition.inactiveSrcTable.put(aProdSrcKey, true);
+				return;
+			}
 			
 			this.partition.addGPMSourceCOO(aProdKey, aProdSrcKey, aCOO);
 		}

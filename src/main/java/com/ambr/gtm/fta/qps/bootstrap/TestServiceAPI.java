@@ -21,6 +21,7 @@ import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatus;
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusGenerator;
 import com.ambr.gtm.fta.qps.bom.qualstatus.api.GetBOMQualificationStatusClientAPI;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
@@ -81,7 +82,7 @@ public class TestServiceAPI
 	public void execute()
 		throws Exception
 	{
-		this.test10();
+		this.test11();
 	}
 	
 	/**
@@ -495,5 +496,9 @@ public class TestServiceAPI
 	public void test11()
 		throws Exception
 	{
+		GPMSourceIVAProductContainer aContainer;
+		
+		aContainer = this.queueUniverse.ivaCache.getSourceIVAByProduct(646157351L);
+		aContainer = aContainer;
 	}
 }
