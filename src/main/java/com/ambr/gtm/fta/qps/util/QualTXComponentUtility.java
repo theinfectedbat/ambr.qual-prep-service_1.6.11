@@ -1,6 +1,7 @@
 package com.ambr.gtm.fta.qps.util;
 
 import java.text.MessageFormat;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,6 +37,9 @@ public class QualTXComponentUtility
 	TradeLaneStatusTracker						statusTracker;
 	
 	QualTXBusinessLogicProcessor qualTXBusinessLogicProcessor;
+	private DetermineComponentCOO determineComponentCOO;
+	private CumulationComputationRule cumulationComputationRule;
+	private PreviousYearQualificationRule previousYearQualificationRule;
 		
 	public QualTXBusinessLogicProcessor getQualTXBusinessLogicProcessor()
 	{
@@ -45,6 +49,9 @@ public class QualTXComponentUtility
 	public void setQualTXBusinessLogicProcessor(QualTXBusinessLogicProcessor qualTXBusinessLogicProcessor)
 	{
 		this.qualTXBusinessLogicProcessor = qualTXBusinessLogicProcessor;
+		this.determineComponentCOO = this.qualTXBusinessLogicProcessor.determineComponentCOO;
+		this.cumulationComputationRule = this.qualTXBusinessLogicProcessor.cumulationComputationRule;
+		this.previousYearQualificationRule= this.qualTXBusinessLogicProcessor.previousYearQualificationRule;
 	}
 
 	
@@ -362,6 +369,33 @@ public class QualTXComponentUtility
 			this.claimDetailsCache.getClaimDetails(this.qualTXComp.prod_src_iva_key),
 			this.dataExtCfgRepos
 		);
+		
+		String coo = null;
+		GPMClassificationProductContainer aGPMClassContainer = null;
+		if (this.determineComponentCOO != null)
+		{
+			aGPMClassContainer = this.gpmClassCache.getGPMClassificationsByProduct(this.bomComp.prod_key);
+			coo = determineComponentCOO.determineCOOForComponentSource(this.qualTXComp, this.bomComp, aSourceIVAProductSourceContainer, aGPMClassContainer, this.qualTXBusinessLogicProcessor.propertySheetManager);
+			this.qualTXComp.ctry_of_origin = coo;
+		}
+
+		if (this.cumulationComputationRule != null) cumulationComputationRule.applyCumulationForComponent(this.qualTXComp, aSourceIVAProductSourceContainer, this.claimDetailsCache, this.dataExtCfgRepos);
+
+		if (!"Y".equalsIgnoreCase(this.qualTXComp.cumulation_rule_applied) && (this.qualTXComp.qualified_flg == null || "".equalsIgnoreCase(this.qualTXComp.qualified_flg)))
+		{
+			if (this.previousYearQualificationRule != null)
+			{
+				Date origEffectiveFrom = this.qualTXComp.qualified_from;
+				Date origEffectiveTo = this.qualTXComp.qualified_to;
+				boolean isPrevYearQualApplied = previousYearQualificationRule.applyPrevYearQualForComponent(this.bomComp, this.qualTXComp, aSourceIVAProductSourceContainer, claimDetailsCache, this.dataExtCfgRepos);
+				if (!isPrevYearQualApplied)
+				{
+					if (this.cumulationComputationRule != null) cumulationComputationRule.applyCumulationForComponent(this.qualTXComp, aSourceIVAProductSourceContainer, this.claimDetailsCache, this.dataExtCfgRepos);
+					this.qualTXComp.qualified_from = origEffectiveFrom;
+					this.qualTXComp.qualified_to = origEffectiveTo;
+				}
+			}
+		}
 		return aSourceIVAProductSourceContainer;
 	}
 }

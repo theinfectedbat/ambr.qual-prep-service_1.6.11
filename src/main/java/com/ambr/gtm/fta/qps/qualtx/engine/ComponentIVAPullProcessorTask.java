@@ -105,32 +105,6 @@ public class ComponentIVAPullProcessorTask
 					QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aQualTXComp, aBOMComp, this.claimDetailsCache, this.ivaCache, this.queue.queueUniverse.dataExtCfgRepos, this.componentBatch.statusTracker);
 					aQualTXComponentUtility.setQualTXBusinessLogicProcessor(this.businessProcessor);
 					aContainer = aQualTXComponentUtility.pullIVAData();
-					
-					String coo = null;
-					if(this.determineComponentCOO != null) {
-						aGPMClassContainer = this.gpmClassCache.getGPMClassificationsByProduct(aBOMComp.prod_key);
-						coo = determineComponentCOO.determineCOOForComponentSource(aQualTXComp, aBOMComp, aContainer, aGPMClassContainer,  this.businessProcessor.propertySheetManager);
-					     aQualTXComp.ctry_of_origin = coo;
-					}
-					
-					if(this.cumulationComputationRule != null)
-						cumulationComputationRule.applyCumulationForComponent(aQualTXComp, aContainer, this.claimDetailsCache,this.queue.queueUniverse.dataExtCfgRepos);
-					
-					if (!"Y".equalsIgnoreCase(aQualTXComp.cumulation_rule_applied) && ( aQualTXComp.qualified_flg == null || "".equalsIgnoreCase(aQualTXComp.qualified_flg)))
-					{
-						if (this.previousYearQualificationRule != null)
-						{
-							Date origEffectiveFrom = aQualTXComp.qualified_from;
-							Date origEffectiveTo = aQualTXComp.qualified_to;
-							boolean isPrevYearQualApplied = previousYearQualificationRule.applyPrevYearQualForComponent(aBOMComp, aQualTXComp, aContainer, claimDetailsCache, this.queue.queueUniverse.dataExtCfgRepos);
-							if (!isPrevYearQualApplied)
-							{
-								if (this.cumulationComputationRule != null) cumulationComputationRule.applyCumulationForComponent(aQualTXComp, aContainer, this.claimDetailsCache, this.queue.queueUniverse.dataExtCfgRepos);
-								aQualTXComp.qualified_from = origEffectiveFrom;
-								aQualTXComp.qualified_to = origEffectiveTo;
-							}
-						}
-					}
 					this.componentBatch.statusTracker.sourceIVAPullSuccess(aQualTXComp);
 				}
 				catch (Exception e) {
