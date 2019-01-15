@@ -679,7 +679,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			aCOOHierchyOrder = null;
 		}
-		catch (PropertyValueException p)
+		catch (PropertyValueException pe)
 		{
 			aCOOHierchyOrder = null;
 		}
