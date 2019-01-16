@@ -10,9 +10,11 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.util.StringUtil;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.JdbcUtils;
 
 import com.ambr.gtm.fta.qps.exception.MaxRowsReachedException;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
+import com.ambr.platform.rdbms.schema.providers.RDBMSVendorNameEnum;
 import com.ambr.platform.rdbms.util.DataRecordUtility;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
@@ -390,9 +392,16 @@ public class BOMUniversePartition
 		try {
 			try {
 				theJdbcTemplate.setFetchSize(this.fetchSize);
-				if (this.targetSchema != null) {
-					theJdbcTemplate.execute(MessageFormat.format("alter session set current_schema={0}", this.targetSchema));
-				}
+				if (this.targetSchema != null) 
+					{
+						String dbVendor = JdbcUtils.commonDatabaseName(JdbcUtils.extractDatabaseMetaData(theJdbcTemplate.getDataSource(), "getDatabaseProductName"));
+						if (dbVendor!=null && RDBMSVendorNameEnum.valueOf(dbVendor.toUpperCase()) ==   RDBMSVendorNameEnum.POSTGRESQL)
+						{
+						theJdbcTemplate.execute(MessageFormat.format("SET search_path TO {0}", this.targetSchema));
+					}
+					else
+						theJdbcTemplate.execute(MessageFormat.format("alter session set current_schema={0}", this.targetSchema));
+					}
 				
 				if (this.partitionCount == 1) {
 					aInputList = (this.filterOrgCode == null)? null : new Object[]{this.filterOrgCode};

@@ -17,6 +17,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.support.JdbcUtils;
 
 import com.ambr.gtm.fta.qts.container.TrackerContainer;
 import com.ambr.gtm.fta.qts.observer.BOMTrackerStatusObserver;
@@ -24,6 +25,7 @@ import com.ambr.gtm.fta.qts.observer.QtxStatusObserver;
 import com.ambr.gtm.fta.qts.observer.ReloadQtxWorkObserver;
 import com.ambr.gtm.fta.qts.observer.TrackerGarbageCollector;
 import com.ambr.gtm.fta.qts.work.QtxWorkInfo;
+import com.ambr.platform.rdbms.schema.providers.RDBMSVendorNameEnum;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.propertyresolver.ConfigurationPropertyResolver;
 
@@ -179,6 +181,12 @@ public class TrackerLoader
 			theJdbcTemplate.setFetchSize(this.fetchSize);
 			if (this.targetSchema != null)
 			{
+				String dbVendor = JdbcUtils.commonDatabaseName(JdbcUtils.extractDatabaseMetaData(theJdbcTemplate.getDataSource(), "getDatabaseProductName"));
+				if (dbVendor!=null && RDBMSVendorNameEnum.valueOf(dbVendor.toUpperCase()) ==   RDBMSVendorNameEnum.POSTGRESQL)
+				{
+					theJdbcTemplate.execute(MessageFormat.format("SET search_path TO {0}",  this.targetSchema));
+				}
+				else
 				theJdbcTemplate.execute(MessageFormat.format("alter session set current_schema={0}", this.targetSchema));
 			}
 
