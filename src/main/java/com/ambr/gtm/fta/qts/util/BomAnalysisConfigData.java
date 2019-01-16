@@ -18,6 +18,11 @@ public class BomAnalysisConfigData {
 	private String rvcmethod;
 	private String rvcminSalePrice;
 	private String mandatoryCoo;
+	private String componentHsTrigger;
+	private String componentDecisionTrigger;
+	private String componentHsTriggerValue;
+	private String componentDecisionTriggerValue;
+	
 	private Map<String, String> ftaanalysis = new HashMap<String, String>();
 	
 
@@ -99,5 +104,31 @@ public class BomAnalysisConfigData {
 	public void setFtaanalysis(Map<String, String> ftaanalysis) {
 		this.ftaanalysis = ftaanalysis;
 	}
+	public String componentHsTrigger() {
+		return componentHsTrigger;
+	}
+	public void setComponentHsTrigger(String componentHsTrigger) {
+		this.componentHsTrigger = componentHsTrigger;
+	}
+	public String componentDecisionTrigger() {
+		return componentDecisionTrigger;
+	}
+	public void setComponentDecisionTrigger(String componentDecisionTrigger) {
+		this.componentDecisionTrigger = componentDecisionTrigger;
+	}
+	public String getComponentHsTriggerValue() {
+		return componentHsTriggerValue;
+	}
+	public void setComponentHsTriggerValue(String componentHsTriggerValue) {
+		this.componentHsTriggerValue = componentHsTriggerValue;
+	}
+	public String getComponentDecisionTriggerValue() {
+		return componentDecisionTriggerValue;
+	}
+	public void setComponentDecisionTriggerValue(String componentDecisionTriggerValue) {
+		this.componentDecisionTriggerValue = componentDecisionTriggerValue;
+	}
+	
+	
 	
 }
