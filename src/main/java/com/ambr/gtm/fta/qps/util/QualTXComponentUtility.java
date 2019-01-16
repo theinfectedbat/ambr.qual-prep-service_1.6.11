@@ -400,4 +400,9 @@ public class QualTXComponentUtility
 		}
 		return aSourceIVAProductSourceContainer;
 	}
+
+	public void setGPMClassificationCache(GPMClassificationProductContainerCache gpmClassCache) {
+		this.gpmClassCache = gpmClassCache;
+		
+	}
 }
