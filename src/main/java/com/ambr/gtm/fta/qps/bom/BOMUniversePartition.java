@@ -414,14 +414,14 @@ public class BOMUniversePartition
 				}
 				
 				if (aInputList == null) {
-					theJdbcTemplate.query(this.loadBOMsSQLText, new BOMsRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadBOMsSQLText, new BOMRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadPricesSQLText, new BOMPriceRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadComponentsSQLText, new BOMComponentsRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadBOMDESQLText, new BOMDataExtensionRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadBOMCompDESQLText, new BOMComponentDataExtensionRowCallbackHandler(this));
 				}
 				else {
-					theJdbcTemplate.query(this.loadBOMsSQLText,	aInputList,	new BOMsRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadBOMsSQLText,	aInputList,	new BOMRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadPricesSQLText, aInputList, new BOMPriceRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadComponentsSQLText, aInputList, new BOMComponentsRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadBOMDESQLText, aInputList, new BOMDataExtensionRowCallbackHandler(this));

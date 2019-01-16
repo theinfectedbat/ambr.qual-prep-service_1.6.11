@@ -14,7 +14,7 @@ import com.ambr.platform.rdbms.util.DataRecordUtility;
  * </P>
  *************************************************************************************
  */
-class BOMsRowCallbackHandler
+class BOMRowCallbackHandler
 	implements RowCallbackHandler
 {
 	private final BOMUniversePartition 	bomPartition;
@@ -28,7 +28,7 @@ class BOMsRowCallbackHandler
 	 * @param	thePartition
 	 *************************************************************************************
 	 */
-	BOMsRowCallbackHandler(BOMUniversePartition thePartition)
+	BOMRowCallbackHandler(BOMUniversePartition thePartition)
 		throws Exception
 	{
 		this.bomPartition = thePartition;

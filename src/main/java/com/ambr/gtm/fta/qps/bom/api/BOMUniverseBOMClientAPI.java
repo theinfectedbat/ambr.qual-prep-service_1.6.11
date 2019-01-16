@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import com.ambr.gtm.fta.qps.bom.BOM;
+import com.ambr.gtm.fta.qps.bom.DistributedBOMObjectReferenceHandler;
 
 /**
  *****************************************************************************************
@@ -71,8 +72,9 @@ public class BOMUniverseBOMClientAPI
 	public BOM execute(long theBOMKey)
 		throws Exception
 	{
-		RestTemplate									aTemplate = new RestTemplate();
-		ResponseEntity<BOM>							aResponseEntity;
+		RestTemplate			aTemplate = new RestTemplate();
+		ResponseEntity<BOM>		aResponseEntity;
+		BOM						aBOM;
 		
 		aResponseEntity = aTemplate.getForEntity(
 				new URI(MessageFormat.format("{0}{1}", this.serviceURL, BOMUniverseBOMServiceAPI.GetURLPath(theBOMKey))), 
@@ -80,7 +82,9 @@ public class BOMUniverseBOMClientAPI
 		);
 		
 		if (aResponseEntity.getStatusCodeValue() == 200) {
-			return aResponseEntity.getBody();
+			aBOM = aResponseEntity.getBody();
+			DistributedBOMObjectReferenceHandler.finalizeObjectReference(aBOM);
+			return aBOM;
 		}
 		else {
 			throw new Exception(MessageFormat.format("Request failed: status [{0}]", aResponseEntity.getStatusCodeValue()));
