@@ -244,6 +244,7 @@ public class BOMUniverse
 			return aUniverseContainer;
 		}
 		
+		this.waitUntilAvailable();
 		for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 			try {
 				GetAllBOMMetricsFromPartitionClientAPI		aAPI = new GetAllBOMMetricsFromPartitionClientAPI(aServiceRef);
