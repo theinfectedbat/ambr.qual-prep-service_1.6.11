@@ -85,7 +85,7 @@ public class PreviousYearQualificationRule
 				aEffectiveTo = new Date(cal.getTimeInMillis());
 			}
 
-			GPMSourceIVA aProdSrcIva = QualTXUtility.getGPMIVARecord(prodSourceContainer, aQualTXComp.qualTX.fta_code, aQualTXComp.qualTX.ctry_of_import, aEffectiveFrom, aEffectiveTo);
+			GPMSourceIVA aProdSrcIva = QualTXUtility.getGPMIVARecordForPYQ(prodSourceContainer, aQualTXComp.qualTX.fta_code, aQualTXComp.qualTX.ctry_of_import, aEffectiveFrom, aEffectiveTo);
 
 			if (aProdSrcIva != null)
 			{

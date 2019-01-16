@@ -104,6 +104,8 @@ public class ComponentIVAPullProcessorTask
 		
 					QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aQualTXComp, aBOMComp, this.claimDetailsCache, this.ivaCache, this.queue.queueUniverse.dataExtCfgRepos, this.componentBatch.statusTracker);
 					aQualTXComponentUtility.setQualTXBusinessLogicProcessor(this.businessProcessor);
+					aQualTXComponentUtility.setGPMClassificationCache(this.gpmClassCache);
+
 					aContainer = aQualTXComponentUtility.pullIVAData();
 					this.componentBatch.statusTracker.sourceIVAPullSuccess(aQualTXComp);
 				}
