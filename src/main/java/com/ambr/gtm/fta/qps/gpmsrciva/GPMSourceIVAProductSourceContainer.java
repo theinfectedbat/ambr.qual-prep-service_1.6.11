@@ -96,7 +96,7 @@ public class GPMSourceIVAProductSourceContainer
 		
 		for(GPMSourceIVA aSrcIVA : this.ivaList)
 		{
-			if(aSrcIVA.isIVAEligibleForProcessing())
+			if(!aSrcIVA.isIVAEligibleForProcessing())
 				continue;
 			
 			if(!theFTACode.equals(aSrcIVA.ftaCode) 
@@ -140,6 +140,10 @@ public class GPMSourceIVAProductSourceContainer
 		
 		for(GPMSourceIVA aSrcIVA : this.ivaList)
 		{
+			
+			if(!aSrcIVA.isIVAEligibleForProcessing())
+				continue;
+			
 			if(!theFTACode.equals(aSrcIVA.ftaCode) 
 					|| !theCOI.equals(aSrcIVA.ctryOfImport)
 					)
@@ -148,11 +152,7 @@ public class GPMSourceIVAProductSourceContainer
 			if(theEffectiveFrom.compareTo(aSrcIVA.effectiveFrom) != 0
 					&& theEffectiveTo.compareTo(aSrcIVA.effectiveTo) != 0)
 				continue;
-			
-			if (STPDecisionEnum.M != aSrcIVA.systemDecision) {
-				continue;
-			}
-			
+					
 			return aSrcIVA;
 		}
 		
