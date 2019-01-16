@@ -115,6 +115,9 @@ public class PreviousYearQualificationRule
 	public boolean getPrevYearQualFlgFromBom(BOMComponent aBOMComp) throws Exception
 	{
 		String aBomStaticDefaultDE = "BOM_STATIC:DEFAULT";
+		
+		if(aBOMComp.getBOM().deList == null)
+			return false;
 
 		for (BOMDataExtension aBOMDE : aBOMComp.getBOM().deList)
 		{
