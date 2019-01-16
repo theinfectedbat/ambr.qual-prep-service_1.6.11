@@ -458,7 +458,27 @@ public class QTXStageProducer extends QTXProducer
 			    isValQualtx = isValidQualtxComp(qualtxComp);
 			    if(!isValQualtx) 
 			    	continue;
-
+			    
+			    if(workReasonCode == RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE || workReasonCode == RequalificationWorkCodes.GPM_CTRY_CMPL_DELETED || workReasonCode == RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED )
+			    {
+			    	String	criticalIndicator = qualtxComp.critical_indicator == null ? "" : qualtxComp.critical_indicator;
+			    	QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
+					if(QEConfig != null && QEConfig.getBomAnalysisConfigData() != null && QEConfig.getBomAnalysisConfigData().componentHsTrigger().equals("Y"))
+					{
+						if((QEConfig.getBomAnalysisConfigData().getComponentHsTriggerValue().equals("ANY") || QEConfig.getBomAnalysisConfigData().getComponentHsTriggerValue().equals(RequalificationWorkCodes.CRITICAL)) && (!criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_HS) || !criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_ANY)))
+						{
+							continue;
+						}
+					}
+					if(QEConfig != null && QEConfig.getBomAnalysisConfigData() != null && QEConfig.getBomAnalysisConfigData().componentDecisionTrigger().equals("Y"))
+					{
+						if((QEConfig.getBomAnalysisConfigData().getComponentDecisionTriggerValue().equals("ANY") || QEConfig.getBomAnalysisConfigData().getComponentDecisionTriggerValue().equals(RequalificationWorkCodes.CRITICAL)) && (!criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_QUALIFIED) || !criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_QUALIFIED_NO_SHIFT) || !criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_ANY)))
+						{
+							continue;
+						}
+					}
+				}
+			    
 				if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 				{
 					theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
@@ -779,6 +799,25 @@ public class QTXStageProducer extends QTXProducer
 			QualTXComponent qualtxComp = qualtx.compList.get(0);	//There will always be one QualTXComponent present (as defined by sql that pulled this data
 			
 			if(!isValidQualtxComp(qualtxComp)) continue;
+			if(workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED )
+		    {
+		    	String	criticalIndicator = qualtxComp.critical_indicator == null ? "" : qualtxComp.critical_indicator;
+		    	QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
+				if(QEConfig != null && QEConfig.getBomAnalysisConfigData() != null && QEConfig.getBomAnalysisConfigData().componentHsTrigger().equals("Y"))
+				{
+					if((QEConfig.getBomAnalysisConfigData().getComponentHsTriggerValue().equals("ANY") || QEConfig.getBomAnalysisConfigData().getComponentHsTriggerValue().equals(RequalificationWorkCodes.CRITICAL)) && (!criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_HS) || !criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_ANY)))
+					{
+						continue;
+					}
+				}
+				if(QEConfig != null && QEConfig.getBomAnalysisConfigData() != null && QEConfig.getBomAnalysisConfigData().componentDecisionTrigger().equals("Y"))
+				{
+					if((QEConfig.getBomAnalysisConfigData().getComponentDecisionTriggerValue().equals("ANY") || QEConfig.getBomAnalysisConfigData().getComponentDecisionTriggerValue().equals(RequalificationWorkCodes.CRITICAL)) && (!criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_QUALIFIED) || !criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_QUALIFIED_NO_SHIFT) || !criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_ANY)))
+					{
+						continue;
+					}
+				}
+			}
 			if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
@@ -911,7 +950,26 @@ public class QTXStageProducer extends QTXProducer
 		    	continue;
 
 		    if(!isValidQualtxComp(qualtxComp)) continue;
-		    
+		    if(workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE || workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_DELETED || workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED )
+		    {
+		    	String	criticalIndicator = qualtxComp.critical_indicator == null ? "" : qualtxComp.critical_indicator;
+		    	QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
+				if(QEConfig != null && QEConfig.getBomAnalysisConfigData() != null && QEConfig.getBomAnalysisConfigData().componentHsTrigger().equals("Y"))
+				{
+					if((QEConfig.getBomAnalysisConfigData().getComponentHsTriggerValue().equals("ANY") || QEConfig.getBomAnalysisConfigData().getComponentHsTriggerValue().equals(RequalificationWorkCodes.CRITICAL)) && !isRequalificationRequired(criticalIndicator, true))
+					{
+						continue;
+					}
+				}
+				if(QEConfig != null && QEConfig.getBomAnalysisConfigData() != null && QEConfig.getBomAnalysisConfigData().componentDecisionTrigger().equals("Y"))
+				{
+					if((QEConfig.getBomAnalysisConfigData().getComponentDecisionTriggerValue().equals("ANY") || QEConfig.getBomAnalysisConfigData().getComponentDecisionTriggerValue().equals(RequalificationWorkCodes.CRITICAL)) && !isRequalificationRequired(criticalIndicator, false))
+					{
+						continue;
+					}
+				}
+			}
+		   
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
@@ -1021,6 +1079,19 @@ public class QTXStageProducer extends QTXProducer
 
 			qtxWorkList.put(qualtx.alt_key_qualtx, theQtxWork);
 		}
+	}
+
+	private boolean isRequalificationRequired(String criticalIndicator, boolean isHsChange) 
+	{
+		if(isHsChange)
+		{
+			return criticalIndicator.equals("") || criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_HS) || criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_ANY);
+		}
+		else
+		{
+			return criticalIndicator.equals("") || criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_QUALIFIED) || criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_QUALIFIED_NO_SHIFT) || criticalIndicator.equals(RequalificationWorkCodes.CRITICAL_ANY);	
+		}
+		
 	}
 
 	private boolean isValidQualtx(QualTX qualtx, boolean isBOMChange)

@@ -188,33 +188,49 @@ public class QEConfigCache
 
 		BomAnalysisConfigData bomConf = new BomAnalysisConfigData();
 		JsonNode analysisConfJson = aQEConfigJsonObject.get("BOM");
-		if (analysisConfJson == null) return bomConf;
-
-		for (JsonNode eachNode : analysisConfJson)
+		JsonNode analysisTriggerConfJson = aQEConfigJsonObject.get("REQUAL");
+		if (analysisConfJson == null && analysisTriggerConfJson == null) return bomConf;
+		if(analysisConfJson != null)
 		{
-			if (eachNode.has("FTA_ANALYSIS") && eachNode.get("FTA_ANALYSIS").isArray())
+			for (JsonNode eachNode : analysisConfJson)
 			{
-				for (JsonNode ftaAnalysisNode : eachNode.get("FTA_ANALYSIS"))
+				if (eachNode.has("FTA_ANALYSIS") && eachNode.get("FTA_ANALYSIS").isArray())
 				{
-					Map<String, String> ftaanalysis = new HashMap<>();
-					ftaanalysis.put(ftaAnalysisNode.get("FTA_CODE").asText(), ftaAnalysisNode.get("DEMIN_SAFETY_FACTOR").asText());
-					bomConf.setFtaanalysis(ftaanalysis);
+					for (JsonNode ftaAnalysisNode : eachNode.get("FTA_ANALYSIS"))
+					{
+						Map<String, String> ftaanalysis = new HashMap<>();
+						ftaanalysis.put(ftaAnalysisNode.get("FTA_CODE").asText(), ftaAnalysisNode.get("DEMIN_SAFETY_FACTOR").asText());
+						bomConf.setFtaanalysis(ftaanalysis);
+					}
 				}
-			}
 
-			if (eachNode.has("COO_FROM_COM")) bomConf.setCooFromCom(eachNode.get("COO_FROM_COM").asText());
-			if (eachNode.has("RVC_CALC_MAX_SALES_PRICE")) bomConf.setRvcMaxSalePrice(eachNode.get("RVC_CALC_MAX_SALES_PRICE").asDouble());
-			if (eachNode.has("RVC_LIMIT_SAFETY_FACTOR")) bomConf.setRvcLimitSafFactor(eachNode.get("RVC_LIMIT_SAFETY_FACTOR").asDouble());
-			if (eachNode.has("PARTIAL_PERIOD")) bomConf.setPartialPeriod(eachNode.get("PARTIAL_PERIOD").asText());
-			if (eachNode.has("RVC_THRESHOLD_SAFETY_FACTOR")) bomConf.setRvcThreshHoldSaffactor(eachNode.get("RVC_THRESHOLD_SAFETY_FACTOR").asDouble());
-			if (eachNode.has("ANALYSIS_METHOD")) bomConf.setAnalysisMethod(eachNode.get("ANALYSIS_METHOD").asText());
-			if (eachNode.has("INTERMEDIATE_PARTS")) bomConf.setInterMediateParts(eachNode.get("INTERMEDIATE_PARTS").asText());
-			if (eachNode.has("AGG_COO_BOM_HEADER")) bomConf.setAggCooFromCom(eachNode.get("AGG_COO_BOM_HEADER").asText());
-			if (eachNode.has("AGG_COO_FROM_COM")) bomConf.setAggCooFromCom(eachNode.get("AGG_COO_FROM_COM").asText());
-			if (eachNode.has("RVC_METHOD")) bomConf.setRvcmethod(eachNode.get("RVC_METHOD").asText());
-			if (eachNode.has("RVC_CALC_MIN_SALES_PRICE")) bomConf.setRvcMinSalePrice(eachNode.get("RVC_CALC_MIN_SALES_PRICE").asText());
-			if (eachNode.has("MANDATORY_COO")) bomConf.setCooFromCom(eachNode.get("MANDATORY_COO").asText());
+				if (eachNode.has("COO_FROM_COM")) bomConf.setCooFromCom(eachNode.get("COO_FROM_COM").asText());
+				if (eachNode.has("RVC_CALC_MAX_SALES_PRICE")) bomConf.setRvcMaxSalePrice(eachNode.get("RVC_CALC_MAX_SALES_PRICE").asDouble());
+				if (eachNode.has("RVC_LIMIT_SAFETY_FACTOR")) bomConf.setRvcLimitSafFactor(eachNode.get("RVC_LIMIT_SAFETY_FACTOR").asDouble());
+				if (eachNode.has("PARTIAL_PERIOD")) bomConf.setPartialPeriod(eachNode.get("PARTIAL_PERIOD").asText());
+				if (eachNode.has("RVC_THRESHOLD_SAFETY_FACTOR")) bomConf.setRvcThreshHoldSaffactor(eachNode.get("RVC_THRESHOLD_SAFETY_FACTOR").asDouble());
+				if (eachNode.has("ANALYSIS_METHOD")) bomConf.setAnalysisMethod(eachNode.get("ANALYSIS_METHOD").asText());
+				if (eachNode.has("INTERMEDIATE_PARTS")) bomConf.setInterMediateParts(eachNode.get("INTERMEDIATE_PARTS").asText());
+				if (eachNode.has("AGG_COO_BOM_HEADER")) bomConf.setAggCooFromCom(eachNode.get("AGG_COO_BOM_HEADER").asText());
+				if (eachNode.has("AGG_COO_FROM_COM")) bomConf.setAggCooFromCom(eachNode.get("AGG_COO_FROM_COM").asText());
+				if (eachNode.has("RVC_METHOD")) bomConf.setRvcmethod(eachNode.get("RVC_METHOD").asText());
+				if (eachNode.has("RVC_CALC_MIN_SALES_PRICE")) bomConf.setRvcMinSalePrice(eachNode.get("RVC_CALC_MIN_SALES_PRICE").asText());
+				if (eachNode.has("MANDATORY_COO")) bomConf.setCooFromCom(eachNode.get("MANDATORY_COO").asText());
+			}
+			
 		}
+		
+		if(analysisTriggerConfJson != null)
+		{
+			for (JsonNode eachNode : analysisTriggerConfJson)
+			{
+				if (eachNode.has("COMPONENT_HS")) bomConf.setComponentHsTrigger(eachNode.get("COMPONENT_HS").asText());
+				if (eachNode.has("COMPONENT_HS_INDICATOR")) bomConf.setComponentHsTriggerValue(eachNode.get("COMPONENT_HS_INDICATOR").asText());
+				if (eachNode.has("COMPONENT_QUALIFIED")) bomConf.setComponentDecisionTrigger(eachNode.get("COMPONENT_QUALIFIED").asText());
+				if (eachNode.has("COMPONENT_QUALIFIED_INDICATOR")) bomConf.setComponentDecisionTriggerValue(eachNode.get("COMPONENT_QUALIFIED_INDICATOR").asText());
+			}
+		}
+		
 		MessageFormatter.trace(logger, "loadAnalysisConf", "Loading  analysis Config cache for FTA_ANALYSIS COMPLETE");
 		return bomConf;
 	}
