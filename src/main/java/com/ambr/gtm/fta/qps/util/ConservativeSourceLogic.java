@@ -98,7 +98,7 @@ public class ConservativeSourceLogic
 			}
 			
 			//if the SRC IVA has N decision, check for SRC with the highest cumulation value.
-			if (STPDecisionEnum.valueOf("N") == aSrcIVA.finalDecision &&  !foundSrcWithEmptyFinalDecision)
+			if (STPDecisionEnum.N.equals(aSrcIVA.finalDecision) &&  !foundSrcWithEmptyFinalDecision)
 			{
 				foundSrcWithFinalDecisionNO = true;
 				double aClaimDetailCumulationValue = 0.0;
@@ -117,7 +117,7 @@ public class ConservativeSourceLogic
 			}
 			
 			//if the SRC IVA has Y decision, check for SRC with the lowest traced value.
-			if(STPDecisionEnum.valueOf("Y") == aSrcIVA.finalDecision  && (!foundSrcWithFinalDecisionNO || !foundSrcWithEmptyFinalDecision))
+			if(STPDecisionEnum.Y.equals(aSrcIVA.finalDecision)  && !foundSrcWithFinalDecisionNO && !foundSrcWithEmptyFinalDecision)
 			{
 					double aTracedValueFromClaimDtls = 0.0;
 					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
