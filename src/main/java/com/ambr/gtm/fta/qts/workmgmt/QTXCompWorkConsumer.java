@@ -403,7 +403,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
+		/*if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
 		{
 			this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), aClaimsDetailCache, this.repos);
 			
@@ -420,7 +420,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.qualified_to = origEffectiveTo;
 				}
 			}
-		}
+		}*/
 		
 		
 		if (work.compWorkHSList != null)
@@ -553,7 +553,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				
 					this.qtxBusinessLogicProcessor.cumulationComputationRule.applyCumulationForComponent(qualtxComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), aClaimsDetailCache ,this.repos);
 				}
-				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE))
+				/*if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE))
 				{
 					Long prodSourceKey = qualtxComp.prod_src_key;
 					
@@ -577,7 +577,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 							qualtxComp.qualified_to = origEffectiveTo;
 						}
 					}
-				}
+				}*/
 				
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_IVA_DELETED))
 				{
