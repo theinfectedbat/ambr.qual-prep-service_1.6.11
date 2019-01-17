@@ -104,18 +104,21 @@ public class QualTXUtility
 	public static GPMSourceIVA getGPMIVARecord(GPMSourceIVAProductSourceContainer prodSourceContainer, String fta_code, String ctry_of_import, Date effective_from, Date effective_to)
 	{
 		boolean isMatched = false;
-		for (GPMSourceIVA gpmSRCIva : prodSourceContainer.ivaList)
+		if (prodSourceContainer!= null && prodSourceContainer.ivaList != null)
 		{
-			isMatched = gpmSRCIva.ftaCode.equals(fta_code);
-			if (ctry_of_import != null) isMatched = isMatched && gpmSRCIva.ctryOfImport.equals(ctry_of_import);
+			for (GPMSourceIVA gpmSRCIva : prodSourceContainer.ivaList)
+			{
+				isMatched = gpmSRCIva.ftaCode.equals(fta_code);
+				if (ctry_of_import != null) isMatched = isMatched && gpmSRCIva.ctryOfImport.equals(ctry_of_import);
 
-			Date srcIVAeffectiveFrom = new Date(gpmSRCIva.effectiveFrom.getTime());
-			Date srcIVAeffectiveTo = new Date(gpmSRCIva.effectiveTo.getTime());
+				Date srcIVAeffectiveFrom = new Date(gpmSRCIva.effectiveFrom.getTime());
+				Date srcIVAeffectiveTo = new Date(gpmSRCIva.effectiveTo.getTime());
 
-			isMatched = isMatched && (srcIVAeffectiveFrom.before(effective_from) || srcIVAeffectiveFrom.equals(effective_from)) && (srcIVAeffectiveTo.after(effective_to) || srcIVAeffectiveTo.equals(effective_to));
+				isMatched = isMatched && (srcIVAeffectiveFrom.before(effective_from) || srcIVAeffectiveFrom.equals(effective_from)) && (srcIVAeffectiveTo.after(effective_to) || srcIVAeffectiveTo.equals(effective_to));
 
-			isMatched = isMatched && (gpmSRCIva.finalDecision != null && gpmSRCIva.finalDecision.name().equals("Y") && gpmSRCIva.systemDecision != null && (!gpmSRCIva.systemDecision.name().equals("C") && !gpmSRCIva.systemDecision.name().equals("I")) && gpmSRCIva.ftaEnabledFlag);
-			if (isMatched) return gpmSRCIva;
+				isMatched = isMatched && (gpmSRCIva.finalDecision != null && gpmSRCIva.finalDecision.name().equals("Y") && gpmSRCIva.systemDecision != null && (!gpmSRCIva.systemDecision.name().equals("C") && !gpmSRCIva.systemDecision.name().equals("I")) && gpmSRCIva.ftaEnabledFlag);
+				if (isMatched) return gpmSRCIva;
+			}
 		}
 
 		return null;
