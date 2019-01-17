@@ -134,7 +134,12 @@ public class ConservativeSourceLogic
 						
 						//TODO : Write logic for checking if the HS falls in the trace list.
 						boolean fallsInTraceList = false;
-						String hsNum = (String)aClaimDetails.claimDetailsValue.get(flexFieldMap.get("IMPORT_HS"));
+						
+						String hsNum = null;
+						Object hsNumObj = aClaimDetails.claimDetailsValue.get(flexFieldMap.get("IMPORT_HS"));
+						if(hsNumObj != null )
+							hsNum = (String)hsNumObj;
+						
 						if(hsNum != null){
 							//fallsInTraceList = <Utility>.existsInFTAList(theOrgCode, theCOI, hsNum, theFTACode, new Date(), "TRACE");
 						String hsExcpList="ANY_"+theFTACode+"_TRACE";
@@ -144,7 +149,9 @@ public class ConservativeSourceLogic
 
 						if(fallsInTraceList)
 						{
-							aTracedValueFromClaimDtls =(Double)aClaimDetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
+							Object tracedValue = aClaimDetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
+							if(tracedValue != null)
+								aTracedValueFromClaimDtls =(Double)tracedValue;
 						}
 					}
 					if(aYesDecisionTracedValue == null || aYesDecisionTracedValue.doubleValue() < aTracedValueFromClaimDtls)
