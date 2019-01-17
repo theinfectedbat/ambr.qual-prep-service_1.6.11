@@ -404,10 +404,14 @@ public class QualTXComponent
 			}
 
 			qualTXCompDetails.setValue("LAST_MODIFIED_BY", this.last_modified_by);
-			qualTXCompDetails.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
-			qualTXCompDetails.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
-			qualTXCompDetails.setValue("FLEXFIELD_VAR14", aClaimDetails.getValue(aTracedCampId));
-			qualTXCompDetails.setValue("FLEXFIELD_VAR15", aClaimDetails.getValue(aTracedResponseId));
+			if(aCampId != null)
+				qualTXCompDetails.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
+			if(aresponseId != null)
+				qualTXCompDetails.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
+			if(aTracedCampId != null)
+				qualTXCompDetails.setValue("FLEXFIELD_VAR14", aClaimDetails.getValue(aTracedCampId));
+			if(aTracedResponseId != null)
+				qualTXCompDetails.setValue("FLEXFIELD_VAR15", aClaimDetails.getValue(aTracedResponseId));
 
 		}
 
