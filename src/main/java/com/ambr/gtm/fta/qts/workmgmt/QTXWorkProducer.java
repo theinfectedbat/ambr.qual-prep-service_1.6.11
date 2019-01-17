@@ -15,6 +15,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.ambr.gtm.fta.qps.bom.api.BOMUniverseBOMClientAPI;
 import com.ambr.gtm.fta.qps.gpmclass.api.GetGPMClassificationsByProductFromUniverseClientAPI;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromUniverseClientAPI;
+import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.GetCacheRefreshInformationClientAPI;
@@ -35,6 +36,7 @@ public class QTXWorkProducer extends QTXProducer
 	private GetGPMClassificationsByProductFromUniverseClientAPI gpmClassificationsByProductAPI;
 	private GetGPMSourceIVAByProductFromUniverseClientAPI gpmSourceIVAByProductFromUniverseClientAPI;
 	private GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI;
+	public PreparationEngineQueueUniverse		queueUniverse;
 	
 	private int status;
 	
@@ -56,6 +58,11 @@ public class QTXWorkProducer extends QTXProducer
 	public void setQtxBusinessLogicProcessor(QualTXBusinessLogicProcessor qtxBusinessLogicProcessor)
 	{
 		this.qtxBusinessLogicProcessor = qtxBusinessLogicProcessor;
+	}
+
+	public void setQueueUniverse(PreparationEngineQueueUniverse theQueueUniverse) throws Exception
+	{
+		this.queueUniverse = theQueueUniverse;
 	}
 
 	public ArrayList<QTXMonitoredMetrics> getMonitoredMetrics()

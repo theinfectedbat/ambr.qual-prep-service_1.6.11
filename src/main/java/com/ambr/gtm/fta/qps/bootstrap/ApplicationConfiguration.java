@@ -702,6 +702,7 @@ public class ApplicationConfiguration
 			@Autowired MDIQualTxRepository qualTxRepository, 
 			@Autowired QTXWorkRepository workRepository,
 			@Autowired SchemaDescriptorService schemaService,
+			@Autowired PreparationEngineQueueUniverse	theQueueUniverse,
 			@Autowired QualTXBusinessLogicProcessor businsessLogicProcessor ) throws Exception
 	{
 		boolean requalServiceRequired = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.REQUAL_SERVICE_START, "N"));
@@ -733,6 +734,7 @@ public class ApplicationConfiguration
 			GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI = new GetCacheRefreshInformationClientAPI(new URL(cacheRefreshUrl));
 			
 			qtxWorkProducer.setAPI(bomUniverseBOMClientAPI, gpmClassificationsByProductFromUniverseClientAPI, gpmSourceIVAByProductFromUniverseClientAPI, cacheRefreshInformationClientAPI);
+			qtxWorkProducer.setQueueUniverse(theQueueUniverse);
 		}
 		
 		return qtxWorkProducer;
