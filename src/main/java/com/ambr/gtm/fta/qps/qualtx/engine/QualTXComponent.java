@@ -368,8 +368,6 @@ public class QualTXComponent
 		DataExtensionConfiguration	aCfg = theRepos.getDataExtensionConfiguration(groupName);
 		Map<String, String> flexFieldMap = aCfg.getFlexColumnMapping();
 		
-		String aCampId = flexFieldMap.get("CAMPAIGN_ID");
-		String aresponseId = flexFieldMap.get("RESPONSE_ID");
 		QualTXComponentDataExtension qualTXCompDetails = null;
 		
 		if (aQualTXDataExts != null && !aQualTXDataExts.isEmpty())
@@ -383,7 +381,14 @@ public class QualTXComponent
 				}
 			}
 		}
-		if(aClaimDetails.getValue(aCampId) != null || aClaimDetails.getValue(aresponseId) != null)
+		
+		String aCampId = flexFieldMap.get("CAMPAIGN_ID");
+		String aresponseId = flexFieldMap.get("RESPONSE_ID");
+		String aTracedCampId = flexFieldMap.get("TRACE_CAMPAIGN_ID");
+		String aTracedResponseId = flexFieldMap.get("TRACE_RESPONSE_ID");
+		
+		if(aClaimDetails.getValue(aCampId) != null || aClaimDetails.getValue(aresponseId) != null ||
+				aClaimDetails.getValue(aTracedCampId) != null || aClaimDetails.getValue(aTracedResponseId) != null)
 		{
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 			if (qualTXCompDetails == null)
@@ -393,14 +398,16 @@ public class QualTXComponent
 			}
 			else
 			{
-	
+
 				qualTXCompDetails.setValue("LAST_MODIFIED_DATE", now);
-	
+
 			}
-			
+
 			qualTXCompDetails.setValue("LAST_MODIFIED_BY", this.last_modified_by);
 			qualTXCompDetails.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
 			qualTXCompDetails.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
+			qualTXCompDetails.setValue("FLEXFIELD_VAR14", aClaimDetails.getValue(aTracedCampId));
+			qualTXCompDetails.setValue("FLEXFIELD_VAR15", aClaimDetails.getValue(aTracedResponseId));
 
 		}
 
