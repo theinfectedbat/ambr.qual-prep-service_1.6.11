@@ -105,7 +105,9 @@ public class ConservativeSourceLogic
 				GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(aSrcIVA.ivaKey);
 				if ((claimdetailsContainer != null) && (claimdetailsContainer.getPrimaryClaimDetails() != null)) 
 				{
-					aClaimDetailCumulationValue = (Double)claimdetailsContainer.getPrimaryClaimDetails().getValue(flexFieldMap.get("CUMULATION_VALUE"));
+					Object cumulationValue = claimdetailsContainer.getPrimaryClaimDetails().getValue(flexFieldMap.get("CUMULATION_VALUE"));
+					if(cumulationValue != null)
+						aClaimDetailCumulationValue = (Double)cumulationValue;
 				}
 				if (aNoDecisionCumulationValue == null || aNoDecisionCumulationValue.doubleValue() > aClaimDetailCumulationValue)
 				{
