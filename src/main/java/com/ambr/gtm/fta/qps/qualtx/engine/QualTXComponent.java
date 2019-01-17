@@ -387,8 +387,22 @@ public class QualTXComponent
 		String aTracedCampId = flexFieldMap.get("TRACE_CAMPAIGN_ID");
 		String aTracedResponseId = flexFieldMap.get("TRACE_RESPONSE_ID");
 		
-		if(aClaimDetails.getValue(aCampId) != null || aClaimDetails.getValue(aresponseId) != null ||
-				aClaimDetails.getValue(aTracedCampId) != null || aClaimDetails.getValue(aTracedResponseId) != null)
+		String aCampIdValue = null;
+		String aresponseIdValue = null;
+		String aTracedCampIdValue = null;
+		String aTracedResponseIdValue = null;
+				
+		if(aCampId != null && aClaimDetails.getValue(aCampId) != null)
+			aCampIdValue =(String) aClaimDetails.getValue(aCampId);
+		if(aresponseId != null && aClaimDetails.getValue(aresponseId) != null)
+			aresponseIdValue =  (String)aClaimDetails.getValue(aresponseId);
+		if(aTracedCampId != null && aClaimDetails.getValue(aTracedCampId) != null)
+			aTracedCampIdValue = (String) aClaimDetails.getValue(aTracedCampId);
+		if(aTracedResponseId != null &&  aClaimDetails.getValue(aTracedResponseId) != null)
+			aTracedResponseIdValue = (String) aClaimDetails.getValue(aTracedResponseId);
+
+		
+		if(aCampIdValue != null || aresponseIdValue != null || aTracedCampIdValue != null || aTracedResponseIdValue != null)
 		{
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 			if (qualTXCompDetails == null)
@@ -404,14 +418,10 @@ public class QualTXComponent
 			}
 
 			qualTXCompDetails.setValue("LAST_MODIFIED_BY", this.last_modified_by);
-			if(aCampId != null)
-				qualTXCompDetails.setValue("FLEXFIELD_VAR12", aClaimDetails.getValue(aCampId));
-			if(aresponseId != null)
-				qualTXCompDetails.setValue("FLEXFIELD_VAR13", aClaimDetails.getValue(aresponseId));
-			if(aTracedCampId != null)
-				qualTXCompDetails.setValue("FLEXFIELD_VAR14", aClaimDetails.getValue(aTracedCampId));
-			if(aTracedResponseId != null)
-				qualTXCompDetails.setValue("FLEXFIELD_VAR15", aClaimDetails.getValue(aTracedResponseId));
+			qualTXCompDetails.setValue("FLEXFIELD_VAR12", aCampIdValue);
+			qualTXCompDetails.setValue("FLEXFIELD_VAR13", aresponseIdValue);
+			qualTXCompDetails.setValue("FLEXFIELD_VAR14", aTracedCampIdValue);
+			qualTXCompDetails.setValue("FLEXFIELD_VAR15", aTracedResponseIdValue);
 
 		}
 
