@@ -147,58 +147,33 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && !ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) && !ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type))
 			{
 				
-					qualtxComp = qualtx.createComponent();
-
-					// TODO bom_id is not a column on qualtx_comp, may be we need to
-					// set to src_id but it looks like src_id is populting with
-					// numbers as of now.
-
-					// TODO review with claude/pavan - can this section be removed
-					// and replaced with routines from prep service?
-
-//					 qualtxComp.comp_id = (bomComp.comp_num != null) ?
-//					 bomComp.comp_num.toString() : null;
-//					 qualtxComp.cost = bomComp.extended_cost;
-//					 qualtxComp.src_key = bomComp.alt_key_comp;
-//					 qualtxComp.weight_uom = bomComp.weight_uom;
-//					 qualtxComp.component_type = bomComp.component_type;
-//					 qualtxComp.area = bomComp.area;
-//					 qualtxComp.area_uom = bomComp.area_uom;
-//					 qualtxComp.prod_key = bomComp.prod_key;
-//					 qualtxComp.prod_src_key = bomComp.prod_src_key;
-//					 qualtxComp.supplier_key = bomComp.supplier_key;
-//					 qualtxComp.manufacturer_key = bomComp.manufacturer_key;
-//					 qualtxComp.seller_key = bomComp.seller_key;
-//					 qualtxComp.net_weight = bomComp.net_weight;
-//					 qualtxComp.unit_weight = bomComp.unit_weight;
-//					 qualtxComp.qty_per = bomComp.qty_per;
-//					 qualtxComp.unit_cost = bomComp.unit_cost;
-					 aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
-					 aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
-					 aQualTXComponentUtilityforComp.pullComponentData();
-
+				qualtxComp = qualtx.createComponent();
 				
+				aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+				aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+				aQualTXComponentUtilityforComp.pullComponentData();
+
 				// if the current analysis method is Top-Down mark the
 				// RM_CONSTRUCTION_STATUS as INIT, if a component is added. The
 				// Preparation Engine will need to re-construct the Qual TX
 				// Components.
 				parentWorkPackage.qualtx.compList.add(qualtxComp);
-				if (parentWork.details.analysis_method == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS)
+				qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+				qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+				if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
 				{
 					qualtxComp.top_down_ind = "Y";
-					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				}
-
+				else if (parentWork.details.analysis_method.ordinal()==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
+						|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+				{
+					if(bomComp.sub_bom_key != null )
+						parentWorkPackage.isReadyForQualification = false;
+				}
+				
 				compWorkPackage.qualtxComp = qualtxComp;
-				/*
-				 * EntityManager<QualTXComponent> entityMgr = new
-				 * EntityManager<QualTXComponent>(QualTXComponent.class,
-				 * this.txMgr, this.schemaDesc, template);
-				 * entityMgr.setExistingEntity(qualtxComp);
-				 * compWorkPackage.entityMgr = entityMgr;
-				 */
-			}}
+			}
+			}
 		}
 		boolean isCompDeleted = false;
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_DELETED) == true || isConfigChange)
