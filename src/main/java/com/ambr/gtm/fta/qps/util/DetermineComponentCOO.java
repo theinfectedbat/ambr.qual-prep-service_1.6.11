@@ -101,11 +101,6 @@ public  class DetermineComponentCOO
 
 		}
 		
-		if (aCOO == null || "".equals(aCOO))
-		{
-			aCOO=getBOMCompCOO(bomComponent);
-			qualtxComp.coo_source = 0;
-		}
 		return aCOO;
 	}
 
