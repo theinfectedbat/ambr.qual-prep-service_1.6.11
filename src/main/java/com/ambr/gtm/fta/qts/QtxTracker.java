@@ -127,21 +127,23 @@ public class QtxTracker
 		{
 			for (QtxWorkTracker qtxWorkTracker : qtxWorkTrackerSet)
 			{
-				if(qtxWorkTracker.isEligibleForDelete) continue;
+				if (qtxWorkTracker.isEligibleForDelete) continue;
 				TrackerCodes.QualtxStatus aQtxWorkStatus = qtxWorkTracker.getQtxStatus();
-				if (!TrackerCodes.QualtxStatus.QUALIFICATION_FAILED.equals(aQtxWorkStatus) && !TrackerCodes.QualtxStatus.QUALIFICATION_COMPLETE.equals(aQtxWorkStatus)  && !TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED.equals(aQtxWorkStatus))
+				if (!TrackerCodes.QualtxStatus.QUALIFICATION_FAILED.equals(aQtxWorkStatus) && !TrackerCodes.QualtxStatus.QUALIFICATION_COMPLETE.equals(aQtxWorkStatus) && !TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED.equals(aQtxWorkStatus) && !TrackerCodes.QualtxStatus.QUALIFICATION_NOT_REQUIRED.equals(aQtxWorkStatus))
 				{
 					isQualificationCompleted = false;
 					return null;
 				}
-				else if (TrackerCodes.QualtxStatus.QUALIFICATION_COMPLETE.equals(aQtxWorkStatus))
+				else if (TrackerCodes.QualtxStatus.QUALIFICATION_COMPLETE.equals(aQtxWorkStatus) || TrackerCodes.QualtxStatus.QUALIFICATION_NOT_REQUIRED.equals(aQtxWorkStatus))
 				{
 					isQualificationCompleted = true;
 					synchronized (this.qtxQualCompletedWorkSet)
-					{  
+					{
 						this.qtxQualCompletedWorkSet.add(qtxWorkTracker);
 					}
-				}else{
+				}
+				else
+				{
 					aCalculatedStatus = QUALIFICATION_FAILED;
 				}
 			}
