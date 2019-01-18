@@ -920,11 +920,12 @@ public class ApplicationConfiguration
 
 	@Bean
 	public QualTXBusinessLogicProcessor beanQtxBusinessLogicProcessor(@Autowired QEConfigCache qeConfigCache, 
-			@Autowired SimplePropertySheetManager propertySheetManager,@Autowired DataExtensionConfigurationRepository theRepos,@Autowired FTAHSListCache ftaHSListCache, @Autowired CurrencyExchangeRateManager beanCurrencyExchangeRateManager) throws Exception
+			@Autowired SimplePropertySheetManager propertySheetManager,@Autowired DataExtensionConfigurationRepository theRepos,@Autowired FTAHSListCache ftaHSListCache, @Autowired CurrencyExchangeRateManager beanCurrencyExchangeRateManager,
+			@Autowired BOMUniversePartition bomUniversePartition) throws Exception
 	{
 		this.qualTXBusinessLogicProcessor = new QualTXBusinessLogicProcessor(qeConfigCache,ftaHSListCache); 
 		CumulationComputationRule computationRule = new CumulationComputationRule(beanCurrencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
-		PreviousYearQualificationRule previousYearQualificationRule = new PreviousYearQualificationRule(qeConfigCache,theRepos);
+		PreviousYearQualificationRule previousYearQualificationRule = new PreviousYearQualificationRule(qeConfigCache,theRepos,bomUniversePartition);
 		this.qualTXBusinessLogicProcessor.setCurrencyExchangeRateManager(beanCurrencyExchangeRateManager);
 		this.qualTXBusinessLogicProcessor.setCumulationComputationRule(computationRule);
 		this.qualTXBusinessLogicProcessor.setDetermineComponentCOO(new DetermineComponentCOO());

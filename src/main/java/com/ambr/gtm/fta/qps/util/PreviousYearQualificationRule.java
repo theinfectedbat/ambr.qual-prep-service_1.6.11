@@ -8,14 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.ambr.gtm.fta.qps.bom.BOM;
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
+import com.ambr.gtm.fta.qps.bom.BOMUniversePartition;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceCampaignDetail;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
-import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
@@ -28,16 +29,17 @@ public class PreviousYearQualificationRule
 {
 	private QEConfigCache				qeConfigCache;
 	private DataExtensionConfigurationRepository dataRepos;
+	private BOMUniversePartition bomUniversePartition;
 
-	public PreviousYearQualificationRule(QEConfigCache qeConfigCache,DataExtensionConfigurationRepository dataRepos)
+	public PreviousYearQualificationRule(QEConfigCache qeConfigCache,DataExtensionConfigurationRepository dataRepos,BOMUniversePartition bomUniversePartition)
 	{
 		this.qeConfigCache = qeConfigCache;
 		this.dataRepos = dataRepos;
-		
+		this.bomUniversePartition = bomUniversePartition;
 	}
 	public boolean applyPrevYearQualForComponent(BOMComponent aBOMComp,QualTXComponent aQualTXComp, GPMSourceIVAProductSourceContainer prodSourceContainer, GPMClaimDetailsCache claimDetailsCache, DataExtensionConfigurationRepository dataExtRepos) throws Exception
 	{
-		boolean usePrevYearQualification = usePrevYearQualification(aBOMComp, aQualTXComp);
+		boolean usePrevYearQualification = usePrevYearQualification(aQualTXComp);
 
 		if (usePrevYearQualification)
 		{
@@ -111,23 +113,28 @@ public class PreviousYearQualificationRule
 		return true;
 	}
 	
-	public boolean usePrevYearQualification(BOMComponent aBOMComp,QualTXComponent aQualTXComp) throws Exception
+	public boolean usePrevYearQualification(QualTXComponent aQualTXComp) throws Exception
 	{
-		return getPrevYearQualFlgFromBom(aBOMComp) && getPrevYearQualification(aQualTXComp);
+		BOM aActualBOM = bomUniversePartition.getBOM(aQualTXComp.qualTX.src_key);
+		return getPrevYearQualFlgFromBom(aActualBOM) && getPrevYearQualification(aQualTXComp);
 	}
-	
+
 	public boolean getPrevYearQualFlgFromBom(BOMComponent aBOMComp) throws Exception
 	{
-		String aBomStaticDefaultDE = "BOM_STATIC:DEFAULT";
-		
-		if(aBOMComp.getBOM().deList == null)
-			return false;
+		return getPrevYearQualFlgFromBom(aBOMComp.getBOM());
+	}
 
-		for (BOMDataExtension aBOMDE : aBOMComp.getBOM().deList)
+	public boolean getPrevYearQualFlgFromBom(BOM aBOM) throws Exception
+	{
+		String aBomStaticDefaultDE = "BOM_STATIC:DEFAULT";
+
+		if (aBOM.deList == null) return false;
+
+		for (BOMDataExtension aBOMDE : aBOM.deList)
 		{
 			if (aBOMDE.group_name.equalsIgnoreCase(aBomStaticDefaultDE))
-			{ 
-				Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("BOM_STATIC","DEFAULT");
+			{
+				Map<String, String> qualtxCOmpDtlflexFieldMap = getFeildMapping("BOM_STATIC", "DEFAULT");
 				return "Y".equals(aBOMDE.getValue(qualtxCOmpDtlflexFieldMap.get("USE_PREV_YEAR_QUAL"))) ? true : false;
 			}
 		}
