@@ -118,7 +118,6 @@ public class QtxTracker
 		return qtxWorkTracker;
 	}
 	
-	
 	public TrackerCodes.QualTrackerStatus getCalculatedQualtxStatus() throws Exception
 	{
 		TrackerCodes.QualTrackerStatus aCalculatedStatus = null;
