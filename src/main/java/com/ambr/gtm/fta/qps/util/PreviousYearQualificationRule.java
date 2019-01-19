@@ -1,6 +1,8 @@
 package com.ambr.gtm.fta.qps.util;
 
 import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -149,10 +151,20 @@ public class PreviousYearQualificationRule
 			if (laneContainer != null)
 			{
 				TradeLaneData laneData = laneContainer.getTradeLaneData(aTradeLane);
-				return laneData.isUserPriviousYearQualification();
+				if(laneData.isUserPriviousYearQualification())
+				{
+					String aPrevYearQualUpto = laneData.getUsePrevYearQualUpto();
+					return validateQualUpto(aPrevYearQualUpto+"-"+Calendar.getInstance().get(Calendar.YEAR));
+				}
 			}
 		}
 		return false;
+	}
+	
+	public boolean validateQualUpto(String previousDate) 
+	{
+		LocalDate qualUptoDate = LocalDate.parse(previousDate, DateTimeFormatter.ofPattern("dd-MMM-yyyy"));
+		return LocalDate.now().compareTo(qualUptoDate) <= 0;
 	}
 	
 	public TradeLane getTradeLane(String orgCode, String ftaCode, String coi) throws Exception
