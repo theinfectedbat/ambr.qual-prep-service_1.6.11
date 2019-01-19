@@ -154,16 +154,19 @@ public class PreviousYearQualificationRule
 				if(laneData.isUserPriviousYearQualification())
 				{
 					String aPrevYearQualUpto = laneData.getUsePrevYearQualUpto();
-					return validateQualUpto(aPrevYearQualUpto+"-"+Calendar.getInstance().get(Calendar.YEAR));
+					return isQualUptoApplicable(aPrevYearQualUpto);
 				}
 			}
 		}
 		return false;
 	}
 	
-	public boolean validateQualUpto(String previousDate) 
+	public boolean isQualUptoApplicable(String previousDate) 
 	{
-		LocalDate qualUptoDate = LocalDate.parse(previousDate, DateTimeFormatter.ofPattern("dd-MMM-yyyy"));
+		if(previousDate == null || "".equals(previousDate.trim()))
+			return true;
+		
+		LocalDate qualUptoDate = LocalDate.parse(previousDate+"-"+Calendar.getInstance().get(Calendar.YEAR), DateTimeFormatter.ofPattern("dd-MMM-yyyy"));
 		return LocalDate.now().compareTo(qualUptoDate) <= 0;
 	}
 	
