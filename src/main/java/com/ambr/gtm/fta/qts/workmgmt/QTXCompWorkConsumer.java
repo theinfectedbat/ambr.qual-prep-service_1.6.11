@@ -378,6 +378,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 		}
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
+		{
+			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+			aQualTXComponentUtilityforComp.pullComponentData();
+		}
 		
 		if (work.compWorkHSList != null)
 		{
@@ -556,7 +562,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					aQualTXComponentUtilityforComp.pullIVAData();
 				}
 				
-				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_ADDED) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_NEW_IVA_IDENTIFED) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_SRC_CHG)) 
+				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_ADDED) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_NEW_IVA_IDENTIFED) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_SRC_CHG) || compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE)) 
 				{
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 					if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
