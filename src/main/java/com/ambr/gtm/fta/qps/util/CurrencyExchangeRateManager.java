@@ -80,7 +80,6 @@ public class CurrencyExchangeRateManager
 		rate.exchangeRate = aCurrentRate;
 		rate.rateOnDate = Calendar.getInstance().getTime();
 		m_ExchangeRateCache.put(countryMapping, rate);
-		
 		return rate;
 	}
 
@@ -96,6 +95,12 @@ public class CurrencyExchangeRateManager
 		return  !sdf.format(rateOnDate).equals(sdf.format(new Date(System.currentTimeMillis())));
 	}
 
+	public synchronized void flushCache()
+	{
+		m_ExchangeRateCache.clear();
+	}
+	
+	
 	/**
 	 * Custom class to manage the Sour Country to Target Country Exchange Rate
 	 * 
