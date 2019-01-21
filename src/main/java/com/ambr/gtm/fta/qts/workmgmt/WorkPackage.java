@@ -30,7 +30,6 @@ public class WorkPackage
 	public GPMClassificationProductContainer gpmClassificationProductContainer;
 	
 	public boolean deleteBOMQual = false;
-	public boolean isReadyForQualification = true;
 	
 	private WorkPackage linkedPackage = null;
 	private WorkPackage rootPackage = null;

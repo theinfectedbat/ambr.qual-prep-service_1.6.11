@@ -128,13 +128,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				request.setQualtxKey(work.details.qualtx_key);
 				request.setQualtxWorkId(work.qtx_wid);
 				request.setBOMKey(work.bom_key);
-				if(workPackage.isReadyForQualification)
-					request.setStatus(TrackerCodes.QualtxStatus.READY_FOR_QUALIFICATION.ordinal());
-				else
-				{
-					request.setStatus(TrackerCodes.QualtxStatus.QUALIFICATION_NOT_REQUIRED.ordinal());
-					request.setWaitForNextAnalysisMethodFlg(true);
-				}
+				request.setStatus(TrackerCodes.QualtxStatus.READY_FOR_QUALIFICATION.ordinal());
 				Env.getSingleton().getTrackerAPI().updateQualtxStatus(request);
 			}
 			catch (Exception e)
@@ -265,11 +259,8 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			ArrayList<QTXWork> workList = new ArrayList<QTXWork>();
 			workList.add(next.work);
 
-			if(workPackage.isReadyForQualification)
-				producer.getWorkRepository().updateWorkStatus(workList, TrackerCodes.QualtxStatus.READY_FOR_QUALIFICATION);
-			else
-				producer.getWorkRepository().updateWorkStatus(workList, TrackerCodes.QualtxStatus.QUALIFICATION_NOT_REQUIRED);
-
+			producer.getWorkRepository().updateWorkStatus(workList, TrackerCodes.QualtxStatus.READY_FOR_QUALIFICATION);
+			
 			producer.getWorkRepository().updateWorkHSStatus(next.work.workHSList, TrackerCodes.QualtxHSPullStatus.COMPLETED);
 
 			producer.getWorkRepository().updateCompWorkStatus(next.work.compWorkList, TrackerCodes.QualtxCompStatus.COMPLETED);
