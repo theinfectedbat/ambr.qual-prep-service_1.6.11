@@ -107,6 +107,8 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		QualTX qualtx = parentWorkPackage.qualtx;
 		QualTXComponent qualtxComp = compWorkPackage.qualtxComp;
 		BOMComponent bomComp = (parentWorkPackage.bom != null) ? parentWorkPackage.bom.getBOMComponentByAltKey(work.bom_comp_key) : null;
+		
+		if(null != bomComp) bomComp.setBOM(parentWorkPackage.bom);
 		boolean isConfigChange = false;
 		if (((QTXCompWorkProducer)(this.producer)).queueUniverse == null) {
 			throw new IllegalStateException("Queue Universe has not been initialized");
