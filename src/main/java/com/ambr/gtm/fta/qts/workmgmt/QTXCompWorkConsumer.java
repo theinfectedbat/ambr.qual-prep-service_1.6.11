@@ -15,9 +15,10 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.ambr.gtm.fta.qps.util.ComponentType;
-
+import com.ambr.gtm.fta.qps.util.QualTXComponentExpansionUtility;
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMComponentDataExtension;
+import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
@@ -119,6 +120,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		QEConfigCache qeConfigCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.qeConfigCache;
 		GPMClassificationProductContainerCache gpmClassCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.gpmClassCache;
 		QualTXComponentUtility aQualTXComponentUtilityforComp = null;
+		BOMUniverse bomUniverse = ((QTXCompWorkProducer)(this.producer)).queueUniverse.bomUniverse;
 
 		if(work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_CONFIG_CHANGE) == true)
 		{
@@ -158,8 +160,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				// Preparation Engine will need to re-construct the Qual TX
 				// Components.
 				parentWorkPackage.qualtx.compList.add(qualtxComp);
-				qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-				qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
 				{
 					qualtxComp.top_down_ind = "Y";
@@ -167,8 +167,16 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				else if (parentWork.details.analysis_method.ordinal()==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
 						|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
 				{
-					if(bomComp.sub_bom_key != null )
-						parentWorkPackage.isReadyForQualification = false;
+					if(bomComp.sub_bom_key != null && bomComp.sub_bom_key != 0 )
+					{
+						QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
+						aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
+						if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
+							qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+						else 
+							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+					}
+						
 				}
 				
 				compWorkPackage.qualtxComp = qualtxComp;
@@ -178,17 +186,26 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		boolean isCompDeleted = false;
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_DELETED) == true || isConfigChange)
 		{
-			if (bomComp == null) {
-			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
-			qualtx.removeComponent(qualtxComp);
-			qualtxComp.qualTX = qualtx;
-			//if the current analysis method is Top-Down mark the RM_CONSTRUCTION_STATUS as INIT, if a component is deleted. The Preparation Engine will need to re-construct the Qual TX Components.
-			if(parentWork.details.analysis_method == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS)
+			if (bomComp == null) 
 			{
-				qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-				qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-			}
-			isCompDeleted = true;
+				if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
+				qualtx.removeComponent(qualtxComp);
+				qualtxComp.qualTX = qualtx;
+				if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
+						|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+				{
+					if(bomComp.sub_bom_key != null && bomComp.sub_bom_key != 0 )
+					{
+						QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
+						aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
+						if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
+							qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+						else 
+							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+					}
+						
+				}
+				isCompDeleted = true;
 			}
 			
 		}
