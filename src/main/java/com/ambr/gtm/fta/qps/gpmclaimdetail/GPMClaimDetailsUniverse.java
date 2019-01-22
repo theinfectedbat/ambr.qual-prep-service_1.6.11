@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
+import com.ambr.gtm.fta.qps.bom.BOMUniverseProperties;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.api.GetGPMClaimDetailsFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.api.GetGPMClaimDetailsStatusFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
@@ -580,6 +581,8 @@ public class GPMClaimDetailsUniverse
 			
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 	
+			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, GPMClaimDetailsUniverseProperties.LOG_FILE_NAME);
+			
 			// Start the process asynchronously
 			aServiceRef.start(true);
 		}

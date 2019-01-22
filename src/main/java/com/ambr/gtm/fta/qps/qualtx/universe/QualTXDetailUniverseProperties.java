@@ -8,4 +8,5 @@ public class QualTXDetailUniverseProperties
 	public static final String UNIVERSE_PARTITION_MEM_MAX		= "com.ambr.gtm.fta.qps.qualtxdetail_universe_partition_mem_max";
 	public static final String UNIVERSE_PARTITION_MEM_MIN		= "com.ambr.gtm.fta.qps.qualtxdetail_universe_partition_mem_min";
 	public static final String UNIVERSE_PARTITION_NUM			= "com.ambr.gtm.fta.qps.qualtxdetail_universe_partition_num";
+	public static final String LOG_FILE_NAME					= "${logging.path}/qps.qualtxdetail_universe.log";
 }
