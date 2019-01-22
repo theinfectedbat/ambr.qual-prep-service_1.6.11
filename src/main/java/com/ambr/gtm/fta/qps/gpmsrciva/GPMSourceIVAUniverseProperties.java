@@ -9,4 +9,5 @@ public class GPMSourceIVAUniverseProperties
 	public static final String UNIVERSE_PARTITION_MEM_MAX	= "com.ambr.gtm.fta.qps.gpmsrciva_universe_partition_mem_max";
 	public static final String UNIVERSE_PARTITION_MEM_MIN	= "com.ambr.gtm.fta.qps.gpmsrciva_universe_partition_mem_min";
 	public static final String LOCAL_CACHE_SIZE 			= "com.ambr.gtm.fta.qps.gpmsrciva_universe_local_cache_size";
+	public static final String LOG_FILE_NAME				= "${logging.path}/qps.gpmsrciva_universe.log";
 }

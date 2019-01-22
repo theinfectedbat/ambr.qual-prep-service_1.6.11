@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
+import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverseProperties;
 import com.ambr.gtm.fta.qps.ptnr.api.GetPartnerDetailFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.ptnr.api.GetPartnerDetailStatusFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
@@ -590,6 +591,8 @@ public class PartnerDetailUniverse
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_ENABLED_FLG, "Y");
 	
+			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, PartnerDetailUniverseProperties.LOG_FILE_NAME);
+			
 			// Start the process asynchronously
 			aServiceRef.start(true);
 		}

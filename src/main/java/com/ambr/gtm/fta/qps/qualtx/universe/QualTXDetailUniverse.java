@@ -14,6 +14,7 @@ import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
 import com.ambr.gtm.fta.qps.bom.api.GetBOMStatusFromPartitionClientAPI;
+import com.ambr.gtm.fta.qps.ptnr.PartnerDetailUniverseProperties;
 import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXCountFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXDetailFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
@@ -622,6 +623,8 @@ public class QualTXDetailUniverse
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_ENABLED_FLG, "Y");
 	
+			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, QualTXDetailUniverseProperties.LOG_FILE_NAME);
+			
 			// Start the process asynchronously
 			aServiceRef.start(true);
 		}

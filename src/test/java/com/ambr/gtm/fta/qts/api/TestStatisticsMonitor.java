@@ -2,7 +2,8 @@ package com.ambr.gtm.fta.qts.api;
 
 import org.junit.Test;
 
-import com.ambr.gtm.fta.qts.util.*;
+import com.ambr.gtm.fta.qts.util.LongStatistic;
+import com.ambr.gtm.fta.qts.util.StatisticMonitor;
 
 public class TestStatisticsMonitor
 {
