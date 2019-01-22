@@ -202,8 +202,8 @@ public class TestServiceAPI
 	{
 		DataExtensionConfigurationRepository	aRepos;
 		
-		aRepos = new DataExtensionConfigurationRepository();
-		aRepos.load(new JdbcTemplate(this.dataSrc), 1000, null);
+		aRepos = new DataExtensionConfigurationRepository(new JdbcTemplate(this.dataSrc), 1000, null);
+		aRepos.load();
 		
 		System.out.println("done");
 	}
