@@ -76,7 +76,7 @@ public class QualTXDetailUniversePartition
 		this.qualTXDetailTable = new HashMap<>();
 		
 		ArrayList<String>	aWhereClause = new ArrayList<>();
-		
+		aWhereClause.add(" is_active = 'Y' ");
 		if (this.partitionCount > 1) {
 			aWhereClause.add(" mod(src_key, ?) = ?");
 
@@ -92,7 +92,7 @@ public class QualTXDetailUniversePartition
 		
 
 		aUtil = new DataRecordUtility<QualTXDetail>(QualTXDetail.class);
-		this.loadSQLText = MessageFormat.format("select {0} from mdi_qualtx where is_active = 'Y' {1} ", 
+		this.loadSQLText = MessageFormat.format("select {0} from mdi_qualtx where {1} ", 
 			StringUtil.join(aUtil.getColumnNames().toArray(), ","), 
 			StringUtil.join(aWhereClause.toArray(), " and ")
 		);
