@@ -101,6 +101,7 @@ public class QualTX
 		this.compList = new ArrayList<>();
 		this.priceList = new ArrayList<>();
 		this.deList = new ArrayList<>();
+		this.is_active = "Y";
 	}
 	
     /**

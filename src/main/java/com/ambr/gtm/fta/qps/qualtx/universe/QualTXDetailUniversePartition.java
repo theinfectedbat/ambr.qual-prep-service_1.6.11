@@ -1,23 +1,29 @@
 package com.ambr.gtm.fta.qps.qualtx.universe;
 
+import java.io.File;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
+
+import javax.sql.DataSource;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.util.StringUtil;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.JdbcUtils;
 
-import com.ambr.gtm.fta.qps.exception.MaxRowsReachedException;
-import com.ambr.platform.rdbms.schema.providers.RDBMSVendorNameEnum;
-import com.ambr.platform.rdbms.util.DataRecordUtility;
+import com.ambr.gtm.fta.qps.CommandEnum;
+import com.ambr.gtm.fta.qps.QPSProperties;
+import com.ambr.gtm.fta.qps.UniverseStatusEnum;
+import com.ambr.gtm.fta.qps.bom.api.GetBOMStatusFromPartitionClientAPI;
+import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXCountFromPartitionClientAPI;
+import com.ambr.gtm.fta.qps.qualtx.universe.api.GetQualTXDetailFromPartitionClientAPI;
+import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
+import com.ambr.platform.utils.propertyresolver.ConfigurationPropertyResolver;
+import com.ambr.platform.utils.subservice.SubordinateServiceManager;
+import com.ambr.platform.utils.subservice.SubordinateServiceReference;
+import com.ambr.platform.utils.subservice.exception.ServerUnavailableException;
 
 /**
  *****************************************************************************************
@@ -25,145 +31,73 @@ import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
  * </P>
  *****************************************************************************************
  */
-public class QualTXDetailUniversePartition 
+public class QualTXDetailUniverse 
 {
-	static Logger		logger = LogManager.getLogger(QualTXDetailUniversePartition.class);
+	static Logger		logger = LogManager.getLogger(QualTXDetailUniverse.class);
 
-	int													rowCount;
-	private HashMap<Long, QualTXDetailBOMContainer>		qualTXDetailTable;
-	private String										loadSQLText;
-	private int											partitionNum;
-	private int											fetchSize;
-	private int											qualTXCount;
 	private int											partitionCount;
+	private int											fetchSize;
 	int													maxCursorDepth;
+	int													memoryMax;
+	int													memoryMin;
 	private String										targetSchema;
-	private String 										filterOrgCode;
+	private String										serviceJarFileName;
+	private SubordinateServiceManager					serviceMgr;
+	private QualTXDetailUniversePartitionEventHandler	eventHandler;
+	private int											serverPort;
+	private String										dbURL;
+	private String										dbUserName;
+	private String										dbTargetSchema;
+	private String										dbPassword;
+	UniverseStatusEnum									status;
+	QualTXDetailUniversePartition						localPartition;
+	private ConfigurationPropertyResolver				propertyResolver;
+	private DataSource									dataSrc;
+
+    /**
+     *************************************************************************************
+     * <P>
+     * </P>
+     *************************************************************************************
+     */
+	public QualTXDetailUniverse()
+		throws Exception
+	{
+		this.fetchSize = 10000;
+		this.maxCursorDepth = -1;
+		this.memoryMax = 512;
+		this.memoryMin = 256;
+		this.serverPort = 80;
+		this.setPartitionCount(0);
+		this.status = UniverseStatusEnum.PENDING_STARTUP;
+	}
 	
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     *************************************************************************************
-     */
-	public QualTXDetailUniversePartition()
-		throws Exception
-	{
-		this(1, 1, null);
-	}
-	
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     * 
-     * @param	thePartitionCount
-     * @param	thePartitionNum
-     * @param	theFilterOrgCode
-     *************************************************************************************
-     */
-	public QualTXDetailUniversePartition(
-		int 	thePartitionCount, 
-		int 	thePartitionNum,
-		String	theFilterOrgCode)
-		throws Exception
-	{
-		DataRecordUtility<?>	aUtil;
-		
-		this.partitionNum = thePartitionNum;
-		this.partitionCount = thePartitionCount;
-		this.filterOrgCode = theFilterOrgCode;
-		this.qualTXDetailTable = new HashMap<>();
-		
-		ArrayList<String>	aWhereClause = new ArrayList<>();
-		
-		if (this.partitionCount > 1) {
-			aWhereClause.add("where mod(src_key, ?) = ?");
-
-			if (this.filterOrgCode != null) {
-				aWhereClause.add("and org_code = ?");
-			}
-		}
-		else {
-			if (this.filterOrgCode != null) {
-				aWhereClause.add("where org_code = ?");
-			}
-		}
-
-		aUtil = new DataRecordUtility<QualTXDetail>(QualTXDetail.class);
-		this.loadSQLText = MessageFormat.format("select {0} from mdi_qualtx {1}", 
-			StringUtil.join(aUtil.getColumnNames().toArray(), ","), 
-			StringUtil.join(aWhereClause.toArray(), " ")
-		);
-		
-		MessageFormatter.info(logger, "constructor", "QualTX Detail Universe Partition: Count [{0}] Partition Number [{1}]", this.partitionCount, this.partitionNum);
-	}
-
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 * 
-	 * @param	theQualTXDetail
-	 *************************************************************************************
-	 */
-	void addQualTXDetail(QualTXDetail theQualTXDetail)
-		throws Exception
-	{
-		QualTXDetailBOMContainer	aContainer;
-		
-		this.qualTXCount++;
-		
-		aContainer = this.qualTXDetailTable.get(theQualTXDetail.src_key);
-		if (aContainer == null) {
-			aContainer = new QualTXDetailBOMContainer(theQualTXDetail.src_key);
-			this.qualTXDetailTable.put(aContainer.bomKey, aContainer);
-		}
-		
-		aContainer.add(theQualTXDetail);
-	}
-
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     * 
-     * @param	theBomID
-     *************************************************************************************
-     */
-	public QualTXDetailBOMContainer getQualTXDetailByBOM(long theBOMKey)
-		throws Exception
-	{
-		QualTXDetailBOMContainer		aDetailContainer;
-		
-		aDetailContainer = this.qualTXDetailTable.get(theBOMKey);
-		return aDetailContainer;
-	}
-
 	/**
 	 *************************************************************************************
 	 * <P>
 	 * </P>
 	 *************************************************************************************
 	 */
-	public int getBOMCount()
+	public void ensureAvailable()
 		throws Exception
 	{
-		return this.qualTXDetailTable.size();
+		int	aAttemptCount = 1;
+		
+		MessageFormatter.info(logger, "ensureAvailable", "Start");
+		while (true) {
+			try {
+				this.refresh();
+				break;
+			}
+			catch (Exception e) {
+				MessageFormatter.error(logger, "ensureAvailable", e, "Refresh failed: Attempt [{0}]", aAttemptCount);
+				aAttemptCount++;
+			}
+		}
+		
+		MessageFormatter.info(logger, "ensureAvailable", "Complete");
 	}
-
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     *************************************************************************************
-     */
-	public int getPartitionNum()
-		throws Exception
-	{
-		return this.partitionNum;
-	}
-
+	
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -173,99 +107,263 @@ public class QualTXDetailUniversePartition
 	public int getQualTXCount()
 		throws Exception
 	{
-		return this.qualTXCount;
+		int		aCount = 0;
+		
+		if (this.localPartition != null) {
+			aCount += this.localPartition.getQualTXCount();
+		}
+		else {
+			this.waitUntilAvailable();
+			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
+				try {
+					GetQualTXCountFromPartitionClientAPI		aAPI = new GetQualTXCountFromPartitionClientAPI(aServiceRef);
+		
+					aCount += aAPI.execute();
+				}
+				catch (Exception e) {
+					MessageFormatter.error(logger, "getBOM", e, "Error receiving result from partition [{0}]", aServiceRef.getInstanceID());
+				}
+			}
+		}
+	
+		return aCount;
 	}
 
 	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     * 
-     * @param	thePadding
-     *************************************************************************************
-     */
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theBOMKey
+	 *************************************************************************************
+	 */
+	public QualTXDetailBOMContainer getQualTXDetailContainer(long theBOMKey)
+		throws Exception
+	{
+		QualTXDetailBOMContainer	aContainer = null;
+		PerformanceTracker			aPerfTracker = new PerformanceTracker(logger, Level.DEBUG, "getQualTXDetailContainer");
+		
+		aPerfTracker.start();
+		
+		if (this.localPartition != null) {
+			aContainer = this.localPartition.getQualTXDetailByBOM(theBOMKey);
+		}
+		else {
+			this.waitUntilAvailable();
+			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
+				try {
+					GetQualTXDetailFromPartitionClientAPI		aAPI = new GetQualTXDetailFromPartitionClientAPI(aServiceRef);
+		
+					aContainer = aAPI.execute(theBOMKey);
+					if (aContainer != null) {
+						break;
+					}
+				}
+				catch (Exception e) {
+					MessageFormatter.error(logger, "getBOM", e, "BOM [{0}]: Error receiving result from partition [{0}]", theBOMKey, aServiceRef.getInstanceID());
+				}
+			}
+		}
+		
+		aPerfTracker.stop("BOM [{0,number,#}] found [{1}]", new Object[]
+			{
+				theBOMKey, 
+				(aContainer != null)
+			}
+		);
+		
+		return aContainer;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getFetchSize()
+		throws Exception
+	{
+		return this.fetchSize;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getMaxCursorDepth()
+		throws Exception
+	{
+		return this.maxCursorDepth;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getMemoryMax()
+		throws Exception
+	{
+		return this.memoryMax;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getMemoryMin()
+		throws Exception
+	{
+		return this.memoryMin;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getPartitionCount()
+		throws Exception
+	{
+		return this.partitionCount;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * @param thePaddingLength 
+	 *************************************************************************************
+	 */
 	public String getStatus(int thePaddingLength)
 		throws Exception
 	{
-		ParameterizedMessageUtility		aMsgUtil;
-	
-		aMsgUtil = new ParameterizedMessageUtility(thePaddingLength);
-		aMsgUtil.format("Qual TX Universe Partition [{0}] of [{1}]", false, true, this.partitionNum, this.partitionCount);
-		aMsgUtil.format("  Qual TX Details: BOMs [{0}] Qual TXs [{1}]", false, true, 
-			this.getBOMCount(), 
-			this.getQualTXCount()
-		);
+		ParameterizedMessageUtility		aMsgUtil = new ParameterizedMessageUtility(thePaddingLength);
 		
-		System.gc();
-
-		aMsgUtil.format("  JVM Memory: Total [{0}] Free [{1}] Max [{2}] Used [{3}]", 
-			false, true, 
-			Runtime.getRuntime().totalMemory(),
-			Runtime.getRuntime().freeMemory(),
-			Runtime.getRuntime().maxMemory(),
-			Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()
-		);
+		if (this.localPartition != null) {
+			return this.localPartition.getStatus(thePaddingLength);
+		}
+		
+		aMsgUtil.format("Qual TX Detail Universe", false, true);
+		for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
+			try {
+				GetBOMStatusFromPartitionClientAPI		aAPI = new GetBOMStatusFromPartitionClientAPI(aServiceRef);
+	
+				aMsgUtil.format(aAPI.execute(thePaddingLength+3), true, true);
+			}
+			catch (Exception e) {
+				MessageFormatter.error(logger, "getStatus", e, "Error receiving result from partition [{0}]", aServiceRef.getInstanceID());
+			}
+		}
 		
 		return aMsgUtil.getMessage();
 	}
 	
 	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     * 
-     * @param	theJdbcTemplate
-     *************************************************************************************
-     */
-	public void load(JdbcTemplate theJdbcTemplate)
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theBOMKey
+	 *************************************************************************************
+	 */
+	public int getTargetPartition(long theBOMKey)
 		throws Exception
 	{
-		Object[]			aInputList = null;
-		PerformanceTracker	aPerfTracker = new PerformanceTracker(logger, Level.INFO, "load");
-
-		this.qualTXDetailTable.clear();
-		this.qualTXDetailTable = new HashMap<>();
-		
-		aPerfTracker.start();
-		try {
-			try {
-				theJdbcTemplate.setFetchSize(this.fetchSize);
-				if (this.targetSchema != null) {
-					String dbVendor = JdbcUtils.commonDatabaseName(JdbcUtils.extractDatabaseMetaData(theJdbcTemplate.getDataSource(), "getDatabaseProductName"));
-					if (dbVendor!=null && RDBMSVendorNameEnum.valueOf(dbVendor.toUpperCase()) ==   RDBMSVendorNameEnum.POSTGRESQL)
-					{
-						theJdbcTemplate.execute(MessageFormat.format("SET search_path TO {0}", this.targetSchema));
-					}
-					else
-					theJdbcTemplate.execute(MessageFormat.format("alter session set current_schema={0}", this.targetSchema));
-				}
+		int	aPartitionNum = (int)(theBOMKey % this.partitionCount);
 	
-				if (this.partitionCount == 1) {
-					aInputList = (this.filterOrgCode == null)? null : new Object[]{this.filterOrgCode};
-				}
-				else if (this.filterOrgCode == null) {
-					aInputList = new Object[]{new Integer(this.partitionCount), new Integer(this.partitionNum-1)};
-				}
-				else {
-					aInputList = new Object[]{new Integer(this.partitionCount), new Integer(this.partitionNum-1), this.filterOrgCode};
-				}
-				
-				if (aInputList == null) {
-					theJdbcTemplate.query(this.loadSQLText, new QualTXDetailRowCallbackHandler(this));
-				}
-				else {
-					theJdbcTemplate.query(this.loadSQLText,	aInputList,	new QualTXDetailRowCallbackHandler(this));
-				}
-			}
-			catch (DataAccessException e) {
-				if (!(e.getCause() instanceof MaxRowsReachedException)) {
-					throw e;
-				}
-			}
+		return aPartitionNum;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public synchronized void refresh()
+		throws Exception
+	{
+		PerformanceTracker aPerfTracker = new PerformanceTracker(logger, Level.INFO, "refresh");
+
+		try {
+			aPerfTracker.start();
+			this.status = UniverseStatusEnum.REFRESH_IN_PROGRESS;
+			this.shutdown();
+
+			this.status = UniverseStatusEnum.REFRESH_IN_PROGRESS;
+			this.startup();
 		}
 		finally {
-			aPerfTracker.stop("BOMs [{0}] Qual TXs [{1}]", new Object[]{this.getBOMCount(),	this.getQualTXCount()});
+			aPerfTracker.stop("Qual TX Detail Universe status [{0}].", new Object[]{this.status.name()});
 		}
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theDataSrc
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setDataSource(DataSource theDataSrc)
+		throws Exception
+	{
+		this.dataSrc = theDataSrc;
+		return this;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theURL
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setDBURL(String theURL)
+		throws Exception
+	{
+		this.dbURL = theURL;
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theUserName
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setDBUserName(String theUserName)
+		throws Exception
+	{
+		this.dbUserName = theUserName;
+		return this;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	thePassword
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setDBPassword(String thePassword)
+		throws Exception
+	{
+		this.dbPassword = thePassword;
+		return this;
 	}
 	
 	/**
@@ -276,12 +374,27 @@ public class QualTXDetailUniversePartition
 	 * @param	theFetchSize
 	 *************************************************************************************
 	 */
-	public QualTXDetailUniversePartition setFetchSize(int theFetchSize)
+	public QualTXDetailUniverse setFetchSize(int theFetchSize)
 		throws Exception
 	{
+		MessageFormatter.debug(logger, "setFetchSize", "Current [{0}]: Target [{1}]", this.fetchSize, theFetchSize);
 		this.fetchSize = theFetchSize;
-		MessageFormatter.info(logger, "setFetchSize", "Fetch size [{0}]", this.fetchSize);
+
 		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	thePartition
+	 *************************************************************************************
+	 */
+	public void setLocalPartition(QualTXDetailUniversePartition thePartition)
+		throws Exception
+	{
+		this.localPartition = thePartition;
 	}
 
 	/**
@@ -292,11 +405,104 @@ public class QualTXDetailUniversePartition
 	 * @param	theMaxCursorDepth
 	 *************************************************************************************
 	 */
-	public QualTXDetailUniversePartition setMaxCursorDepth(int theMaxCursorDepth)
+	public QualTXDetailUniverse setMaxCursorDepth(int theMaxCursorDepth)
 		throws Exception
 	{
 		this.maxCursorDepth = theMaxCursorDepth;
-		MessageFormatter.info(logger, "setMaxCursorDepth", "Max Cursor Depth: [{0}]", this.maxCursorDepth);
+		MessageFormatter.debug(logger, "setMaxCursorDepth", "Max Cursor Depth: [{0}]", this.maxCursorDepth);
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theMemInMB
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setMemoryMax(int theMemInMB)
+		throws Exception
+	{
+		MessageFormatter.debug(logger, "setMemoryMax", "Current [{0}]: Target [{1}]", this.memoryMax, theMemInMB);
+		this.memoryMax = theMemInMB;
+		return this;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theMemInMB
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setMemoryMin(int theMemInMB)
+		throws Exception
+	{
+		MessageFormatter.debug(logger, "setMemoryMin", "Current [{0}]: Target [{1}]", this.memoryMin, theMemInMB);
+		this.memoryMin = theMemInMB;
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theJarFileName
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setServiceJarFileName(String theJarFileName)
+		throws Exception
+	{
+		this.serviceJarFileName = theJarFileName;
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	thePartitionCount
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setPartitionCount(int thePartitionCount)
+		throws Exception
+	{
+		MessageFormatter.debug(logger, "setPartitionCount", "Current [{0}]: Target [{1}]", this.partitionCount, thePartitionCount);
+		this.partitionCount = thePartitionCount;
+		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	thePropertyResolver
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setPropertyResolver(ConfigurationPropertyResolver thePropertyResolver)
+		throws Exception
+	{
+		this.propertyResolver = thePropertyResolver;
+		return this;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theServerPort
+	 *************************************************************************************
+	 */
+	public QualTXDetailUniverse setServerPort(int theServerPort)
+		throws Exception
+	{
+		this.serverPort = theServerPort;
 		return this;
 	}
 
@@ -308,11 +514,144 @@ public class QualTXDetailUniversePartition
 	 * @param	theTargetSchema
 	 *************************************************************************************
 	 */
-	public QualTXDetailUniversePartition setTargetSchema(String theTargetSchema)
+	public QualTXDetailUniverse setTargetSchema(String theTargetSchema)
 		throws Exception
 	{
 		this.targetSchema = theTargetSchema;
-		MessageFormatter.info(logger, "setTargetSchema", "Target schema: [{0}]", this.targetSchema);
+		MessageFormatter.debug(logger, "setTargetSchema", "Target schema: [{0}]", this.targetSchema);
 		return this;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public void shutdown()
+		throws Exception
+	{
+		if (this.localPartition != null) {
+			return;
+		}
+		
+		if (this.status == UniverseStatusEnum.SHUTDOWN) {
+			return;
+		}
+		
+		if (this.serviceMgr != null) {
+			MessageFormatter.debug(logger, "shutdown", "Initiating shutdown");
+			this.serviceMgr.shutdown();
+			this.status = UniverseStatusEnum.SHUTDOWN;
+			MessageFormatter.debug(logger, "shutdown", "Shutdown complete.");
+		}
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	theTemplate
+	 *************************************************************************************
+	 */
+	public void startup()
+		throws Exception
+	{
+		SubordinateServiceReference		aServiceRef;
+		
+		if (this.localPartition != null) {
+			MessageFormatter.info(logger, "startup", "Local Partition enabled");
+			this.localPartition.load(new JdbcTemplate(this.dataSrc));
+			this.status = UniverseStatusEnum.AVAILABLE;
+			return;
+		}
+		
+		if (this.serviceJarFileName == null) {
+			throw new IllegalStateException("Service JAR file name must be specialized.");
+		}
+		
+		if (this.partitionCount == 0) {
+			throw new IllegalStateException("No partitions have been allocated for this universe.");
+		}
+		
+		this.serviceMgr = new SubordinateServiceManager("QualTXDetailUniverse", this.serverPort, this.propertyResolver);
+		this.serviceMgr.setMemoryMax(this.memoryMax);
+		this.serviceMgr.setMemoryMin(this.memoryMin);
+		this.serviceMgr.setTargetLibrary(new File(this.serviceJarFileName));
+		this.serviceMgr.setEventHandler(new QualTXDetailUniversePartitionEventHandler(this));
+				
+		// Start the desired number of subprocesses
+		
+		for (int aPartitionNum = 1; aPartitionNum <= this.partitionCount; aPartitionNum++) {
+			aServiceRef = this.serviceMgr.createSubordinateService();
+			
+			// When we start the subprocess, we DON'T want a GPMClassificationUniverse bean to be instantiated
+			// It will cause a recursive launch of processes
+			aServiceRef.setProperty(QualTXDetailUniverseProperties.UNIVERSE_ENABLED, "N");
+			
+			// We DO want a BOM Universe Partition object to be created
+			aServiceRef.setProperty(QualTXDetailUniverseProperties.UNIVERSE_PARTITION_ENABLED, "Y");
+			
+			// This is primarily for information purposes to the subprocess
+			aServiceRef.setProperty(
+				QualTXDetailUniverseProperties.UNIVERSE_PARTITION_COUNT,
+				String.valueOf(this.partitionCount)
+			);
+			
+			// We need to let the subprocess know which partition it is
+			aServiceRef.setProperty(QualTXDetailUniverseProperties.UNIVERSE_PARTITION_NUM, String.valueOf(aPartitionNum));
+			
+			// The process should run as a SERVICE, which means it will remain online until intentionally shut down
+			aServiceRef.setProperty(QPSProperties.COMMAND, CommandEnum.SERVICE.name());
+			
+			// Set Data Source properties
+			aServiceRef.setProperty(QPSProperties.MAX_FETCH_SIZE, String.valueOf(this.fetchSize));
+			aServiceRef.setProperty(
+				MessageFormat.format("{0}.url", PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_DATA_SOURCE), 
+				this.dbURL
+			);
+			aServiceRef.setProperty(
+				MessageFormat.format("{0}.username", PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_DATA_SOURCE), 
+				this.dbUserName
+			);
+			aServiceRef.setProperty(
+				MessageFormat.format("{0}.password", PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_DATA_SOURCE), 
+				this.dbPassword
+			);
+			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
+			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_ENABLED_FLG, "Y");
+	
+			// Start the process asynchronously
+			aServiceRef.start(true);
+		}
+		
+		try {
+			this.serviceMgr.waitForServers();
+			this.status = UniverseStatusEnum.AVAILABLE;
+		}
+		catch (ServerUnavailableException e) {
+			this.status = UniverseStatusEnum.STARTUP_FAILED;
+			throw e;
+		}
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	private void waitUntilAvailable()
+		throws Exception
+	{
+		MessageFormatter.trace(logger, "waitUntilAvailable", "checking universe status");
+	
+		while (this.status != UniverseStatusEnum.AVAILABLE) {
+			MessageFormatter.trace(logger, "waitUntilAvailable", "universe status [{0}], waiting", this.status);
+			Thread.sleep(1000);
+		}
+		
+		MessageFormatter.trace(logger, "waitUntilAvailable", "universe available");
 	}
 }
