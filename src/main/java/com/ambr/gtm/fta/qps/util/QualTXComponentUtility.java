@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMComponentDataExtension;
+import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
@@ -41,6 +42,7 @@ public class QualTXComponentUtility
 	private DetermineComponentCOO determineComponentCOO;
 	private CumulationComputationRule cumulationComputationRule;
 	private PreviousYearQualificationRule previousYearQualificationRule;
+	private BOMUniverse bomUniverse;
 		
 	public QualTXBusinessLogicProcessor getQualTXBusinessLogicProcessor()
 	{
@@ -389,7 +391,7 @@ public class QualTXComponentUtility
 			{
 				Date origEffectiveFrom = this.qualTXComp.qualified_from;
 				Date origEffectiveTo = this.qualTXComp.qualified_to;
-				boolean isPrevYearQualApplied = previousYearQualificationRule.applyPrevYearQualForComponent(this.bomComp, this.qualTXComp, aSourceIVAProductSourceContainer, claimDetailsCache, this.dataExtCfgRepos);
+				boolean isPrevYearQualApplied = previousYearQualificationRule.applyPrevYearQualForComponent(this.bomComp, this.qualTXComp, aSourceIVAProductSourceContainer, claimDetailsCache, this.dataExtCfgRepos,this.bomUniverse);
 				if (!isPrevYearQualApplied)
 				{
 					if (this.cumulationComputationRule != null) cumulationComputationRule.applyCumulationForComponent(this.qualTXComp, aSourceIVAProductSourceContainer, this.claimDetailsCache, this.dataExtCfgRepos);
@@ -404,5 +406,9 @@ public class QualTXComponentUtility
 	public void setGPMClassificationCache(GPMClassificationProductContainerCache gpmClassCache) {
 		this.gpmClassCache = gpmClassCache;
 		
+	}
+
+	public void setBOMUniverse(BOMUniverse bomUniverse) {
+		this.bomUniverse = bomUniverse;
 	}
 }
