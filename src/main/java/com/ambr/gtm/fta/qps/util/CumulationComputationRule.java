@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import com.ambr.gtm.fta.list.FTAListContainer;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
@@ -19,7 +18,6 @@ import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.config.FTAHSListCache;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.CumulationConfigContainer.CumulationRule;
-import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
@@ -249,8 +247,11 @@ public class CumulationComputationRule
 
 			Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 			
-			if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
-				cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
+			if(cumulationrule.useCOOList())
+			{
+				if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
+					cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
+			}
 			
 			if(qualTXCompDetails == null)
 				qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
@@ -282,7 +283,7 @@ public class CumulationComputationRule
 					aQualTXComp.in_cumulation_value = cumulationValue;
 			}
 		}
-	}
+	}	
 	
 	public Double	calculateCumulationValue	(QualTXComponent aQualTXComp, GPMClaimDetails claimdetails)
 	throws Exception{
