@@ -147,44 +147,21 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 
-			if (qualtxComp == null) {
-			
-			if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && !ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) && !ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type))
+			if (qualtxComp == null)
 			{
-				
-				qualtxComp = qualtx.createComponent();
-				
-				aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
-				aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
-				aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
-				aQualTXComponentUtilityforComp.pullComponentData();
-
-				// if the current analysis method is Top-Down mark the
-				// RM_CONSTRUCTION_STATUS as INIT, if a component is added. The
-				// Preparation Engine will need to re-construct the Qual TX
-				// Components.
-				parentWorkPackage.qualtx.compList.add(qualtxComp);
-				if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
+			
+				if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && !ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) && !ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type))
 				{
-					qualtxComp.top_down_ind = "Y";
+					
+					qualtxComp = addComponent(qualtx, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache,
+							aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
+	
+					expandComponentsBasedOnAnalysisMethod(parentWorkPackage, parentWork, qualtx, qualtxComp, bomComp,
+							aClaimsDetailCache, aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository,
+							gpmClassCache, bomUniverse);
+					
+					compWorkPackage.qualtxComp = qualtxComp;
 				}
-				else if (parentWork.details.analysis_method.ordinal()==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
-						|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
-				{
-					if(bomComp.sub_bom_key != null && bomComp.sub_bom_key != 0 )
-					{
-						QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
-						aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
-						if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
-							qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-						else 
-							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-					}
-						
-				}
-				
-				compWorkPackage.qualtxComp = qualtxComp;
-			}
 			}
 		}
 		boolean isCompDeleted = false;
@@ -195,20 +172,8 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 				qualtx.removeComponent(qualtxComp);
 				qualtxComp.qualTX = qualtx;
-				if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
-						|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
-				{
-					if(bomComp.sub_bom_key != null && bomComp.sub_bom_key != 0 )
-					{
-						QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
-						aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
-						if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
-							qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-						else 
-							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-					}
-						
-				}
+				deleteExpandedComponents(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
+						aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
 				isCompDeleted = true;
 			}
 			
@@ -244,7 +209,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				qualtxComp.essential_character = bomComp.essential_character;
 				if(null != bomComp.unit_cost)
 					qualtxComp.unit_cost = bomComp.unit_cost;
-				qualtxComp.qualTX = qualtx;
+				qualtxComp.qualTX = qualtx;  
 				// //if the current analysis method is Top-Down mark the
 				// RM_CONSTRUCTION_STATUS as INIT, if a component
 				// unit_cost/qty_per is updated. The Preparation Engine will
@@ -282,48 +247,8 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			Set<QualTXComponentDataExtension> deleteQualtxYarnDetailsDE = new HashSet<QualTXComponentDataExtension>(); 
 			deleteQualtxYarnDetailsDE.addAll(qualtxYarnDtlsCompDEs);
 			
-			for (BOMComponentDataExtension bomCompYarnDetail : bomCompYarnDetailsList)
-			{
-				if (bomCompYarnDetail.getValue("FLEXFIELD_VAR1") == null)
-					continue;
-				
-				boolean isYarnTypeExist = false;
-				for (QualTXComponentDataExtension qualtxYarnDtlsCompDE : qualtxYarnDtlsCompDEs)
-				{
-					if (null != qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1") && qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1").equals(bomCompYarnDetail.getValue("FLEXFIELD_VAR1")))
-					{
-						isYarnTypeExist = true;
-						deleteQualtxYarnDetailsDE.remove(qualtxYarnDtlsCompDE);
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR2", bomCompYarnDetail.getValue("FLEXFIELD_VAR2"));
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR3", bomCompYarnDetail.getValue("FLEXFIELD_VAR3"));
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR4", bomCompYarnDetail.getValue("FLEXFIELD_VAR4"));
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR5", bomCompYarnDetail.getValue("FLEXFIELD_VAR5"));
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR6", bomCompYarnDetail.getValue("FLEXFIELD_VAR6"));	
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR7", bomCompYarnDetail.getValue("FLEXFIELD_VAR7"));	
-						qualtxYarnDtlsCompDE.setValue("FLEXFIELD_NUM1", bomCompYarnDetail.getValue("FLEXFIELD_NUM1"));	
-					}
-				}
-				if(!isYarnTypeExist)
-				{
-					QualTXComponentDataExtension de = qualtxComp.createDataExtension("IMPL_BOM_PROD_FAMILY:TEXTILES", this.repos, null);
-					
-					Timestamp now = new Timestamp(System.currentTimeMillis());
-					de.setValue("CREATED_BY", parentWork.userId); 
-					de.setValue("CREATED_DATE", now);
-					de.setValue("LAST_MODIFIED_BY", parentWork.userId);
-					de.setValue("LAST_MODIFIED_DATE", now);
-
-					de.setValue("FLEXFIELD_VAR1", bomCompYarnDetail.getValue("FLEXFIELD_VAR1"));	//type
-					de.setValue("FLEXFIELD_VAR2", bomCompYarnDetail.getValue("FLEXFIELD_VAR2"));	//originating_status
-					de.setValue("FLEXFIELD_VAR3", bomCompYarnDetail.getValue("FLEXFIELD_VAR3"));	//ctry_of_origin
-					de.setValue("FLEXFIELD_VAR4", bomCompYarnDetail.getValue("FLEXFIELD_VAR4"));	//ctry_of_manufacture
-					de.setValue("FLEXFIELD_VAR5", bomCompYarnDetail.getValue("FLEXFIELD_VAR5"));	//weight_type
-					de.setValue("FLEXFIELD_VAR6", bomCompYarnDetail.getValue("FLEXFIELD_VAR6"));	//knit_to_shape
-					de.setValue("FLEXFIELD_VAR7", bomCompYarnDetail.getValue("FLEXFIELD_VAR7"));	//uom
-					de.setValue("FLEXFIELD_NUM1", bomCompYarnDetail.getValue("FLEXFIELD_NUM1"));	//weight
-
-				} 
-			}
+			compareBOMComponentDEwithQualtxComponentDE(parentWork, qualtxComp, bomCompYarnDetailsList,
+					qualtxYarnDtlsCompDEs, deleteQualtxYarnDetailsDE);
 			qualtxComp.deList.removeAll(deleteQualtxYarnDetailsDE);
 		}
 
@@ -339,72 +264,43 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			Set<QualTXComponentPrice> deleteCompPriceList = new HashSet<QualTXComponentPrice>(); 
 			deleteCompPriceList.addAll(qualtxComp.priceList);
 			
-			for (BOMComponentDataExtension bomCompPrice : priceDetailsList)
-			{
-				if(bomCompPrice.getValue("flexfield_var1") == null) continue;	//PRICE_TYPE
-				
-				boolean isPriceTypeExist = false;
-				for (QualTXComponentPrice qualtxCompPrice : qualtxComp.priceList)
-				{
-					if (bomCompPrice.getValue("flexfield_var1").equals(qualtxCompPrice.price_type))
-					{
-						isPriceTypeExist = true;
-						deleteCompPriceList.remove(qualtxCompPrice);
-						if (bomCompPrice.getValue("flexfield_num1") != qualtxCompPrice.price)
-						{
-							qualtxCompPrice.price =  ((Integer)bomCompPrice.getValue("flexfield_num1")).doubleValue();
-						}
-						if (!bomCompPrice.getValue("flexfield_var2").equals(qualtxCompPrice.currency_code))
-						{
-							qualtxCompPrice.currency_code = (String) bomCompPrice.getValue("flexfield_var2");
-						}
-					}
-				}
-				if(!isPriceTypeExist)
-				{
-					QualTXComponentPrice price = qualtxComp.createPrice((Number) bomCompPrice.getValue("flexfield_num1"), (String) bomCompPrice.getValue("flexfield_var1"));
-					
-					price.currency_code = (String) bomCompPrice.getValue("flexfield_var2");	//CURRENCY_CODE
-					
-					price.created_by = parentWork.userId;
-					price.created_date = new Timestamp(System.currentTimeMillis());
-					price.last_modified_by = price.created_by;
-					price.last_modified_date = price.created_date;
-				}
-			}
+			compareBomCompPricesWithQualtxComponentPrices(parentWork, qualtxComp, priceDetailsList,
+					deleteCompPriceList);
 			qualtxComp.priceList.removeAll(deleteCompPriceList);
 		}
 		
-		if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
-		if (bomComp == null && !isCompDeleted) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
-		qualtxComp.qualTX = qualtx;
-		int cooSource = qualtxComp.coo_source;
-		List<String> propertyValue = getCOODeterminationHierarchy(qualtx);
-		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO) <= cooSource)
+		if(work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) || work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) || 
+				work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) || work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG))
 		{
-			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
-		}
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_MANUFACTURER_COO) <= cooSource)
-		{
-			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
-		}
-		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.GPM_COO) <= cooSource)
-		{
-			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
-		}
-		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.STP_COO) <= cooSource)
-		{
-			qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
+			if (bomComp == null && !isCompDeleted) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
+			qualtxComp.qualTX = qualtx;
+			int cooSource = qualtxComp.coo_source;
+			List<String> propertyValue = getCOODeterminationHierarchy(qualtx);
+			
+			if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO) <= cooSource)
+			{
+				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+			}
+			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_MANUFACTURER_COO) <= cooSource)
+			{
+				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+			}
+			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.GPM_COO) <= cooSource)
+			{
+				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+			}
+			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.STP_COO) <= cooSource)
+			{
+				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+			}
 		}
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
 		{
 			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
 			aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
-			aQualTXComponentUtilityforComp.pullComponentData();
+			aQualTXComponentUtilityforComp.pullIVAData();
 		}
 		
 		if (work.compWorkHSList != null)
@@ -457,7 +353,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.prod_ctry_cmpl_key = null;
 				}
 				
-				//TODO why isnt TA storing the HS number - avoid unecessary select
 				if (compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) == true)
 				{	
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
@@ -605,6 +500,142 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.created_by = parentWork.userId;
 			qualtxComp.created_date = currentDate;
 		}
+	}
+
+	private void compareBomCompPricesWithQualtxComponentPrices(QTXWork parentWork, QualTXComponent qualtxComp,
+			ArrayList<BOMComponentDataExtension> priceDetailsList, Set<QualTXComponentPrice> deleteCompPriceList)
+			throws Exception {
+		for (BOMComponentDataExtension bomCompPrice : priceDetailsList)
+		{
+			if(bomCompPrice.getValue("flexfield_var1") == null) continue;	//PRICE_TYPE
+			
+			boolean isPriceTypeExist = false;
+			for (QualTXComponentPrice qualtxCompPrice : qualtxComp.priceList)
+			{
+				if (bomCompPrice.getValue("flexfield_var1").equals(qualtxCompPrice.price_type))
+				{
+					isPriceTypeExist = true;
+					deleteCompPriceList.remove(qualtxCompPrice);
+					if (bomCompPrice.getValue("flexfield_num1") != qualtxCompPrice.price)
+					{
+						qualtxCompPrice.price =  ((Integer)bomCompPrice.getValue("flexfield_num1")).doubleValue();
+					}
+					if (!bomCompPrice.getValue("flexfield_var2").equals(qualtxCompPrice.currency_code))
+					{
+						qualtxCompPrice.currency_code = (String) bomCompPrice.getValue("flexfield_var2");
+					}
+				}
+			}
+			if(!isPriceTypeExist)
+			{
+				QualTXComponentPrice price = qualtxComp.createPrice((Number) bomCompPrice.getValue("flexfield_num1"), (String) bomCompPrice.getValue("flexfield_var1"));
+				
+				price.currency_code = (String) bomCompPrice.getValue("flexfield_var2");	//CURRENCY_CODE
+				
+				price.created_by = parentWork.userId;
+				price.created_date = new Timestamp(System.currentTimeMillis());
+				price.last_modified_by = price.created_by;
+				price.last_modified_date = price.created_date;
+			}
+		}
+	}
+
+	private void compareBOMComponentDEwithQualtxComponentDE(QTXWork parentWork, QualTXComponent qualtxComp,
+			ArrayList<BOMComponentDataExtension> bomCompYarnDetailsList,
+			Set<QualTXComponentDataExtension> qualtxYarnDtlsCompDEs,
+			Set<QualTXComponentDataExtension> deleteQualtxYarnDetailsDE) throws Exception {
+		for (BOMComponentDataExtension bomCompYarnDetail : bomCompYarnDetailsList)
+		{
+			if (bomCompYarnDetail.getValue("FLEXFIELD_VAR1") == null)
+				continue;
+			
+			boolean isYarnTypeExist = false;
+			for (QualTXComponentDataExtension qualtxYarnDtlsCompDE : qualtxYarnDtlsCompDEs)
+			{
+				if (null != qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1") && qualtxYarnDtlsCompDE.getValue("FLEXFIELD_VAR1").equals(bomCompYarnDetail.getValue("FLEXFIELD_VAR1")))
+				{
+					isYarnTypeExist = true;
+					deleteQualtxYarnDetailsDE.remove(qualtxYarnDtlsCompDE);
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR2", bomCompYarnDetail.getValue("FLEXFIELD_VAR2"));
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR3", bomCompYarnDetail.getValue("FLEXFIELD_VAR3"));
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR4", bomCompYarnDetail.getValue("FLEXFIELD_VAR4"));
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR5", bomCompYarnDetail.getValue("FLEXFIELD_VAR5"));
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR6", bomCompYarnDetail.getValue("FLEXFIELD_VAR6"));	
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_VAR7", bomCompYarnDetail.getValue("FLEXFIELD_VAR7"));	
+					qualtxYarnDtlsCompDE.setValue("FLEXFIELD_NUM1", bomCompYarnDetail.getValue("FLEXFIELD_NUM1"));	
+				}
+			}
+			if(!isYarnTypeExist)
+			{
+				QualTXComponentDataExtension de = qualtxComp.createDataExtension("IMPL_BOM_PROD_FAMILY:TEXTILES", this.repos, null);
+				
+				Timestamp now = new Timestamp(System.currentTimeMillis());
+				de.setValue("CREATED_BY", parentWork.userId); 
+				de.setValue("CREATED_DATE", now);
+				de.setValue("LAST_MODIFIED_BY", parentWork.userId);
+				de.setValue("LAST_MODIFIED_DATE", now);
+
+				de.setValue("FLEXFIELD_VAR1", bomCompYarnDetail.getValue("FLEXFIELD_VAR1"));	//type
+				de.setValue("FLEXFIELD_VAR2", bomCompYarnDetail.getValue("FLEXFIELD_VAR2"));	//originating_status
+				de.setValue("FLEXFIELD_VAR3", bomCompYarnDetail.getValue("FLEXFIELD_VAR3"));	//ctry_of_origin
+				de.setValue("FLEXFIELD_VAR4", bomCompYarnDetail.getValue("FLEXFIELD_VAR4"));	//ctry_of_manufacture
+				de.setValue("FLEXFIELD_VAR5", bomCompYarnDetail.getValue("FLEXFIELD_VAR5"));	//weight_type
+				de.setValue("FLEXFIELD_VAR6", bomCompYarnDetail.getValue("FLEXFIELD_VAR6"));	//knit_to_shape
+				de.setValue("FLEXFIELD_VAR7", bomCompYarnDetail.getValue("FLEXFIELD_VAR7"));	//uom
+				de.setValue("FLEXFIELD_NUM1", bomCompYarnDetail.getValue("FLEXFIELD_NUM1"));	//weight
+
+			} 
+		}
+	}
+
+	private void deleteExpandedComponents(QTXWork parentWork, QualTX qualtx, QualTXComponent qualtxComp,
+			BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
+			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
+			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
+			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
+		if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
+				|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+		{
+			if(bomComp.sub_bom_key != null && bomComp.sub_bom_key != 0 )
+			{
+				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
+				aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
+				if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
+					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+				else 
+					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+			}
+				
+		}
+	}
+
+	private void expandComponentsBasedOnAnalysisMethod(WorkPackage parentWorkPackage, QTXWork parentWork, QualTX qualtx,
+			QualTXComponent qualtxComp, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
+			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
+			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
+			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
+		parentWorkPackage.qualtx.compList.add(qualtxComp);
+		if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
+		{
+			qualtxComp.top_down_ind = "Y";
+		} else
+			deleteExpandedComponents(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
+					aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
+	}
+
+	private QualTXComponent addComponent(QualTX qualtx, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
+			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
+			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
+			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
+		QualTXComponent qualtxComp;
+		QualTXComponentUtility aQualTXComponentUtilityforComp;
+		qualtxComp = qualtx.createComponent();
+		
+		aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+		aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+		aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
+		aQualTXComponentUtilityforComp.pullComponentData();
+		return qualtxComp;
 	}
 
 	private void setTracedValue(QualTXComponent qualtxComp, GPMClaimDetails aClaimDetails,
