@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
+import com.ambr.gtm.fta.qps.bom.BOMUniverse;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
@@ -42,6 +43,8 @@ public class ComponentIVAPullProcessorTask
 	private DetermineComponentCOO					determineComponentCOO;
 	private QualTXBusinessLogicProcessor			businessProcessor;
 	private PreviousYearQualificationRule			previousYearQualificationRule;
+
+	private BOMUniverse bomUniverse;
 	/**
      *************************************************************************************
      * <P>
@@ -65,6 +68,7 @@ public class ComponentIVAPullProcessorTask
 		this.cumulationComputationRule = this.businessProcessor.cumulationComputationRule;
 		this.previousYearQualificationRule= this.businessProcessor.previousYearQualificationRule;
 		this.gpmClassCache =  this.queue.queueUniverse.gpmClassCache;
+		this.bomUniverse = this.queue.queueUniverse.bomUniverse;
 		this.description =
 			"BOM." +
 			this.componentBatch.getBOMKey() +
@@ -105,6 +109,7 @@ public class ComponentIVAPullProcessorTask
 					QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aQualTXComp, aBOMComp, this.claimDetailsCache, this.ivaCache, this.queue.queueUniverse.dataExtCfgRepos, this.componentBatch.statusTracker);
 					aQualTXComponentUtility.setQualTXBusinessLogicProcessor(this.businessProcessor);
 					aQualTXComponentUtility.setGPMClassificationCache(this.gpmClassCache);
+					aQualTXComponentUtility.setBOMUniverse(this.bomUniverse);
 
 					aContainer = aQualTXComponentUtility.pullIVAData();
 					this.componentBatch.statusTracker.sourceIVAPullSuccess(aQualTXComp);

@@ -135,6 +135,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+			aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
 
 			aQualTXComponentUtilityforComp.pullIVAData();
 			aQualTXComponentUtilityforComp.pullCtryCmplData();
@@ -155,6 +156,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				
 				aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 				aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+				aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
 				aQualTXComponentUtilityforComp.pullComponentData();
 
 				// if the current analysis method is Top-Down mark the
@@ -487,6 +489,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				{
 					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
 					aQualTXComponentUtilityforComp.pullIVAData();
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_FINAL_DECISION_CHANGE))
@@ -578,6 +581,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.prod_src_iva_key = null;
 					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
 					aQualTXComponentUtilityforComp.pullIVAData();
 				}
 				
@@ -587,6 +591,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
 					aQualTXComponentUtilityforComp.pullIVAData();
 				}
 			}			

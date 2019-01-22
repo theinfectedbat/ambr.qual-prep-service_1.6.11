@@ -311,6 +311,7 @@ public class QualTXComponentExpansionUtility
 						QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
 						QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
 						aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
+						aQualTXComponentUtility.setBOMUniverse(this.bomUniverse);
 						aQualTXComponentUtility.pullComponentData();
 						if (this.isRawMaterialApproach)
 						{

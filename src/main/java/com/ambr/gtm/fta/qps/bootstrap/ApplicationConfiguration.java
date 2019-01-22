@@ -920,8 +920,7 @@ public class ApplicationConfiguration
 
 	@Bean
 	public QualTXBusinessLogicProcessor beanQtxBusinessLogicProcessor(@Autowired QEConfigCache qeConfigCache, 
-			@Autowired SimplePropertySheetManager propertySheetManager,@Autowired DataExtensionConfigurationRepository theRepos,@Autowired FTAHSListCache ftaHSListCache, @Autowired CurrencyExchangeRateManager beanCurrencyExchangeRateManager,
-			@Autowired BOMUniversePartition bomUniversePartition) throws Exception
+			@Autowired SimplePropertySheetManager propertySheetManager,@Autowired DataExtensionConfigurationRepository theRepos,@Autowired FTAHSListCache ftaHSListCache, @Autowired CurrencyExchangeRateManager beanCurrencyExchangeRateManager) throws Exception
 	{
 		this.qualTXBusinessLogicProcessor = new QualTXBusinessLogicProcessor(qeConfigCache,ftaHSListCache); 
 		CumulationComputationRule computationRule = new CumulationComputationRule(beanCurrencyExchangeRateManager, qeConfigCache, propertySheetManager, theRepos, ftaHSListCache);
