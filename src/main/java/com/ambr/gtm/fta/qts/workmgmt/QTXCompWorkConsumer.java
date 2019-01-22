@@ -403,6 +403,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+			aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
 			aQualTXComponentUtilityforComp.pullComponentData();
 		}
 		
