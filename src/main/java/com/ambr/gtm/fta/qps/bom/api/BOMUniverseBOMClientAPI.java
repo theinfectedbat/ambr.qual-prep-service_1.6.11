@@ -83,7 +83,10 @@ public class BOMUniverseBOMClientAPI
 		
 		if (aResponseEntity.getStatusCodeValue() == 200) {
 			aBOM = aResponseEntity.getBody();
-			DistributedBOMObjectReferenceHandler.finalizeObjectReference(aBOM);
+			if (aBOM != null) {
+				DistributedBOMObjectReferenceHandler.finalizeObjectReference(aBOM);
+			}
+			
 			return aBOM;
 		}
 		else {

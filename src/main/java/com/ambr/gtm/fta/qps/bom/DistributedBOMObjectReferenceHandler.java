@@ -23,6 +23,10 @@ public class DistributedBOMObjectReferenceHandler
 	public static void finalizeObjectReference(BOM theBOM)
 		throws Exception
 	{
+		if (theBOM == null) {
+			throw new IllegalArgumentException("BOM object must be specified");
+		}
+		
 		theBOM.initializeComponentBOMReferences();
 	}
 }
