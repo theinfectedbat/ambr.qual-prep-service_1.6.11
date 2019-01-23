@@ -97,15 +97,35 @@ public class QTXStageProducer extends QTXProducer
 	{
 		CacheRefreshInformation cacheInfo = this.cacheRefreshInformationClientAPI.execute();
 		Timestamp bestTime = new Timestamp(cacheInfo.cacheLoadStart);
-		
+		List<QTXStage> stageWorkListQual = new ArrayList<>();
 		logger.debug("QTXStageProducer: Requalification loading work as of " + bestTime);
+	
+		List<QTXStage> stageList = null;
+		TransactionStatus tranStatus = this.txMgr.getTransaction(new DefaultTransactionDefinition());
+	
+		try
+		{
+
+			stageList = this.loadStageWork(cacheInfo.cacheLoadStart);
+
+			stageWorkListQual = processMassQualificationWorks(stageList);
+
+			this.txMgr.commit(tranStatus);
+
+		}catch(Exception e)
+		{
+			logger.error("Failed to expand work stage data - issuing rollback", e);
+
+			this.txMgr.rollback(tranStatus);
+
+			throw new Exception("Failed to expand work stage data - issuing rollback", e);
+
+		}
 		
 		TransactionStatus status = this.txMgr.getTransaction(new DefaultTransactionDefinition());
 		try
-		{
-			List<QTXStage> stageList = this.loadStageWork(cacheInfo.cacheLoadStart);
-			
-			Map<Long, QTXWork> consolidatedWork = this.generateWorkFromStagedData(stageList, bestTime);
+		{			
+			Map<Long, QTXWork> consolidatedWork = this.generateWorkFromStagedData(stageWorkListQual, bestTime);
 			
 			logger.debug("generation complete");
 
@@ -125,14 +145,47 @@ public class QTXStageProducer extends QTXProducer
 		}
 		catch (Exception e)
 		{
-			logger.error("Failed to expand work stage data - issuing rollback", e);
+			logger.error("Failed to process work stage data - issuing rollback", e);
 			
 			this.txMgr.rollback(status);
 			
-			throw new Exception("Failed to expand work stage data - issuing rollback", e);
+			throw new Exception("Failed to process work stage data - issuing rollback", e);
 		}
 	}
 	
+	private List<QTXStage> processMassQualificationWorks(List<QTXStage> stageList) throws Exception
+	{
+		List<QTXStage> stageWorkListMassQual = new ArrayList<>();
+		List<QTXStage> stageWorkListQual = new ArrayList<>();
+		Map<Long, QtxStageData> configRequalMap = new HashMap<>();
+
+		for (QTXStage stageWork : stageList)
+		{
+			if (stageWork.batch_id == null || stageWork.batch_id.isEmpty())
+			{
+				stageWorkListQual.add(stageWork);
+			}
+			else
+			{
+				stageWorkListMassQual.add(stageWork);
+			}
+		}
+
+		for (QTXStage stageData : stageWorkListMassQual)
+		{
+			JSONObject workData = new JSONObject(stageData.data);
+
+			if (workData.opt("MASS_QUALIFICATION") != null)
+			{
+				processMassRequalWork(stageData, workData, configRequalMap);
+			}
+
+		}
+
+		processMassQualificationWork(configRequalMap);
+
+		return stageWorkListQual;
+	}
 	@Override
 	protected void findWork() throws Exception
 	{
@@ -206,7 +259,6 @@ public class QTXStageProducer extends QTXProducer
 		Map<Long, ArrayList<Long>> prodRequalMap = new HashMap<>();
 		Map<Long, String> newCtryCmpMap = new HashMap<>();
 		Map<Long, QualTX> contentRequalList = new HashMap<>();
-		Map<Long, QtxStageData> configRequalMap = new HashMap<>();
 		Map<Long, QTXConsolWork> bomConsolMap = new HashMap<>();
 		Map<Long, QTXConsolWork> prodConsolMap = new HashMap<>();
 		
@@ -224,7 +276,7 @@ public class QTXStageProducer extends QTXProducer
 			}
 			else if (workData.opt("MASS_QUALIFICATION") != null)
 			{
-				processConfigRequalWork(stageData, workData, configRequalMap, bomConsolMap);
+				//processConfigRequalWork(stageData, workData, configRequalMap, bomConsolMap);
 			}
     		else
 			{
@@ -235,7 +287,7 @@ public class QTXStageProducer extends QTXProducer
 		this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap, bestTime);
 		this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap, bestTime);
 		this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
-		this.getConsolidatedQualtxForMassQual(configRequalMap, consolidatedWork, bomConsolMap, bestTime);
+		//this.getConsolidatedQualtxForMassQual(configRequalMap, consolidatedWork, bomConsolMap, bestTime);
 
 		return consolidatedWork;
 	}
@@ -1122,7 +1174,7 @@ public class QTXStageProducer extends QTXProducer
 		return isValid;
 	}
 
-	private void getConsolidatedQualtxForMassQual(Map<Long, QtxStageData> configRequalMap, Map<Long, QTXWork> qtxWorkList,  Map<Long, QTXConsolWork> bomConsolMap, Timestamp bestTime) throws Exception
+	private void processMassQualificationWork(Map<Long, QtxStageData> configRequalMap) throws Exception
 	{
 		for (Map.Entry<Long, QtxStageData> entry : configRequalMap.entrySet())
 		{
@@ -1131,19 +1183,21 @@ public class QTXStageProducer extends QTXProducer
 	
 				QtxStageData stageData = entry.getValue();
 	
-				List<QualTX> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
-	
-				boolean isForceQualification = stageData.isforceQualification;
-				createArQtxBomCompBean(qualtxList, qtxWorkList, reasonCode, true, bomConsolMap, isForceQualification, bestTime);
+				List<Long> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
 		
+				updateQualtxToInactive(qualtxList);
+			
 			}catch(Exception e){
-				logger.error("getConsolidatedQualtxForConfigUpdates, Error while processing the configRequalMap:" + configRequalMap);
+				
+				logger.error("Failed to update qualtx for mass qualification - issuing rollback", e);
+
+				throw new Exception("Failed to update qualtx for mass qualification - issuing rollback", e);
 			}
 		}
 
 	}
 
-	private void processConfigRequalWork(QTXStage stageData, JSONObject workData, Map<Long, QtxStageData> configRequalMap, Map<Long, QTXConsolWork> bomConsolMap)
+	private void processMassRequalWork(QTXStage stageData, JSONObject workData, Map<Long, QtxStageData> configRequalMap)
 	{
 		if (workData.isNull("MASS_QUALIFICATION")) return;
 
@@ -1158,21 +1212,6 @@ public class QTXStageProducer extends QTXProducer
 			{
 				JSONObject theBomDtl = theBomDtls.getJSONObject(index);
 				bomKeyList.add(theBomDtl.optLong("BOM_KEY"));
-
-				QTXConsolWork qtxConsolWork = bomConsolMap.get(theBomDtl.optLong("BOM_KEY"));
-				if (qtxConsolWork == null)
-				{
-					qtxConsolWork = new QTXConsolWork();
-					qtxConsolWork.user_id = stageData.user_id;
-					qtxConsolWork.priority = stageData.priority;
-					qtxConsolWork.time_stamp = stageData.time_stamp;
-					bomConsolMap.put(theBomDtl.optLong("BOM_KEY"), qtxConsolWork);
-				}
-				else
-				{
-					qtxConsolWork.priority = (qtxConsolWork.priority < stageData.priority) ? stageData.priority : qtxConsolWork.priority;
-				}
-
 			}
 
 			QtxStageData stageDatabean = new QtxStageData();
@@ -1201,6 +1240,34 @@ public class QTXStageProducer extends QTXProducer
 			if (optTradeLane.isPresent()) return optTradeLane.get();
 		}
 		return null;
+	}
+
+	private void updateQualtxToInactive(List<Long> qualtxList) throws Exception
+	{
+
+		String sql = "update mdi_qualtx set is_active='N' where alt_key_qualtx=?";
+
+		try
+		{
+			 template.batchUpdate(sql, qualtxList, this.batchSize, new ParameterizedPreparedStatementSetter<Long>()
+			{
+
+				@Override
+				public void setValues(PreparedStatement ps, Long argument) throws SQLException
+				{
+					ps.setLong(1, argument.longValue());
+				}
+			});
+			 
+		}
+		catch (Exception e)
+		{
+			logger.error("Failed to update qualtx for mass qualification - issuing rollback", e);
+
+			throw new Exception("Failed to update qualtx for mass qualification - issuing rollback", e);
+
+		}
+
 	}
 
 }
