@@ -93,7 +93,6 @@ public class TradeLaneDetail
 		if (this.systemDecision == STPDecisionEnum.I) {
 			
 		}
-		
 		if (theQualTX.qualified_flg == null) {
 			this.qualEvalStatus = QualificationEvaluationStatusEnum.UNKNOWN;
 		}
