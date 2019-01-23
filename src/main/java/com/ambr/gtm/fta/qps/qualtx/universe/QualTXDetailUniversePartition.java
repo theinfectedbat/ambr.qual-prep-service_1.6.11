@@ -76,25 +76,24 @@ public class QualTXDetailUniversePartition
 		this.qualTXDetailTable = new HashMap<>();
 		
 		ArrayList<String>	aWhereClause = new ArrayList<>();
-		aWhereClause.add(" is_active = 'Y' ");
+		
 		if (this.partitionCount > 1) {
-			aWhereClause.add(" mod(src_key, ?) = ?");
+			aWhereClause.add("where mod(src_key, ?) = ?");
 
 			if (this.filterOrgCode != null) {
-				aWhereClause.add(" org_code = ?");
+				aWhereClause.add("and org_code = ?");
 			}
 		}
 		else {
 			if (this.filterOrgCode != null) {
-				aWhereClause.add(" org_code = ?");
+				aWhereClause.add("where org_code = ?");
 			}
 		}
-		
 
 		aUtil = new DataRecordUtility<QualTXDetail>(QualTXDetail.class);
-		this.loadSQLText = MessageFormat.format("select {0} from mdi_qualtx where {1} ", 
+		this.loadSQLText = MessageFormat.format("select {0} from mdi_qualtx {1}", 
 			StringUtil.join(aUtil.getColumnNames().toArray(), ","), 
-			StringUtil.join(aWhereClause.toArray(), " and ")
+			StringUtil.join(aWhereClause.toArray(), " ")
 		);
 		
 		MessageFormatter.info(logger, "constructor", "QualTX Detail Universe Partition: Count [{0}] Partition Number [{1}]", this.partitionCount, this.partitionNum);

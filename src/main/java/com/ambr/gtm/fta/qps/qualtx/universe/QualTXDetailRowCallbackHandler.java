@@ -47,16 +47,19 @@ class QualTXDetailRowCallbackHandler
 	public void processRow(ResultSet theResultSet) 
 		throws SQLException 
 	{
+		try
+		{
+			if ("Y".equalsIgnoreCase(theResultSet.getString("is_active")))
+			{
+				QualTXDetail aQualTXDetail;
+				aQualTXDetail = new QualTXDetail();
 
-		try {
-			QualTXDetail	aQualTXDetail;
-			aQualTXDetail = new QualTXDetail();
-
-			this.dataRecUtil.extractDataFromResultSet(aQualTXDetail, theResultSet);
-			
-			this.partition.addQualTXDetail(aQualTXDetail);
+				this.dataRecUtil.extractDataFromResultSet(aQualTXDetail, theResultSet);
+				this.partition.addQualTXDetail(aQualTXDetail);
+			}
 		}
-		catch (Exception e) {
+		catch (Exception e)
+		{
 			throw new RuntimeException(e);
 		}
 
