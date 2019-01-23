@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.time.Duration;
+import java.util.ArrayList;
 
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,7 @@ import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.BOMStatusManager;
+import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.platform.rdbms.util.DataRecordUtility;
 import com.ambr.platform.utils.queue.TaskQueueProgressSummary;
 import com.ambr.platform.utils.queue.TaskQueueThroughputUtility;
@@ -120,7 +122,9 @@ public class BOMQualificationStatusGenerator
 				aTradeLaneDetail.coiSpec = theResultSet.getString("ctry_of_import");
 				aTradeLaneDetail.qualPeriodStartDate = theResultSet.getTimestamp("effective_from");
 				aTradeLaneDetail.qualPeriodEndDate = theResultSet.getTimestamp("effective_to");
-
+				aTradeLaneDetail.orgCode = theResultSet.getString("org_code");
+				aTradeLaneDetail.ivaCode = theResultSet.getString("iva_code");
+				
 				aValue = theResultSet.getString("system_decision");
 				if (aValue != null) {
 					aTradeLaneDetail.systemDecision = STPDecisionEnum.valueOf(aValue);
@@ -167,6 +171,7 @@ public class BOMQualificationStatusGenerator
 	{
 		this.statusObj = new BOMQualificationStatus(theBOMKey);
 		this.loadTradeLaneUniverse();
+		this.updateActiveTradeLanes();
 		this.loadQualTXDetails();
 		this.loadPreparationStatusDetails();
 		
@@ -235,7 +240,7 @@ public class BOMQualificationStatusGenerator
 	{
 		String	aSqlText;
 		
-		aSqlText = "SELECT alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, ctry_of_import, effective_from, effective_to, iva_code ";
+		aSqlText = "SELECT alt_key_iva, fta_enabled_flag, fta_code, system_decision, final_decision, ctry_of_import, effective_from, effective_to, iva_code, org_code ";
 		aSqlText += "from mdi_prod_src_iva ";
 		aSqlText += "where alt_key_src = (select prod_src_key from mdi_bom where alt_key_bom = ?)";
 		
@@ -270,5 +275,19 @@ public class BOMQualificationStatusGenerator
 	{
 		this.measurmentPeriodInSecs = thePeriodIsSecs;
 		return this;
+	}
+	
+	public void updateActiveTradeLanes() throws Exception
+	{
+		 ArrayList<TradeLaneDetail> tradeLaneDetailList=  BOMQualificationStatusGenerator.this.statusObj.tradeLaneDetailList;
+		
+		 for(TradeLaneDetail tradeLaneDetail :tradeLaneDetailList)
+		 {
+			 if(!queueUniverse.qeConfigCache.isTradeLaneEnabled(tradeLaneDetail.orgCode,tradeLaneDetail.ftaCode,tradeLaneDetail.coiSpec))
+				{
+				 tradeLaneDetail.qualEvalStatus=QualificationEvaluationStatusEnum.EVALUATION_DISABLED;
+				}
+		 }
+		
 	}
 }

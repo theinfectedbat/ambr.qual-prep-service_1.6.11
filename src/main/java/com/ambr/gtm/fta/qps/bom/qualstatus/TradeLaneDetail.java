@@ -22,6 +22,8 @@ public class TradeLaneDetail
 	public Date										timestamp;
 	public STPDecisionEnum							systemDecision;
 	public STPDecisionEnum							finalDecision;
+	public String									orgCode;
+	public String									ivaCode;
 	
 	
 	/**
@@ -41,6 +43,7 @@ public class TradeLaneDetail
 		switch (this.qualEvalStatus)
 		{
 			case UNKNOWN: return aStatus;
+			case EVALUATION_DISABLED : return "Not Configured For Evaluation";
 			default: return this.qualEvalStatus.name();
 		}
 	}
@@ -90,14 +93,18 @@ public class TradeLaneDetail
 		if (this.systemDecision == STPDecisionEnum.I) {
 			
 		}
+		
 		if (theQualTX.qualified_flg == null) {
 			this.qualEvalStatus = QualificationEvaluationStatusEnum.UNKNOWN;
 		}
-		else if ("Y".equalsIgnoreCase(theQualTX.qualified_flg)) {
-			this.qualEvalStatus = QualificationEvaluationStatusEnum.QUALIFIED;
-		}
-		else if ("N".equalsIgnoreCase(theQualTX.qualified_flg)) {
-			this.qualEvalStatus = QualificationEvaluationStatusEnum.NOT_QUALIFIED;
+		
+		for (QualificationEvaluationStatusEnum qualStatusEnum : QualificationEvaluationStatusEnum.values()  )
+		{
+			if(qualStatusEnum.toString().equalsIgnoreCase(theQualTX.qualified_flg))
+			{
+				this.qualEvalStatus = qualStatusEnum;
+			}
 		}
 	}
+	
 }
