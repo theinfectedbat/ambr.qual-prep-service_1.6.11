@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.RowMapper;
 
 import com.ambr.gtm.fta.qps.bom.BOMMetricSetUniverseContainer;
 import com.ambr.gtm.fta.qps.bom.BOMUniverse;
@@ -62,19 +63,24 @@ public class ArQtxWorkUtility
 		return qualtxList;
 	}
 
-	public List<QualTX> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
+	public List<Long> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE, CREATED_DATE from MDI_QUALTX WHERE ");
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX from MDI_QUALTX WHERE ");
 
 		ArrayList<Object> paramList = new ArrayList<>();
 		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(" AND "+this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
 		paramList.addAll(altKeyList);
 		paramList.addAll(ftaList);
-		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
-		List<QualTX> qualtxList = this.template.query(sql.toString(), paramList.toArray(), extractor);
-
-		return qualtxList;
+		
+		List<Long> data = this.template.query(sql.toString(),paramList.toArray(), new RowMapper<Long>(){
+            public Long mapRow(ResultSet rs, int rowNum) 
+                                         throws SQLException {
+                    return rs.getLong(1);
+            }
+       });
+		
+		return data;
 	}
 	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyList, long reasonCode) throws Exception
