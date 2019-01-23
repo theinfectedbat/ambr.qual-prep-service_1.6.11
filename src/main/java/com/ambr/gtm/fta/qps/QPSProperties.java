@@ -15,4 +15,5 @@ public class QPSProperties
 	public static final String FILTER_ORG_CODE					= "com.ambr.gtm.fta.qps.filter_org_code";
 	public static final String IGNORE_TRADE_LANE_CONFIGURATION	= "com.ambr.gtm.fta.qps.ignore_trade_lane_cfg";
 	public static final String LOGGING_FILE						= "logging.file";
+	public static final String LOGGING_PATH						= "logging.path";
 }

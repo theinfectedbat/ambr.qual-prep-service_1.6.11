@@ -640,6 +640,7 @@ public class GPMSourceIVAUniverse
 			
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 	
+			aServiceRef.setProperty(QPSProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(QPSProperties.LOGGING_PATH));
 			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, GPMSourceIVAUniverseProperties.LOG_FILE_NAME);
 			
 			// Start the process asynchronously
