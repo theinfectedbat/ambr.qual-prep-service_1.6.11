@@ -306,6 +306,10 @@ public class QualTXComponentUtility
 				this.qualTXComp.qualified_flg = (aConservativeSRCIVA.finalDecision == null)? "" : aQualified;
 				this.qualTXComp.prod_src_iva_key = aConservativeSRCIVA.ivaKey;
 			}
+			else {
+				this.qualTXComp.qualified_flg =  "N" ;
+				this.qualTXComp.prod_src_iva_key = null;
+			}
 		}
 		else
 		{	
