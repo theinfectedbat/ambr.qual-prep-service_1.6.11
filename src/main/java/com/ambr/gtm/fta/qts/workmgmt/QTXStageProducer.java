@@ -105,7 +105,7 @@ public class QTXStageProducer extends QTXProducer
 		{
 			List<QTXStage> stageList = this.loadStageWork(cacheInfo.cacheLoadStart);
 			
-			Map<Long, QTXWork> consolidatedWork = this.generateWorkFromStagedData(stageList);
+			Map<Long, QTXWork> consolidatedWork = this.generateWorkFromStagedData(stageList, bestTime);
 			
 			logger.debug("generation complete");
 
@@ -199,7 +199,7 @@ public class QTXStageProducer extends QTXProducer
 	}
 
 	//TODO discuss "created by" following sql doesnt select user that created work record (submitted_by_user_id.  most logic is using mdi_qualtx.last_modified_by
-	public Map<Long, QTXWork> generateWorkFromStagedData(List<QTXStage> stageList) throws Exception
+	public Map<Long, QTXWork> generateWorkFromStagedData(List<QTXStage> stageList, Timestamp bestTime) throws Exception
 	{
  		Map<Long, QTXWork> consolidatedWork = new HashMap<>();
 		Map<Long, ArrayList<Long>> bomRequalMap = new HashMap<>();
@@ -232,15 +232,15 @@ public class QTXStageProducer extends QTXProducer
 			}
 		}
 		
-		this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap);
-		this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap);
-		this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap);
-		this.getConsolidatedQualtxForMassQual(configRequalMap, consolidatedWork, bomConsolMap);
+		this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap, bestTime);
+		this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap, bestTime);
+		this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
+		this.getConsolidatedQualtxForMassQual(configRequalMap, consolidatedWork, bomConsolMap, bestTime);
 
 		return consolidatedWork;
 	}
 
-	private void getConsolidatedQualtxForBomUpdate(Map<Long, ArrayList<Long>> bomRequalMap, Map<Long, QTXWork> consolidatedWork, Map<Long, QTXConsolWork> bomConsolMap) throws Exception
+	private void getConsolidatedQualtxForBomUpdate(Map<Long, ArrayList<Long>> bomRequalMap, Map<Long, QTXWork> consolidatedWork, Map<Long, QTXConsolWork> bomConsolMap, Timestamp bestTime) throws Exception
 	{
 		for (Map.Entry<Long, ArrayList<Long>> entry : bomRequalMap.entrySet())
 		{
@@ -252,13 +252,12 @@ public class QTXStageProducer extends QTXProducer
 				if(reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG )
 				{
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList, reasonCode);
-					
-					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false);
+					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
 				}
 				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION)
 				{
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
-					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false);
+					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
 				}
 				else
 				{
@@ -272,7 +271,7 @@ public class QTXStageProducer extends QTXProducer
 						compChanges = this.utility.getImpactedQtxCompKeys(theAltKeyList, reasonCode);
 					}
 	
-					this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap, false);
+					this.createArQtxBomCompBean(compChanges, consolidatedWork, reasonCode, false, bomConsolMap, false, bestTime);
 				}
 			}catch(Exception e){
 				logger.error("getConsolidatedQualtxForBomUpdate, Error while processing the reasonCode:" + reasonCode + "bomRequalMap ="+bomRequalMap.keySet());
@@ -281,7 +280,7 @@ public class QTXStageProducer extends QTXProducer
 		}
 	}
 	
-	private void getConsolidatedQualtxForContentUpdate(Map<Long, QualTX> contentRequalList, Map<Long, QTXWork> consolidatedWork, Map<Long, QTXConsolWork> bomConsolMap) throws Exception
+	private void getConsolidatedQualtxForContentUpdate(Map<Long, QualTX> contentRequalList, Map<Long, QTXWork> consolidatedWork, Map<Long, QTXConsolWork> bomConsolMap, Timestamp bestTime) throws Exception
 	{
 		if (contentRequalList.isEmpty()) return;
 
@@ -406,7 +405,7 @@ public class QTXStageProducer extends QTXProducer
 
 	}
 
-	public void createArQtxBomCompBean(List<QualTX> qualtxList, Map<Long, QTXWork> consolidatedWork, long reasonCode, boolean isHeader, Map<Long, QTXConsolWork> bomConsolMap, boolean isForceQualification) throws Exception
+	public void createArQtxBomCompBean(List<QualTX> qualtxList, Map<Long, QTXWork> consolidatedWork, long reasonCode, boolean isHeader, Map<Long, QTXConsolWork> bomConsolMap, boolean isForceQualification, Timestamp bestTime) throws Exception
 	{
 
 		long workReasonCode = this.utility.getQtxWorkReasonCodes(reasonCode);
@@ -419,7 +418,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx, true);
+		    isValQualtx = isValidQualtx(qualtx, true, bestTime);
 		    if(!isValQualtx) 
 		    	continue;
 		    
@@ -458,8 +457,8 @@ public class QTXStageProducer extends QTXProducer
 			    isValQualtx = isValidQualtxComp(qualtxComp);
 			    if(!isValQualtx) 
 			    	continue;
-			    			    
-				if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
+			    
+			    if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 				{
 					theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
 					theQtxCompList = theQtxWork.compWorkList;
@@ -677,7 +676,7 @@ public class QTXStageProducer extends QTXProducer
 		}
 	}
 
-	private void getConsolidatedQualtxForProdUpdate(Map<Long, ArrayList<Long>> prodRequalMap, Map<Long, QTXWork> consolidatedWork, Map<Long, String> newCtryCmpMap, Map<Long, QTXConsolWork> prodConsolMap) throws Exception
+	private void getConsolidatedQualtxForProdUpdate(Map<Long, ArrayList<Long>> prodRequalMap, Map<Long, QTXWork> consolidatedWork, Map<Long, String> newCtryCmpMap, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime) throws Exception
 	{
 		for (Map.Entry<Long, ArrayList<Long>> entry : prodRequalMap.entrySet())
 		{
@@ -688,12 +687,12 @@ public class QTXStageProducer extends QTXProducer
 	
 				List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, reasonCode);
 	
-				buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap);
+				buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap, bestTime);
 	
 				if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
 				{
 					List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
-					buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap);
+					buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap, bestTime);
 				}
 			}catch(Exception e){
 					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the reasonCode:" + reasonCode + "newCtryCmpMap ="+newCtryCmpMap.keySet());
@@ -720,11 +719,11 @@ public class QTXStageProducer extends QTXProducer
 	
 						// Processing new country compliance addition in component product.
 						List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
-						buildQtxForNewCtryCmpl(qualtxCompList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, false);
+						buildQtxForNewCtryCmpl(qualtxCompList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, false, bestTime);
 	
 						// Processing new country compliance addition in main product.
 						List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(ivaKey, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED);
-						buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, true);
+						buildQtxForNewCtryCmpl(qualtxList, ctryCmplkey, ctryCmplCode, consolidatedWork, ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED, prodConsolMap, true, bestTime);
 					}
 				}catch(Exception e){
 					logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED:");
@@ -733,7 +732,7 @@ public class QTXStageProducer extends QTXProducer
 		}
 	}
 
-	private void buildQtxForNewCtryCmpl(List<QualTX> qualtxList, String ctryCmplkey, String ctryCmplCode, Map<Long, QTXWork> consolidatedWork, long reasonCode, Map<Long, QTXConsolWork> prodConsolMap, boolean isHeader) throws Exception
+	private void buildQtxForNewCtryCmpl(List<QualTX> qualtxList, String ctryCmplkey, String ctryCmplCode, Map<Long, QTXWork> consolidatedWork, long reasonCode, Map<Long, QTXConsolWork> prodConsolMap, boolean isHeader, Timestamp bestTime) throws Exception
 	{
 		long workCode = this.utility.getQtxWorkReasonCodes(reasonCode);
 		for (QualTX qualtx : qualtxList)
@@ -747,7 +746,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx, false);
+		    isValQualtx = isValidQualtx(qualtx, false, bestTime);
 		    if(!isValQualtx) 
 		    	continue;
 
@@ -864,7 +863,7 @@ public class QTXStageProducer extends QTXProducer
 		}
 	}
 
-	private void buildheaderProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap) throws Exception
+	private void buildheaderProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime) throws Exception
 	{
 		long workCode = this.utility.getQtxWorkReasonCodes(reasonCode);
 		for (QualTX qualtx : qualtxList)
@@ -873,7 +872,7 @@ public class QTXStageProducer extends QTXProducer
 			QTXWorkHS theQtxHsWork = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx, false);
+		    isValQualtx = isValidQualtx(qualtx, false, bestTime);
 		    if(!isValQualtx)
 		    	continue;
 
@@ -911,7 +910,7 @@ public class QTXStageProducer extends QTXProducer
 		}
 	}
 
-	private void buildCompProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap) throws Exception
+	private void buildCompProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime) throws Exception
 	{
 		long workCode = this.utility.getQtxWorkReasonCodes(reasonCode);
 		for (QualTX qualtx : qualtxList)
@@ -925,7 +924,7 @@ public class QTXStageProducer extends QTXProducer
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
 
-		    isValQualtx = isValidQualtx(qualtx, false);
+		    isValQualtx = isValidQualtx(qualtx, false, bestTime);
 		    if(!isValQualtx) 
 		    	continue;
 
@@ -1074,10 +1073,11 @@ public class QTXStageProducer extends QTXProducer
 		
 	}
 
-	private boolean isValidQualtx(QualTX qualtx, boolean isBOMChange)
+	private boolean isValidQualtx(QualTX qualtx, boolean isBOMChange, Timestamp bestTime)
 	{
 		if (qualtx.src_key == null || qualtx.iva_code == null || qualtx.fta_code == null || qualtx.ctry_of_import == null || (qualtx.is_active != null && (qualtx.is_active).equalsIgnoreCase("N"))) return false;
-
+		if(new Timestamp(qualtx.created_date.getTime()).after(bestTime)) return false;
+		
 		if(!isBOMChange) return true;
 		if (qualtx.fta_code != null && qualtx.ctry_of_import != null)
 		{
@@ -1122,7 +1122,7 @@ public class QTXStageProducer extends QTXProducer
 		return isValid;
 	}
 
-	private void getConsolidatedQualtxForMassQual(Map<Long, QtxStageData> configRequalMap, Map<Long, QTXWork> qtxWorkList,  Map<Long, QTXConsolWork> bomConsolMap) throws Exception
+	private void getConsolidatedQualtxForMassQual(Map<Long, QtxStageData> configRequalMap, Map<Long, QTXWork> qtxWorkList,  Map<Long, QTXConsolWork> bomConsolMap, Timestamp bestTime) throws Exception
 	{
 		for (Map.Entry<Long, QtxStageData> entry : configRequalMap.entrySet())
 		{
@@ -1134,7 +1134,7 @@ public class QTXStageProducer extends QTXProducer
 				List<QualTX> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
 	
 				boolean isForceQualification = stageData.isforceQualification;
-				createArQtxBomCompBean(qualtxList, qtxWorkList, reasonCode, true, bomConsolMap, isForceQualification);
+				createArQtxBomCompBean(qualtxList, qtxWorkList, reasonCode, true, bomConsolMap, isForceQualification, bestTime);
 		
 			}catch(Exception e){
 				logger.error("getConsolidatedQualtxForConfigUpdates, Error while processing the configRequalMap:" + configRequalMap);
