@@ -34,7 +34,7 @@ public class QualTX
 	@Column(name = "assembly_type") 				public String	assembly_type;
 	@Column(name = "bom_type") 						public String	bom_type;	
 	@Column(name = "cost") 							public Double	cost;
-	@Column(name = "ctry_of_import") 				public String	ctry_of_import;
+	@Column(name = "ctry_of_import") 				public String	ctry_of_import;	
 	@Column(name = "ctry_of_manufacture") 			public String	ctry_of_manufacture;
 	@Column(name = "ctry_of_origin") 				public String	ctry_of_origin;
 	@Column(name = "created_by") 					public String	created_by;
@@ -101,6 +101,7 @@ public class QualTX
 		this.compList = new ArrayList<>();
 		this.priceList = new ArrayList<>();
 		this.deList = new ArrayList<>();
+		this.is_active = "Y";
 	}
 	
     /**
