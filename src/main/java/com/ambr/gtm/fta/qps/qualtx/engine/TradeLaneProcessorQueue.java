@@ -91,9 +91,6 @@ public class TradeLaneProcessorQueue
 
 		aSpec = new GroupNameSpecification("IMPL_BOM_PROD_FAMILY:AUTOMOBILE");
 		this.targetDEMap.put(aSpec.groupName, aSpec);
-		
-		aSpec = new GroupNameSpecification("BOM_STATIC:COST_ELEMENT");
-		this.targetDEMap.put(aSpec.groupName, aSpec);
 	}
 	
 	/**
