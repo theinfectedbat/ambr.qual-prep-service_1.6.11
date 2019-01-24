@@ -69,7 +69,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		QTXWork work = workPackage.work;
 		QualTX qualtx = workPackage.qualtx;
 		BOM bom = workPackage.bom;
-		boolean isConfigChange = false;
 		
 		if (qualtx == null)
 		{
@@ -83,21 +82,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				qualtx.deList.remove(qualtxDE);
 			}
 		}
-		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.HEADER_CONFIG_CHANGE) == true)
-		{
-			isConfigChange = true;
-
-			if (workPackage.gpmClassificationProductContainer == null) throw new Exception("GPMClassificationProductContainer not present during HS pull for work " + work.qtx_wid);
-
-			ArrayList<GPMClassification> gpmClassificationList = workPackage.gpmClassificationProductContainer.classificationList;
-
-			if (gpmClassificationList == null) throw new Exception("Failed to find GPMClassification for header HS pull config change " + work.qtx_wid);
-
-			this.qtxBusinessLogicProcessor.setQualTXHeaderHSNumber(qualtx, gpmClassificationList);
-
-		}
 		
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_HDR_CHG) == true || isConfigChange)
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_HDR_CHG) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
 			
@@ -128,7 +114,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		//TODO how to match price records to determine insert/update/delete
 		//TODO need to create (or load) QualTXPrice records for matching purposes
 		//TODO need to keep QualTXPrice records up to date with changes so following work items targeting the same qualtx in memory will have access to them.
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PRC_CHG) == true || isConfigChange)
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PRC_CHG) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
 			
@@ -205,7 +191,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			
 		}
 
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PROD_TXT_DE) == true || isConfigChange)
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PROD_TXT_DE) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
 			
@@ -216,7 +202,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			}
 		}
 
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PROD_AUTO_DE) == true || isConfigChange)
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PROD_AUTO_DE) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
 			
