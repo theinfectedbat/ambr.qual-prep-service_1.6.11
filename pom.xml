@@ -86,6 +86,14 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<finalName>ambr.qual-prep-service-lib-${version}</finalName>
+				</configuration>
+			</plugin>
+			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.1.0</version>
 				<executions>
