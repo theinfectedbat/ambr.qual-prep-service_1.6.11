@@ -1,7 +1,10 @@
 package com.ambr.gtm.fta.qps.util;
 
+import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,7 +13,9 @@ import org.apache.logging.log4j.Logger;
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMComponentDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMUniverse;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsCache;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
@@ -20,8 +25,11 @@ import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.TradeLaneStatusTracker;
+import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.util.CumulationConfigContainer;
 import com.ambr.gtm.fta.qts.util.CumulationConfigContainer.ComponentAgreement;
+import com.ambr.gtm.fta.qts.util.TradeLane;
+import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.platform.utils.log.MessageFormatter;
 
@@ -404,7 +412,104 @@ public class QualTXComponentUtility
 				}
 			}
 		}
+		
+		TradeLaneContainer tradelaneCintainer = this.qualTXBusinessLogicProcessor.qeConfigCache.getQEConfig(this.qualTXComp.org_code).getTradeLaneContainer();
+		TradeLane tradeLane = new TradeLane(this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import);
+		
+		boolean useNonOriginatingMaterials = tradelaneCintainer.getTradeLaneData(tradeLane).isUseNonOriginatingMaterials();
+		if(useNonOriginatingMaterials && (this.qualTXComp.make_buy_flg == null || this.qualTXComp.make_buy_flg.equals("B"))) 
+		{
+			setNonOriginatingMaterialCost();
+		}
+		
 		return aSourceIVAProductSourceContainer;
+	}
+
+	public void setNonOriginatingMaterialCost() 
+	{
+		String groupName = "STP:"+this.qualTXComp.qualTX.fta_code_group + "_NON_ORIGINATING_MATERIALS";
+		List<GPMClaimDetails> gpmNonOriginatingClaimDetails = new ArrayList<>();
+	
+		try {
+		GPMClaimDetailsSourceIVAContainer  theClaimDetailsContainer = this.claimDetailsCache.getClaimDetails(this.qualTXComp.prod_src_iva_key);
+		for(GPMClaimDetails gpmClaimDetails : theClaimDetailsContainer.claimDetailList)
+		{
+			if(gpmClaimDetails.claimDetailsValue.get("group_name").equals(groupName))
+			{
+				gpmNonOriginatingClaimDetails.add(gpmClaimDetails);
+				break;
+			}
+		}
+
+		if(!gpmNonOriginatingClaimDetails.isEmpty())
+		{
+			Map<String,String> flexConfigmap = this.qualTXBusinessLogicProcessor.dataExtensionConfigRepos.getDataExtensionConfiguration(groupName).getFlexColumnMapping();
+			BigDecimal theTotalNonOriginatingComp = new BigDecimal(0);
+			boolean useNonOriginatingMaterialsExists = false;
+			for (GPMClaimDetails aNonOriginatingMaterialRdc : gpmNonOriginatingClaimDetails)
+			{
+				String aBOMHeaderCurrency = this.qualTXComp.qualTX.currency_code;
+				String theNonOriginatingCurrency = null;
+				String columnName = flexConfigmap.get("CURRENCY");
+				if(columnName != null)
+					theNonOriginatingCurrency = (String)aNonOriginatingMaterialRdc.getValue(columnName);
+
+				BigDecimal theNonOriginatingValue = null;
+				columnName = flexConfigmap.get("COST");
+				if(columnName != null)
+				{
+					Double monOrignValue = (Double)aNonOriginatingMaterialRdc.getValue(columnName);
+					if(monOrignValue != null)
+						theNonOriginatingValue = new BigDecimal(monOrignValue);
+				}
+
+				if (aBOMHeaderCurrency != null && !aBOMHeaderCurrency.trim().isEmpty() 
+						&& theNonOriginatingValue != null && theNonOriginatingValue.doubleValue() > 0 
+						&& theNonOriginatingCurrency != null && !theNonOriginatingCurrency.trim().isEmpty())
+				{
+					useNonOriginatingMaterialsExists = true;
+
+					if(!theNonOriginatingCurrency.equalsIgnoreCase(aBOMHeaderCurrency))
+					{		
+						double exchangeRate = this.qualTXBusinessLogicProcessor.currencyExchangeRateManager.getExchangeRate(theNonOriginatingCurrency,aBOMHeaderCurrency); 
+						if (exchangeRate != 0) 
+							theNonOriginatingValue = theNonOriginatingValue.multiply(BigDecimal.valueOf(exchangeRate));
+					}
+				}
+				theTotalNonOriginatingComp = theTotalNonOriginatingComp.add(theNonOriginatingValue);
+			}
+
+			if (useNonOriginatingMaterialsExists && theTotalNonOriginatingComp.doubleValue() > 0)
+			{
+				double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.unit_cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
+				
+				if(this.qualTXComp.qualTX.analysis_method == null 
+						|| "".equals(this.qualTXComp.qualTX.analysis_method))
+				{
+					String analysisMethod =  this.qualTXBusinessLogicProcessor.qeConfigCache.getQEConfig(this.qualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
+					if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+						this.qualTXComp.td_cumulation_value = cumulationValue;
+					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+						this.qualTXComp.rm_cumulation_value = cumulationValue;
+					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+						this.qualTXComp.in_cumulation_value = cumulationValue;
+				}
+				else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
+					this.qualTXComp.td_cumulation_value = cumulationValue;
+				else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
+					this.qualTXComp.rm_cumulation_value = cumulationValue;
+				else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
+					this.qualTXComp.in_cumulation_value = cumulationValue;
+			}
+		}
+		}
+		catch(Exception exec)
+		{
+			MessageFormatter.error(logger, "pullIVAData", exec, "BOM Component with Key [{0,number,#}]: error while calulating the non-originating material cost [{1}], COI[{2}], Effective From[{3, date, dd-MMM-yyyy}], Effective To[{4, date, dd-MMM-yyyy}]", 
+					this.bomComp.alt_key_comp, 
+					this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import,
+					this.qualTXComp.qualTX.effective_from, this.qualTXComp.qualTX.effective_to);
+		}
 	}
 
 	public void setGPMClassificationCache(GPMClassificationProductContainerCache gpmClassCache) {
