@@ -136,8 +136,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					
 					qualtxComp = addComponent(qualtx, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache,
 							aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
-	
-					expandComponentsBasedOnAnalysisMethod(parentWorkPackage, parentWork, qualtx, qualtxComp, bomComp,
+					parentWorkPackage.qualtx.compList.add(qualtxComp);
+					if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
+					{
+						qualtxComp.top_down_ind = "Y";
+					} 
+					expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp,
 							aClaimsDetailCache, aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository,
 							gpmClassCache, bomUniverse);
 					
@@ -150,10 +154,10 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		{
 			if (bomComp == null) 
 			{
-				if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
+				if (qualtxComp == null) throw new Exception("Qualtx component, compwork.qualtx_comp_key : " + work.qualtx_comp_key + " not found on qualtx key" + parentWork.details.qualtx_key + " and qtx_wid :"+parentWork.qtx_wid);
 				qualtx.removeComponent(qualtxComp);
 				qualtxComp.qualTX = qualtx;
-				deleteExpandedComponents(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
+				expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
 						aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
 				isCompDeleted = true;
 			}
@@ -569,11 +573,12 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		}
 	}
 
-	private void deleteExpandedComponents(QTXWork parentWork, QualTX qualtx, QualTXComponent qualtxComp,
-			BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
+	private void expandComponentsBasedOnAnalysisMethod(QTXWork parentWork, QualTX qualtx,
+			QualTXComponent qualtxComp, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
 			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
 			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
 			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
+		
 		if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
 				|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
 		{
@@ -588,20 +593,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 				
 		}
-	}
-
-	private void expandComponentsBasedOnAnalysisMethod(WorkPackage parentWorkPackage, QTXWork parentWork, QualTX qualtx,
-			QualTXComponent qualtxComp, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
-			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
-			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
-			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
-		parentWorkPackage.qualtx.compList.add(qualtxComp);
-		if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
-		{
-			qualtxComp.top_down_ind = "Y";
-		} else
-			deleteExpandedComponents(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
-					aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
 	}
 
 	private QualTXComponent addComponent(QualTX qualtx, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
