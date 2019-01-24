@@ -104,30 +104,32 @@ public class BOMTracker
 			}
 			if (!bomQualtxData.qualtxKeyList.isEmpty() && !bomQualtxData.qtxWorkIdList.isEmpty())
 			{
-				if (postBomQualUpdateWork(bomQualtxData))
+				if (updateQtxWorkStatus(bomQualtxData.qtxWorkIdList, false))
 				{
-					if (updateQtxWorkStatus(bomQualtxData.qtxWorkIdList))
+					if (postBomQualUpdateWork(bomQualtxData))
 					{
-						
 						for (QtxTracker qtxTracker : eligibleQtxList)
 						{
 							qtxTracker.isEligibleForDelete = true;
 							qtxTracker.clearQtxCompltedWorkTracker();
 						}
-						
+
 						for (QtxWorkTracker qtxWorkTracker : eligibleQtxWorkList)
 						{
 							qtxWorkTracker.isEligibleForDelete = true;
 						}
-						
-						
 					}
-				}
+					else
+					{
+						//Reverting updated status from Post policy work posted to Qualification complete
+						updateQtxWorkStatus(bomQualtxData.qtxWorkIdList, true);
+					}
+				} 
 			}
 
 		}
 	}
-	public boolean updateQtxWorkStatus(List<Long> qtxWorkList)
+	public boolean updateQtxWorkStatus(List<Long> qtxWorkList, boolean revertWorkStatus)
 	{
 		if (qtxWorkList != null)
 		{
@@ -137,7 +139,8 @@ public class BOMTracker
 			{
 				QTXWorkStatus workStatus = new QTXWorkStatus();
 				workStatus.qtx_wid = workId;
-				workStatus.status = TrackerCodes.QualtxStatus.BOM_POST_POLICY_WORK_POSTED;
+				if (revertWorkStatus) workStatus.status = TrackerCodes.QualtxStatus.QUALIFICATION_COMPLETE;
+				else workStatus.status = TrackerCodes.QualtxStatus.BOM_POST_POLICY_WORK_POSTED;
 				qtxStatusList.add(workStatus);
 			}
 			try
