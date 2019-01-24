@@ -68,11 +68,14 @@ public class ArQtxWorkUtility
 		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX from MDI_QUALTX WHERE ");
 
 		ArrayList<Object> paramList = new ArrayList<>();
-		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+		if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION)
+		{
+			sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
+			if (null != ftaList && !ftaList.isEmpty()) sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+		}
 		paramList.addAll(altKeyList);
 		paramList.addAll(ftaList);
-		
+
 		List<Long> data = this.template.query(sql.toString(),paramList.toArray(), new RowMapper<Long>(){
             public Long mapRow(ResultSet rs, int rowNum) 
                                          throws SQLException {
@@ -95,7 +98,6 @@ public class ArQtxWorkUtility
 		if (reasonCode == ReQualificationReasonCodes.GPM_SRC_DELETED) sql.append(this.getSimpleClause("PROD_SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG) sql.append(this.getSimpleClause("ALT_KEY_QUALTX", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
 
 		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
@@ -132,8 +134,6 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_TRACE_VALUE_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_FORCE_QUALIFICATION) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
@@ -407,14 +407,11 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_CUMULATION_CHANGE) workCode = RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_TRACE_VALUE_CHANGE) workCode = RequalificationWorkCodes.GPM_COMP_TRACE_VALUE_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) workCode = RequalificationWorkCodes.COMP_PRC_CHG;
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_FORCE_QUALIFICATION) workCode = RequalificationWorkCodes.COMP_CONFIG_CHANGE;
-		else if (reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COO_CHG) workCode = RequalificationWorkCodes.BOM_COMP_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) workCode = RequalificationWorkCodes.BOM_COMP_COM_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) workCode = RequalificationWorkCodes.COMP_STP_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) workCode = RequalificationWorkCodes.COMP_GPM_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) workCode = RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE;
-		else if (reasonCode == ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
 
 		return workCode;
 	}

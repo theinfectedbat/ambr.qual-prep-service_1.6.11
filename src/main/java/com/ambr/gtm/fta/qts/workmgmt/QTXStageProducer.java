@@ -306,7 +306,7 @@ public class QTXStageProducer extends QTXProducer
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList, reasonCode);
 					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
 				}
-				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_FORCE_QUALIFICATION)
+				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG )
 				{
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
 					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
@@ -379,6 +379,8 @@ public class QTXStageProducer extends QTXProducer
 
 			for (int index = 0; index < theHeaderReasonCodes.length(); index++)
 			{
+				if(theHeaderReasonCodes.optLong(index) == ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION)
+					continue;
 				ArrayList<Long> bomKeyList = null;
 				if (bomRequalMap.containsKey(theHeaderReasonCodes.optLong(index)))
 				{
@@ -1225,8 +1227,8 @@ public class QTXStageProducer extends QTXProducer
 			}
 			stageDatabean.altKeylist = bomKeyList;
 
-			stageDatabean.isforceQualification = (isForceQualification != null && isForceQualification.equalsIgnoreCase("Y")) ? true : false;
-			configRequalMap.put(ReQualificationReasonCodes.BOM_GPM_ALL_CHANGE, stageDatabean);
+			//stageDatabean.isforceQualification = (isForceQualification != null && isForceQualification.equalsIgnoreCase("Y")) ? true : false;
+			configRequalMap.put(ReQualificationReasonCodes.BOM_MASS_QUALIFICATION, stageDatabean);
 		}
 
 	}

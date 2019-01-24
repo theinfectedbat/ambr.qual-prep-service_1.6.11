@@ -110,7 +110,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		BOMComponent bomComp = (parentWorkPackage.bom != null) ? parentWorkPackage.bom.getBOMComponentByAltKey(work.bom_comp_key) : null;
 		
 		if(null != bomComp) bomComp.setBOM(parentWorkPackage.bom);
-		boolean isConfigChange = false;
 		if (((QTXCompWorkProducer)(this.producer)).queueUniverse == null) {
 			throw new IllegalStateException("Queue Universe has not been initialized");
 		}
@@ -124,24 +123,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		QualTXComponentUtility aQualTXComponentUtilityforComp = null;
 		BOMUniverse bomUniverse = ((QTXCompWorkProducer)(this.producer)).queueUniverse.bomUniverse;
 
-		if(work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_CONFIG_CHANGE) == true)
-		{
-			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
-
-			if (qualtxComp == null)
-			{
-				qualtxComp = qualtx.createComponent();
-
-			}
-			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
-			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
-			aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
-
-			aQualTXComponentUtilityforComp.pullIVAData();
-			aQualTXComponentUtilityforComp.pullCtryCmplData();
-			isConfigChange = true;
-
-		}
 		
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_ADDED) == true)
 		{
@@ -165,7 +146,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 		}
 		boolean isCompDeleted = false;
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_DELETED) == true || isConfigChange)
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_DELETED) == true)
 		{
 			if (bomComp == null) 
 			{
@@ -179,7 +160,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			
 		}
 		
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_MODIFIED) == true || (isConfigChange && !isCompDeleted))
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_MODIFIED) == true)
 		{
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + work.bom_key + ")");
