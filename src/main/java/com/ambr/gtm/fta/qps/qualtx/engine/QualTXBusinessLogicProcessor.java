@@ -515,12 +515,12 @@ public class QualTXBusinessLogicProcessor
 					aQualTXPrice.price = deValue;
 					aQualTXPrice.currency_code = theBOM.currency_code;
 
-					if ("TRANSACTION_VALUE".equalsIgnoreCase(priceType) && theQualtx.value == null && deValue != null)
+					if ("TRANSACTION_VALUE".equalsIgnoreCase(priceType) && deValue != null)
 					{
 						theQualtx.value = deValue;
 					}
 
-					if ("NET_COST".equalsIgnoreCase(priceType) && theQualtx.cost == null && deValue != null)
+					if ("NET_COST".equalsIgnoreCase(priceType) && deValue != null)
 					{
 						theQualtx.cost = deValue;
 					}

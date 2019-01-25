@@ -156,7 +156,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			{
 				if (qualtxComp == null) throw new Exception("Qualtx component, compwork.qualtx_comp_key : " + work.qualtx_comp_key + " not found on qualtx key" + parentWork.details.qualtx_key + " and qtx_wid :"+parentWork.qtx_wid);
 				qualtx.removeComponent(qualtxComp);
-				qualtxComp.qualTX = qualtx;
 				expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
 						aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
 				isCompDeleted = true;
@@ -580,9 +579,9 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
 		
 		if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
-				|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+			|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
 		{
-			if(bomComp.sub_bom_key != null && bomComp.sub_bom_key != 0 )
+			if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
 			{
 				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
 				aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
@@ -591,7 +590,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				else 
 					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
 			}
-				
 		}
 	}
 
