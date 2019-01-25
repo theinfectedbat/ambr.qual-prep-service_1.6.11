@@ -412,6 +412,7 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) workCode = RequalificationWorkCodes.COMP_STP_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) workCode = RequalificationWorkCodes.COMP_GPM_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) workCode = RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
 
 		return workCode;
 	}

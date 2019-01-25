@@ -34,6 +34,8 @@ public class QualTXDetail
 	@Column(name = "td_construction_status") 	public Short								td_construction_status;
 	@Column(name = "rm_construction_status") 	public Short								rm_construction_status;
 	@Column(name = "in_construction_status") 	public Short								in_construction_status;
+	@Column(name = "is_active") 	            public String	                            is_active;
+
 	/**
      *************************************************************************************
      * <P>

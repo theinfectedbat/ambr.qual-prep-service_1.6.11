@@ -239,7 +239,7 @@ public class QTXStageProducer extends QTXProducer
 		{
 			SimpleDataLoaderResultSetExtractor<QTXStage> extractor = new SimpleDataLoaderResultSetExtractor<QTXStage>(QTXStage.class);
 			
-			stageList = this.template.query("select ar_qtx_stage.qtx_sid, ar_qtx_stage.user_id, ar_qtx_stage_data.data, ar_qtx_stage.time_stamp, ar_qtx_stage.priority from ar_qtx_stage left join ar_qtx_stage_data on ar_qtx_stage.qtx_sid=ar_qtx_stage_data.qtx_sid where ar_qtx_stage.time_stamp<=?  and status=? order by ar_qtx_stage.time_stamp", new Object[]{new java.sql.Timestamp(bestTime), QTXStageStatus.INIT.ordinal()}, extractor);
+			stageList = this.template.query("select ar_qtx_stage.qtx_sid, ar_qtx_stage.user_id, ar_qtx_stage_data.data, ar_qtx_stage.time_stamp, ar_qtx_stage.priority, ar_qtx_stage.batch_id from ar_qtx_stage left join ar_qtx_stage_data on ar_qtx_stage.qtx_sid=ar_qtx_stage_data.qtx_sid where ar_qtx_stage.time_stamp<=?  and status=? order by ar_qtx_stage.time_stamp", new Object[]{new java.sql.Timestamp(bestTime), QTXStageStatus.INIT.ordinal()}, extractor);
 			
 			logger.debug("QTXStageProducer records found = " + stageList.size());
 		}
@@ -306,7 +306,7 @@ public class QTXStageProducer extends QTXProducer
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList, reasonCode);
 					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
 				}
-				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG )
+				else if (reasonCode == ReQualificationReasonCodes.BOM_HDR_CHG  || reasonCode == ReQualificationReasonCodes.BOM_PRC_CHG || reasonCode == ReQualificationReasonCodes.BOM_PROD_AUTO_DE || reasonCode == ReQualificationReasonCodes.BOM_PROD_TXT_DE || reasonCode == ReQualificationReasonCodes.BOM_TXREF_CHG || reasonCode == ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION)
 				{
 					List<QualTX> theBOMHeaderChanges = this.utility.getImpactedQtxKeys(theAltKeyList);
 					this.createArQtxBomCompBean(theBOMHeaderChanges, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
@@ -379,8 +379,6 @@ public class QTXStageProducer extends QTXProducer
 
 			for (int index = 0; index < theHeaderReasonCodes.length(); index++)
 			{
-				if(theHeaderReasonCodes.optLong(index) == ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION)
-					continue;
 				ArrayList<Long> bomKeyList = null;
 				if (bomRequalMap.containsKey(theHeaderReasonCodes.optLong(index)))
 				{
@@ -493,7 +491,7 @@ public class QTXStageProducer extends QTXProducer
 					theQtxWork = this.utility.createQtxWorkObj(qualtx, workReasonCode, bomConsolMap, qualtx.src_key);
 				}
 
-				if (theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_TXREF_CHG || theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_QUAL_MPQ_CHG || (theQtxWork.details.reason_code == RequalificationWorkCodes.HEADER_CONFIG_CHANGE && !isForceQualification))
+				if (theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_TXREF_CHG || theQtxWork.details.reason_code == RequalificationWorkCodes.BOM_QUAL_MPQ_CHG || (theQtxWork.details.reason_code == RequalificationWorkCodes.HEADER_CONFIG_CHANGE))
 				{
 					theQtxWork.setWorkStatus(QualtxStatus.READY_FOR_QUALIFICATION);
 				}
