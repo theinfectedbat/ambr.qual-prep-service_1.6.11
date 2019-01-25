@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
+import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
 
 /**
@@ -17,7 +18,7 @@ import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
 public class BOMQualificationStatus
 	implements Serializable
 {
-	public final long								bomKey;
+	public final long								bomKey ;
 	public long										currentTime;
 	public QualificationPreparationStatusDetail		prepStatusDetail;
 	public Duration									requalEstimatedTimeRemaining;
@@ -32,6 +33,7 @@ public class BOMQualificationStatus
      * @param	theBOMKey
      *************************************************************************************
      */
+	
 	public BOMQualificationStatus(long theBOMKey)
 		throws Exception
 	{
@@ -40,6 +42,13 @@ public class BOMQualificationStatus
 		this.tradeLaneDetailList = new ArrayList<>();
 	}
 	
+	public BOMQualificationStatus()
+			throws Exception
+		{
+			this.bomKey = 0;
+			this.currentTime = System.currentTimeMillis();
+			this.tradeLaneDetailList = new ArrayList<>();
+		}
 	/**
      *************************************************************************************
      * <P>
