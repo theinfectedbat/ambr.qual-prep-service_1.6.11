@@ -133,17 +133,29 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			
 				if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && !ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) && !ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type))
 				{
-					
 					qualtxComp = addComponent(qualtx, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache,
 							aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
 					parentWorkPackage.qualtx.compList.add(qualtxComp);
 					if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
 					{
 						qualtxComp.top_down_ind = "Y";
-					} 
-					expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp,
+					}
+					if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
+					{
+						parentWorkPackage.isReadyForQualification = false;
+						if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal()) 
+						{
+							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+						}
+						else if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+						{
+							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+								
+						}
+					}
+					/*expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp,
 							aClaimsDetailCache, aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository,
-							gpmClassCache, bomUniverse);
+							gpmClassCache, bomUniverse);*/
 					
 					compWorkPackage.qualtxComp = qualtxComp;
 				}
@@ -156,8 +168,20 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			{
 				if (qualtxComp == null) throw new Exception("Qualtx component, compwork.qualtx_comp_key : " + work.qualtx_comp_key + " not found on qualtx key" + parentWork.details.qualtx_key + " and qtx_wid :"+parentWork.qtx_wid);
 				qualtx.removeComponent(qualtxComp);
-				expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
-						aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
+				/*expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
+						aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);*/
+				if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
+				{
+					parentWorkPackage.isReadyForQualification = false;
+					if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal()) 
+					{
+						qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+					}
+					else if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+					{
+						qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+					}
+				}
 				isCompDeleted = true;
 			}
 			
