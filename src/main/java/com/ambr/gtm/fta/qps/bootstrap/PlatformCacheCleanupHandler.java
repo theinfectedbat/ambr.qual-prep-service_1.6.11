@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 
 import com.ambr.gtm.fta.qps.bom.BOMUniverseProperties;
 import com.ambr.platform.utils.cache.CacheManagerService;
+import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.propertyresolver.ConfigurationPropertyResolver;
 
 /**
@@ -36,7 +38,7 @@ public class PlatformCacheCleanupHandler
      *************************************************************************************
      */
 	@EventListener(ApplicationReadyEvent.class)
-    public void cleanup()
+    public void cleanupDuringStartup()
     	throws Exception
 	{
 		// The cache directory cleanup should only be done from the "main" service JVM.  We determine whether this is 
@@ -46,6 +48,6 @@ public class PlatformCacheCleanupHandler
 			return;
 		}
 		
-		this.cacheMgrService.cleanupDirectories();
+		this.cacheMgrService.cleanupOldCacheDirectories();
     }
 }
