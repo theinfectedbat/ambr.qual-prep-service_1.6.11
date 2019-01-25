@@ -412,6 +412,10 @@ public class QualTXComponentUtility
 				}
 			}
 		}
+		else if(this.qualTXComp.qualified_flg != null || !"".equals(this.qualTXComp.qualified_flg))
+		{
+			this.qualTXComp.prev_year_qual_applied = "";
+		}
 		
 		TradeLaneContainer tradelaneCintainer = this.qualTXBusinessLogicProcessor.qeConfigCache.getQEConfig(this.qualTXComp.org_code).getTradeLaneContainer();
 		TradeLane tradeLane = new TradeLane(this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import);
