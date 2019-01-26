@@ -143,20 +143,9 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
 					{
 						parentWorkPackage.isReadyForQualification = false;
-						if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal()) 
-						{
-							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-						}
-						else if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
-						{
-							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-								
-						}
+						qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+						qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 					}
-					/*expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp,
-							aClaimsDetailCache, aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository,
-							gpmClassCache, bomUniverse);*/
-					
 					compWorkPackage.qualtxComp = qualtxComp;
 				}
 			}
@@ -168,19 +157,11 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			{
 				if (qualtxComp == null) throw new Exception("Qualtx component, compwork.qualtx_comp_key : " + work.qualtx_comp_key + " not found on qualtx key" + parentWork.details.qualtx_key + " and qtx_wid :"+parentWork.qtx_wid);
 				qualtx.removeComponent(qualtxComp);
-				/*expandComponentsBasedOnAnalysisMethod(parentWork, qualtx, qualtxComp, bomComp, aClaimsDetailCache,
-						aGPMSourceIVAContainerCache, aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);*/
 				if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
 				{
 					parentWorkPackage.isReadyForQualification = false;
-					if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal()) 
-					{
-						qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-					}
-					else if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
-					{
-						qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-					}
+					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				}
 				isCompDeleted = true;
 			}
