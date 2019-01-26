@@ -247,10 +247,15 @@ public class CumulationComputationRule
 
 			Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 			
-			if(cumulationrule.useCOOList())
+			if(cumulationrule.useCOOList() && cumulative_fta_iva_key == 0)
 			{
 				if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
 					cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
+			}
+			else if(cumulationrule.useCOOList() && cumulative_fta_iva_key > 0)
+			{
+				if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty())
+					cumulationCtryList = aQualTXComp.ctry_of_origin;
 			}
 			
 			if(qualTXCompDetails == null)
