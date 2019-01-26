@@ -319,12 +319,13 @@ public class ArQtxWorkUtility
 			work.userId = qtxConsolWork.user_id;
 		}
 		
-		QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
+		/*QEConfig  QEConfig = qeConfigCache.getQEConfig(qualtx.org_code);
 		if(QEConfig != null && QEConfig.getAnalysisMethod() != null )
 		{ 
 			String analysisMethod =  QEConfig.getAnalysisMethod() ;
 			work.details.analysis_method = TrackerCodes.AnalysisMethod.values()[TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal()];
-		}
+		}*/
+		work.details.analysis_method = TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS; //Always Top Down approach
 		
 		return work;
 	}
