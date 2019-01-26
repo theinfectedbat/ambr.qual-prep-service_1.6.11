@@ -22,9 +22,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-import com.ambr.gtm.fta.qps.bom.BOMMetricSetUniverseContainer;
 import com.ambr.gtm.fta.qps.bom.BOMUniverse;
-import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.api.CacheRefreshInformation;
@@ -42,19 +40,16 @@ import com.ambr.gtm.fta.qts.QtxStatusUpdateRequest;
 import com.ambr.gtm.fta.qts.ReQualificationReasonCodes;
 import com.ambr.gtm.fta.qts.RequalificationWorkCodes;
 import com.ambr.gtm.fta.qts.TrackerCodes;
-import com.ambr.gtm.fta.qts.WorkManagementException;
 import com.ambr.gtm.fta.qts.TrackerCodes.QTXStageStatus;
 import com.ambr.gtm.fta.qts.TrackerCodes.QualtxStatus;
+import com.ambr.gtm.fta.qts.WorkManagementException;
 import com.ambr.gtm.fta.qts.api.TrackerClientAPI;
 import com.ambr.gtm.fta.qts.config.QEConfig;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.trade.MDIQualTxRepository;
 import com.ambr.gtm.fta.qts.util.TradeLane;
-import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
-import com.ambr.gtm.fta.qts.util.TradeLaneData;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 import com.ambr.platform.uoid.UniversalObjectIDGenerator;
-import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 
 //TODO should priority be used here?  this could cause out of sequence processing : new high priority applied before older lower priority targeting same record.
@@ -286,8 +281,7 @@ public class QTXStageProducer extends QTXProducer
 		
 		this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap, bestTime);
 		this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap, bestTime);
-		this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
-		//this.getConsolidatedQualtxForMassQual(configRequalMap, consolidatedWork, bomConsolMap, bestTime);
+		//this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
 
 		return consolidatedWork;
 	}
@@ -1130,7 +1124,8 @@ public class QTXStageProducer extends QTXProducer
 		if (qualtx.src_key == null || qualtx.iva_code == null || qualtx.fta_code == null || qualtx.ctry_of_import == null || (qualtx.is_active != null && (qualtx.is_active).equalsIgnoreCase("N"))) return false;
 		if(new Timestamp(qualtx.created_date.getTime()).after(bestTime)) return false;
 		
-		if(!isBOMChange) return true;
+		// Commenting the code as Re-qualification flag check is only applicable for GPM updates not for Bom updates.
+/*		if(!isBOMChange) return true;
 		if (qualtx.fta_code != null && qualtx.ctry_of_import != null)
 		{
 
@@ -1157,7 +1152,7 @@ public class QTXStageProducer extends QTXProducer
 			}
 
 		}
-
+*/
 		return true;
 	}
 
@@ -1202,7 +1197,7 @@ public class QTXStageProducer extends QTXProducer
 		if (workData.isNull("MASS_QUALIFICATION")) return;
 
 		JSONObject theMassQualDtlsObj = workData.getJSONObject("MASS_QUALIFICATION");
-		String isForceQualification = theMassQualDtlsObj.optString("FORCE_RUN_QUALIFICATION");
+		//String isForceQualification = theMassQualDtlsObj.optString("FORCE_RUN_QUALIFICATION");
 		JSONArray theBomDtls = theMassQualDtlsObj.optJSONArray("BOM_DTLS");
 		if (null != theBomDtls)
 		{
