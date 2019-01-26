@@ -201,6 +201,35 @@ public class QualTXComponentUtility
 				this.mapDataExtensionFields(aQualTXCompDE, aBOMCompDE);
 			}
 		}
+		
+		createCompDtlsDE();
+	}
+	
+	private void createCompDtlsDE() throws Exception
+	{
+		QualTXComponentDataExtension aQualTXCompDE = null;
+		if (this.qualTXComp.deList != null && !this.qualTXComp.deList.isEmpty())
+		{
+			for (QualTXComponentDataExtension compDE : this.qualTXComp.deList)
+			{
+				if (compDE.group_name.contains("QUALTX:COMP_DTLS"))
+				{
+					aQualTXCompDE = compDE;
+					break;
+				}
+			}
+		}
+
+		Timestamp now = new Timestamp(System.currentTimeMillis());
+		if (aQualTXCompDE == null)
+		{
+			aQualTXCompDE = this.qualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtCfgRepos, null);
+			aQualTXCompDE.setValue("CREATED_DATE", now);
+		}
+		
+		aQualTXCompDE.setValue("LAST_MODIFIED_DATE", now);
+		aQualTXCompDE.setValue("LAST_MODIFIED_BY", this.qualTXComp.last_modified_by);
+		aQualTXCompDE.setValue("FLEXFIELD_VAR2", this.bomComp.prod_id);
 	}
 
 	public  void mapDataExtensionFields(
