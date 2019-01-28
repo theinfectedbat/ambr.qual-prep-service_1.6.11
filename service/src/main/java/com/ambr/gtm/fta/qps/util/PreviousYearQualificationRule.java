@@ -2,7 +2,7 @@ package com.ambr.gtm.fta.qps.util;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -177,7 +177,7 @@ public class PreviousYearQualificationRule
 		if(previousDate == null || "".equals(previousDate.trim()))
 			return true;
 		
-		LocalDate qualUptoDate = LocalDate.parse(previousDate+"-"+Calendar.getInstance().get(Calendar.YEAR), DateTimeFormatter.ofPattern("dd-MMM-yyyy"));
+		LocalDate qualUptoDate = LocalDate.parse(previousDate+"-"+Calendar.getInstance().get(Calendar.YEAR), new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("dd-MMM-yyyy").toFormatter());
 		return LocalDate.now().compareTo(qualUptoDate) <= 0;
 	}
 	
