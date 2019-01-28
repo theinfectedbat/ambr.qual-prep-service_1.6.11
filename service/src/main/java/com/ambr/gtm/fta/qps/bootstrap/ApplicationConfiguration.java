@@ -296,8 +296,8 @@ public class ApplicationConfiguration
 
 	@Bean
 	public FTACtryConfigCache beanFTACtryConfigCache(@Autowired DataSource dataSrc, 
-			@Autowired OrgCache orgCache
-			) throws Exception
+			@Autowired OrgCache orgCache,
+			@Autowired Env env) throws Exception
 	{
 		boolean loadUsingTAService = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.LOAD_FTA_CTRY_DG_USING_TA_SERVICE, "N"));
 		boolean loadFTACtryCacheEnabledFlag = "Y".equalsIgnoreCase(this.propertyResolver.getPropertyValue(QTSProperties.FTA_CTRY_DG_CACHE, "N"));
