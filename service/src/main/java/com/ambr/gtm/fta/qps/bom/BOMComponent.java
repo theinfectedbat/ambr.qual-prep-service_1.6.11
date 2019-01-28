@@ -31,6 +31,7 @@ public class BOMComponent
 	@Column(name = "critical_indicator") 	public String	critical_indicator;
 	@Column(name = "ctry_of_origin") 		public String	ctry_of_origin;
 	@Column(name = "ctry_of_manufacture")	public String	ctry_of_manufacture;
+	@Column(name = "prod_id") 				public String	prod_id;
 	@Column(name = "description")			public String	description;
 	@Column(name = "effective_from") 		public Date		effective_from;
 	@Column(name = "effective_to") 			public Date		effective_to;
@@ -134,7 +135,7 @@ public class BOMComponent
 			for (BOMComponentDataExtension bomComponentDataExtension : this.deList)
 				if (bomComponentDataExtension.group_name.equalsIgnoreCase(theGroupName)) bomComponentDataExtensions.add(bomComponentDataExtension);
 		}
-
+		
 		return bomComponentDataExtensions;
 	}
 }
