@@ -511,7 +511,7 @@ public class QTXStageProducer extends QTXProducer
 
 					for (QTXCompWork compWork : theQtxCompList)
 					{
-						if (compWork.qualtx_comp_key == qualtxComp.alt_key_comp)
+						if (compWork.bom_comp_key == qualtxComp.src_key)
 						{
 							isNewComp = false;
 							if (reasonCode == ReQualificationReasonCodes.BOM_COMP_SRC_CHG)

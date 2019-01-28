@@ -139,7 +139,7 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
+		if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
 
 		List<QualTX> list = new ArrayList<QualTX>();
 			
