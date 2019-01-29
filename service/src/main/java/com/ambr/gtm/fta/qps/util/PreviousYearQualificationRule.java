@@ -110,6 +110,7 @@ public class PreviousYearQualificationRule
 		else
 		{
 			aQualTXComp.prev_year_qual_applied="";
+			return false;
 		}
 		return true;
 	}

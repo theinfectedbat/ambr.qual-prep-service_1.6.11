@@ -355,7 +355,7 @@ public class QualTXComponentUtility
 			if (aSourceIVAProductSourceContainer == null) 
 				return null;
 			
-			this.qualTXComp.prod_src_key = this.bomComp.prod_src_key;
+			if(aSourceIVAProductSourceContainer.ivaList.size() > 0) this.qualTXComp.prod_src_key = this.bomComp.prod_src_key;
 			for (GPMSourceIVA aSrcIVA : aSourceIVAProductSourceContainer.ivaList) {
 				//This api allow only SYSTEM_DECISION=M and Full Year IVA Records
 				if(!aSrcIVA.isIVAEligibleForProcessing())
