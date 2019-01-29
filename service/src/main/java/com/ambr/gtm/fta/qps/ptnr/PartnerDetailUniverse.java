@@ -13,10 +13,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAUniverseProperties;
 import com.ambr.gtm.fta.qps.ptnr.api.GetPartnerDetailFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.ptnr.api.GetPartnerDetailStatusFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
+import com.ambr.platform.utils.log.LoggingProperties;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
@@ -548,6 +548,7 @@ public class PartnerDetailUniverse
 		this.serviceMgr.setMemoryMax(this.memoryMax);
 		this.serviceMgr.setMemoryMin(this.memoryMin);
 		this.serviceMgr.setTargetLibrary(new File(this.serviceJarFileName));
+		this.serviceMgr.setLogFileCleanup(true);
 		this.serviceMgr.setEventHandler(new PartnerDetailUniversePartitionEventHandler(this));
 				
 		// Start the desired number of subprocesses
@@ -591,8 +592,8 @@ public class PartnerDetailUniverse
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_ENABLED_FLG, "Y");
 	
-			aServiceRef.setProperty(QPSProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(QPSProperties.LOGGING_PATH));
-			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, PartnerDetailUniverseProperties.LOG_FILE_NAME);
+			aServiceRef.setProperty(LoggingProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(LoggingProperties.LOGGING_PATH));
+			aServiceRef.setProperty(LoggingProperties.LOGGING_FILE, PartnerDetailUniverseProperties.LOG_FILE_NAME);
 			
 			// Start the process asynchronously
 			aServiceRef.start(true);
