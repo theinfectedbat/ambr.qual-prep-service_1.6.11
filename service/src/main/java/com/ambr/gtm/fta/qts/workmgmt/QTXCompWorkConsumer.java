@@ -391,21 +391,27 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					
 					if (compWorkPackage.gpmSourceIVAProductContainer == null)
 						throw new Exception("GPMSourceIVAProductContainer not present during comp IVA pull for work " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_comp_wid);
-
-					GPMSourceIVAProductContainer	aContainer =  aGPMSourceIVAContainerCache.getSourceIVAByProduct(qualtxComp.prod_key);
+					//TA-83212 & TA-82799
+					/*GPMSourceIVAProductContainer	aContainer =  aGPMSourceIVAContainerCache.getSourceIVAByProduct(qualtxComp.prod_key);
 					aContainer.indexByProdSourceKey();
 					GPMSourceIVA gpmSourceIVA = aContainer.getGPMSourceIVA(prodSourceKey, compWorkIVA.iva_key);
 			
 					//GPMSourceIVA gpmSourceIVA = compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVA(prodSourceKey, compWorkIVA.iva_key);
-
+					
 					if(gpmSourceIVA != null)
 					{
 						String aQualified= (gpmSourceIVA.finalDecision != null && "Y".equals( gpmSourceIVA.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
 						qualtxComp.qualified_flg = (gpmSourceIVA.finalDecision == null)? "" : aQualified;
+						//qualtxComp.prev_year_qual_applied = "";
 					}else
 					{
 						logger.error("GPM SROURCE IVA NOT FOUND, Failed to update the iva decision " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_wid);
-					}
+					}*/
+					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+					aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
+					aQualTXComponentUtilityforComp.pullIVAData();
+					
 				}
 				
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_TRACE_VALUE_CHANGE))
