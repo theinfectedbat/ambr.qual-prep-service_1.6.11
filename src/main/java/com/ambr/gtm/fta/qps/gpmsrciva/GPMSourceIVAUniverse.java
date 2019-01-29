@@ -13,11 +13,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.ambr.gtm.fta.qps.CommandEnum;
 import com.ambr.gtm.fta.qps.QPSProperties;
 import com.ambr.gtm.fta.qps.UniverseStatusEnum;
-import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationUniverseProperties;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAByProductFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVABySourceFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.gpmsrciva.api.GetGPMSourceIVAStatusFromPartitionClientAPI;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
+import com.ambr.platform.utils.log.LoggingProperties;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
@@ -596,6 +596,7 @@ public class GPMSourceIVAUniverse
 		this.serviceMgr.setMemoryMax(this.memoryMax);
 		this.serviceMgr.setMemoryMin(this.memoryMin);
 		this.serviceMgr.setTargetLibrary(new File(this.serviceJarFileName));
+		this.serviceMgr.setLogFileCleanup(true);
 		this.serviceMgr.setEventHandler(new GPMSourceIVAUniversePartitionEventHandler(this));
 				
 		// Start the desired number of subprocesses
@@ -640,8 +641,8 @@ public class GPMSourceIVAUniverse
 			
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 	
-			aServiceRef.setProperty(QPSProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(QPSProperties.LOGGING_PATH));
-			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, GPMSourceIVAUniverseProperties.LOG_FILE_NAME);
+			aServiceRef.setProperty(LoggingProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(LoggingProperties.LOGGING_PATH));
+			aServiceRef.setProperty(LoggingProperties.LOGGING_FILE, GPMSourceIVAUniverseProperties.LOG_FILE_NAME);
 			
 			// Start the process asynchronously
 			aServiceRef.start(true);

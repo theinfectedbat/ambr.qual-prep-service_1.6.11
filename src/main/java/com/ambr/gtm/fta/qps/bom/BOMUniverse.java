@@ -18,6 +18,7 @@ import com.ambr.gtm.fta.qps.bom.api.GetBOMFromPartitionClientAPI;
 import com.ambr.gtm.fta.qps.bom.api.GetBOMStatusFromPartitionClientAPI;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.platform.rdbms.bootstrap.PrimaryDataSourceConfiguration;
+import com.ambr.platform.utils.log.LoggingProperties;
 import com.ambr.platform.utils.log.MessageFormatter;
 import com.ambr.platform.utils.log.PerformanceTracker;
 import com.ambr.platform.utils.misc.ParameterizedMessageUtility;
@@ -72,6 +73,18 @@ public class BOMUniverse
 		this.serverPort = 80;
 		this.setPartitionCount(0);
 		this.status = UniverseStatusEnum.PENDING_STARTUP;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public void cleanupOldLogFiles()
+		throws Exception
+	{
+	
 	}
 	
 	/**
@@ -269,6 +282,18 @@ public class BOMUniverse
 		);
 		
 		return aUniverseContainer;
+	}
+	
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public long getServiceStartTime()
+		throws Exception
+	{
+		return this.serviceMgr.getServiceStartTime();
 	}
 	
 	/**
@@ -632,6 +657,7 @@ public class BOMUniverse
 		this.serviceMgr.setMemoryMax(this.memoryMax);
 		this.serviceMgr.setMemoryMin(this.memoryMin);
 		this.serviceMgr.setTargetLibrary(new File(this.serviceJarFileName));
+		this.serviceMgr.setLogFileCleanup(true);
 		this.serviceMgr.setEventHandler(new BOMUniversePartitionEventHandler(this));
 				
 		// Start the desired number of subprocesses
@@ -675,8 +701,8 @@ public class BOMUniverse
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_ENABLED_FLG, "Y");
 			
-			aServiceRef.setProperty(QPSProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(QPSProperties.LOGGING_PATH));
-			aServiceRef.setProperty(QPSProperties.LOGGING_FILE, BOMUniverseProperties.LOG_FILE_NAME);
+			aServiceRef.setProperty(LoggingProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(LoggingProperties.LOGGING_PATH));
+			aServiceRef.setProperty(LoggingProperties.LOGGING_FILE, BOMUniverseProperties.LOG_FILE_NAME);
 	
 			// Start the process asynchronously
 			aServiceRef.start(true);
