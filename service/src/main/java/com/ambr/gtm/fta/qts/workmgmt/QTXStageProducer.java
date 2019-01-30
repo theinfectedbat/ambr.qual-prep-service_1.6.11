@@ -735,7 +735,7 @@ public class QTXStageProducer extends QTXProducer
 	
 				buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap, bestTime);
 	
-				if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
+				if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE)
 				{
 					List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
 					buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap, bestTime);
@@ -925,7 +925,7 @@ public class QTXStageProducer extends QTXProducer
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
-				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
+				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE)
 				{
 					theQtxWork.details.setReasonCodeFlag(workCode);
 					theQtxWork.setWorkStatus(QualtxStatus.INIT);
@@ -939,7 +939,7 @@ public class QTXStageProducer extends QTXProducer
 			{
 				//logger.error("@@@@ buildheaderProdQtxWorkBean=qualtx.src_key= " +qualtx.src_key + " qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.utility.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtx.prod_key);
-				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE)
+				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE)
 				{
 					theQtxWork.details.setReasonCodeFlag(workCode);
 					theQtxWork.setWorkStatus(QualtxStatus.INIT);

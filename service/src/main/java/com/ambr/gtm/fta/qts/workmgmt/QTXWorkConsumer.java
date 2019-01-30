@@ -225,7 +225,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			qualtx.prod_src_key = null;
 			qualtx.supplier_key = null;
 			qualtx.manufacturer_key = null;
-			
+			qualtx.prod_src_key = -1l;
+			qualtx.prod_src_key = null;
 			workPackage.deleteBOMQual = true;
 		}
 
@@ -277,6 +278,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				else if (STPDecisionEnum.I.equals(gpmSourceIVA.systemDecision))
 				{
 					qualtx.is_active = "N";
+					workPackage.deleteBOMQual = true;
 				}
 			}
 
