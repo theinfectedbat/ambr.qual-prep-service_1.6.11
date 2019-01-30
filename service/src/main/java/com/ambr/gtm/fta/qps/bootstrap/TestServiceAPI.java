@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatus;
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusGenerator;
-import com.ambr.gtm.fta.qps.bom.qualstatus.api.GetBOMQualificationStatusClientAPI;
+import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusUtility;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
@@ -82,7 +82,7 @@ public class TestServiceAPI
 	public void execute()
 		throws Exception
 	{
-		this.test11();
+		this.test9();
 	}
 	
 	/**
@@ -481,7 +481,7 @@ public class TestServiceAPI
 		
 		aGenerator = new BOMQualificationStatusGenerator(this.queueUniverse);
 		aStatus = aGenerator.generate(735633486L);
-		System.out.println(aStatus.toString());
+ 		System.out.println(new BOMQualificationStatusUtility().toString(aStatus));
 	}
 	
 	public void test10()

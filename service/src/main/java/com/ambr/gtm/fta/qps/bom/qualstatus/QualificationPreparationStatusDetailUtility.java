@@ -14,27 +14,23 @@ import com.ambr.platform.utils.queue.TaskQueueThroughputUtility;
  * </P>
  *****************************************************************************************
  */
-public class QualificationPreparationStatusDetail 
+public class QualificationPreparationStatusDetailUtility 
 	implements Serializable
 {
-	public String 	statusText;
-	public Date		startTime;
-	public Date		endTime;
-	public long		overallEstimatedTimeRemaining;
-	public long		bomSpecificEstimatedTimeRemaining;
-	public Date		nextScheduledExecutionTime;
-	public long		timeUntilNextExecution;
-	
 	/**
 	 *************************************************************************************
 	 * <P>
 	 * </P>
 	 * 
+	 * @param	theStatusDetail
 	 * @param	theUtil
 	 * @param	theBOMKey
 	 *************************************************************************************
 	 */
-	void setDuration(TaskQueueThroughputUtility theUtil, long theBOMKey)
+	public static void setDuration(
+		QualificationPreparationStatusDetail 	theStatusDetail,
+		TaskQueueThroughputUtility 				theUtil, 
+		long 									theBOMKey)
 		throws Exception
 	{
 		long		aDuration;
@@ -42,11 +38,11 @@ public class QualificationPreparationStatusDetail
 		theUtil.measureThroughput(5);
 		theUtil.collectProgressSummary(MessageFormat.format("{0,number,#}", theBOMKey));
 		
-		this.bomSpecificEstimatedTimeRemaining = 0;
+		theStatusDetail.bomSpecificEstimatedTimeRemaining = 0;
 		for (TaskQueueProgressSummary aSummary : theUtil.getProgressSummaryList()) {
 			aDuration = (long)((((double)aSummary.filteredMaxSubmittedPosInQueue)/aSummary.throughput));
-			if (aDuration > this.bomSpecificEstimatedTimeRemaining) {
-				this.bomSpecificEstimatedTimeRemaining = aDuration;
+			if (aDuration > theStatusDetail.bomSpecificEstimatedTimeRemaining) {
+				theStatusDetail.bomSpecificEstimatedTimeRemaining = aDuration;
 			}
 		}
 	}

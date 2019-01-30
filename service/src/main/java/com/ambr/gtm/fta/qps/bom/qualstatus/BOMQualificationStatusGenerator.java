@@ -2,24 +2,17 @@ package com.ambr.gtm.fta.qps.bom.qualstatus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.MessageFormat;
-import java.time.Duration;
 import java.util.ArrayList;
 
-import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
-import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.BOMStatusManager;
-import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.platform.rdbms.util.DataRecordUtility;
-import com.ambr.platform.utils.queue.TaskQueueProgressSummary;
-import com.ambr.platform.utils.queue.TaskQueueThroughputUtility;
 
 /**
  *****************************************************************************************
@@ -77,7 +70,7 @@ public class BOMQualificationStatusGenerator
 			try {
 				aQualTX = new QualTX();
 				this.dataRecUtil.extractDataFromResultSet(aQualTX, theResultSet);
-				BOMQualificationStatusGenerator.this.statusObj.addQualTXDetails(aQualTX);
+				BOMQualificationStatusUtility.addQualTXDetails(BOMQualificationStatusGenerator.this.statusObj, aQualTX);
 			}
 			catch (Exception e) {
 				throw new RuntimeException(e);
@@ -124,16 +117,8 @@ public class BOMQualificationStatusGenerator
 				aTradeLaneDetail.qualPeriodEndDate = theResultSet.getTimestamp("effective_to");
 				aTradeLaneDetail.orgCode = theResultSet.getString("org_code");
 				aTradeLaneDetail.ivaCode = theResultSet.getString("iva_code");
-				
-				aValue = theResultSet.getString("system_decision");
-				if (aValue != null) {
-					aTradeLaneDetail.systemDecision = STPDecisionEnum.valueOf(aValue);
-				}
-
-				aValue = theResultSet.getString("final_decision");
-				if (aValue != null) {
-					aTradeLaneDetail.finalDecision = STPDecisionEnum.valueOf(aValue);
-				}
+				aTradeLaneDetail.systemDecision = theResultSet.getString("system_decision");
+				aTradeLaneDetail.finalDecision = theResultSet.getString("final_decision");
 
 				BOMQualificationStatusGenerator.this.statusObj.addTradeLane(aTradeLaneDetail);
 			}
@@ -164,6 +149,8 @@ public class BOMQualificationStatusGenerator
 	 *************************************************************************************
 	 * <P>
 	 * </P>
+	 * 
+	 * @param	theBOMKey
 	 *************************************************************************************
 	 */
 	public BOMQualificationStatus generate(long theBOMKey)
@@ -196,7 +183,11 @@ public class BOMQualificationStatusGenerator
 			aStatusDetail.statusText = QualificationPreparationStatusEnum.IN_PROGRESS.name();
 			aStatusDetail.startTime = aStatusMgr.getStartTime();
 			aStatusDetail.endTime = aStatusMgr.getEndTime();
-			aStatusDetail.setDuration(this.queueUniverse.getThroughputUtility(), this.bomKey);
+			QualificationPreparationStatusDetailUtility.setDuration(
+				aStatusDetail, 
+				this.queueUniverse.getThroughputUtility(), 
+				this.bomKey
+			);
 		}
 		catch (IllegalStateException e) {
 			if (this.queueUniverse.qtxDetailUniverse.getQualTXCount() == 0) {
@@ -277,17 +268,21 @@ public class BOMQualificationStatusGenerator
 		return this;
 	}
 	
-	public void updateActiveTradeLanes() throws Exception
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public void updateActiveTradeLanes() 
+		throws Exception	
 	{
-		 ArrayList<TradeLaneDetail> tradeLaneDetailList=  BOMQualificationStatusGenerator.this.statusObj.tradeLaneDetailList;
+		 ArrayList<TradeLaneDetail> aTradeLaneDetailList = BOMQualificationStatusGenerator.this.statusObj.tradeLaneDetailList;
 		
-		 for(TradeLaneDetail tradeLaneDetail :tradeLaneDetailList)
-		 {
-			 if(!queueUniverse.qeConfigCache.isTradeLaneEnabled(tradeLaneDetail.orgCode,tradeLaneDetail.ftaCode,tradeLaneDetail.coiSpec))
-				{
+		 for(TradeLaneDetail tradeLaneDetail : aTradeLaneDetailList) {
+			 if(!queueUniverse.qeConfigCache.isTradeLaneEnabled(tradeLaneDetail.orgCode,tradeLaneDetail.ftaCode,tradeLaneDetail.coiSpec)) {
 				 tradeLaneDetail.qualEvalStatus=QualificationEvaluationStatusEnum.EVALUATION_DISABLED;
-				}
+			 }
 		 }
-		
 	}
 }
