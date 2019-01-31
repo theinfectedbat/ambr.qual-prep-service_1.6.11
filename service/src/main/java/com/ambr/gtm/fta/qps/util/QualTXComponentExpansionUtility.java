@@ -354,7 +354,32 @@ public class QualTXComponentExpansionUtility
 	private boolean subBOMCompAlreadyInQualtxComp(BOMComponent aSubBOMComp)
 	{
 		if(this.qualTX.compList == null || this.qualTX.compList.isEmpty()) return false;
-		return this.qualTX.compList.stream().anyMatch(p -> p.prod_key.equals(aSubBOMComp.prod_key) && p.prod_src_key.equals(aSubBOMComp.prod_src_key) && p.unit_cost.equals(aSubBOMComp.unit_cost));
+	
+		for(QualTXComponent qualTXComponent : this.qualTX.compList)
+		{
+			if(qualTXComponent.prod_key.equals(aSubBOMComp.prod_key) && qualTXComponent.prod_src_key.equals(aSubBOMComp.prod_src_key) && qualTXComponent.unit_cost.equals(aSubBOMComp.unit_cost))
+			{
+				if(this.isRawMaterialApproach)
+				{	
+					qualTXComponent.rm_qty_per = (qualTXComponent.rm_qty_per != null ? qualTXComponent.rm_qty_per : 0) + aSubBOMComp.qty_per;
+					qualTXComponent.rm_cost = aSubBOMComp.unit_cost * qualTXComponent.rm_qty_per;
+					qualTXComponent.rm_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
+					qualTXComponent.rm_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
+					qualTXComponent.raw_material_ind = "Y";
+				}
+				if(this.isIntermediateApproach)
+				{
+					qualTXComponent.in_qty_per = (qualTXComponent.in_qty_per != null ? qualTXComponent.in_qty_per : 0) + aSubBOMComp.qty_per;
+					qualTXComponent.in_cost = aSubBOMComp.unit_cost * qualTXComponent.in_qty_per;
+					qualTXComponent.in_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
+					qualTXComponent.in_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
+					qualTXComponent.intermediate_ind = "Y";
+				}
+				return true;
+			}
+		}
+	
+		return false;
 	}
 
 	class UniqueComponent
