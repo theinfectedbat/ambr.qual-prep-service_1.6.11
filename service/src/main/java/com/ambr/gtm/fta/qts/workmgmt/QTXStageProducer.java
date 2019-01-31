@@ -943,7 +943,7 @@ public class QTXStageProducer extends QTXProducer
 				{
 					theQtxWork.details.setReasonCodeFlag(workCode);
 					theQtxWork.setWorkStatus(QualtxStatus.INIT);
-
+					qtxWorkList.put(qualtx.alt_key_qualtx, theQtxWork);
 					continue;
 				}
 

@@ -57,6 +57,7 @@ public class QTXCompWorkProducer extends QTXProducer
 		QTXCompWorkConsumer consumer = new QTXCompWorkConsumer(work);
 		consumer.setQtxBusinessLogicProcessor(qtxBusinessLogicProcessor);
 		consumer.setDataExtensionRepository(repos);
+		consumer.setJdbcTemplate(template);
 		
 		this.submit(consumer);
 	}
