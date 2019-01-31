@@ -308,38 +308,33 @@ public class QualTXComponentExpansionUtility
 						}
 						// Create the component if it already does not exist and
 						// pull Basic Info, Ctry Cmpl & IVA data.
-						
-						// Before creating new component - check if the qualtx is already having the component
-						for(QualTXComponent qualTXComponent : this.qualTX.compList){
-							// If component is not there in the parent then create new component
-							if(!(aSubBOMComp.prod_key.equals(qualTXComponent.prod_key) && aSubBOMComp.prod_src_key.equals(qualTXComponent.prod_src_key) && aSubBOMComp.unit_cost.equals(qualTXComponent.unit_cost))){
-								QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
-								QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
-								aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
-								aQualTXComponentUtility.setBOMUniverse(this.bomUniverse);
-								aQualTXComponentUtility.pullComponentData();
-								if (this.isRawMaterialApproach)
-								{
-									aNewQualTXComp.raw_material_ind = "Y";
-									aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
-									aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
-									aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
-									aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
-
-								}
-
-								if (this.isIntermediateApproach)
-								{
-									aNewQualTXComp.intermediate_ind = "Y";
-									aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
-									aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
-									aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
-									aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
-								}
-								aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}", aSubBOMComp.comp_num);
-								theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
+						if(!subBOMCompAlreadyInQualtxComp(aSubBOMComp)){
+							QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
+							QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
+							aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
+							aQualTXComponentUtility.setBOMUniverse(this.bomUniverse);
+							aQualTXComponentUtility.pullComponentData();
+							if (this.isRawMaterialApproach)
+							{
+								aNewQualTXComp.raw_material_ind = "Y";
+								aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
+								aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
+								aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
+								aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
+	
 							}
-						}
+	
+							if (this.isIntermediateApproach)
+							{
+								aNewQualTXComp.intermediate_ind = "Y";
+								aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
+								aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
+								aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
+								aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
+							}
+							aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}", aSubBOMComp.comp_num);
+							theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
+					    }
 					}
 
 				}
@@ -356,6 +351,11 @@ public class QualTXComponentExpansionUtility
 		return true;
 	}
 
+	private boolean subBOMCompAlreadyInQualtxComp(BOMComponent aSubBOMComp)
+	{
+		if(this.qualTX.compList == null || this.qualTX.compList.isEmpty()) return false;
+		return this.qualTX.compList.stream().anyMatch(p -> p.prod_key.equals(aSubBOMComp.prod_key) && p.prod_src_key.equals(aSubBOMComp.prod_src_key) && p.unit_cost.equals(aSubBOMComp.unit_cost));
+	}
 
 	class UniqueComponent
 	{
