@@ -228,6 +228,7 @@ public class GPMSourceIVAUniverse
 		PerformanceTracker					aPerfTracker = new PerformanceTracker(logger, Level.DEBUG, "getSourceIVABySource");
 		GPMSourceIVAProductSourceContainer	aUniverseContainer = new GPMSourceIVAProductSourceContainer();
 		GPMSourceIVAProductSourceContainer	aPartitionContainer;
+		boolean								aSrcIsActiveFlag = false;
 		
 		aUniverseContainer.prodSrcKey = theProdSrcKey;
 		aPerfTracker.start();
@@ -235,6 +236,7 @@ public class GPMSourceIVAUniverse
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getSourceIVABySource(theProdSrcKey);
 			if (aPartitionContainer != null) {
+				aSrcIsActiveFlag = true;
 				aUniverseContainer.merge(aPartitionContainer);
 			}
 		}
@@ -248,6 +250,7 @@ public class GPMSourceIVAUniverse
 		
 					aPartitionContainer = aAPI.execute(theProdSrcKey);
 					if (aPartitionContainer != null) {
+						aSrcIsActiveFlag = true;
 						aUniverseContainer.merge(aPartitionContainer);
 					}
 				}
@@ -266,7 +269,7 @@ public class GPMSourceIVAUniverse
 			}
 		);
 		
-		return aUniverseContainer;
+		return aSrcIsActiveFlag? aUniverseContainer : null;
 	}
 	
 	/**
