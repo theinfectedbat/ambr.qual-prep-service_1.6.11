@@ -701,7 +701,6 @@ public class BOMUniverse
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_TARGET_SCHEMA, this.targetSchema);
 			aServiceRef.setProperty(PrimaryDataSourceConfiguration.PROPERTY_NAME_PRIMARY_DATA_SOURCE_CFG_ENABLED_FLG, "Y");
 			
-			aServiceRef.setProperty(LoggingProperties.LOGGING_PATH, this.propertyResolver.getPropertyValue(LoggingProperties.LOGGING_PATH));
 			aServiceRef.setProperty(LoggingProperties.LOGGING_FILE, BOMUniverseProperties.LOG_FILE_NAME);
 	
 			// Start the process asynchronously
