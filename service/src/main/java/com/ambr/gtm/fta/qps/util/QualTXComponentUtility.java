@@ -487,15 +487,19 @@ public class QualTXComponentUtility
 				String theNonOriginatingCurrency = null;
 				String columnName = flexConfigmap.get("CURRENCY");
 				if(columnName != null)
-					theNonOriginatingCurrency = (String)aNonOriginatingMaterialRdc.getValue(columnName);
+				{
+					Object theNonOriginatingCurrencyObj = aNonOriginatingMaterialRdc.getValue(columnName);
+					if(theNonOriginatingCurrencyObj != null)
+						theNonOriginatingCurrency = (String)theNonOriginatingCurrencyObj;
+				}
 
 				BigDecimal theNonOriginatingValue = null;
 				columnName = flexConfigmap.get("COST");
 				if(columnName != null)
 				{
-					Double monOrignValue = (Double)aNonOriginatingMaterialRdc.getValue(columnName);
+					Object monOrignValue = aNonOriginatingMaterialRdc.getValue(columnName);
 					if(monOrignValue != null)
-						theNonOriginatingValue = new BigDecimal(monOrignValue);
+						theNonOriginatingValue = (BigDecimal)monOrignValue;
 				}
 
 				if (aBOMHeaderCurrency != null && !aBOMHeaderCurrency.trim().isEmpty() 

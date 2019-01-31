@@ -54,6 +54,7 @@ public class CumulationComputationRule
 			throws Exception
 	{
 
+
 		CumulationRule cumulationrule = getCumulationRdcByCOIAndCOMConfig(aQualTXComp.org_code,aQualTXComp.qualTX.fta_code,aQualTXComp.qualTX.ctry_of_import,aQualTXComp.qualTX.ctry_of_manufacture);
 		if(cumulationrule == null)
 			return;
@@ -194,6 +195,22 @@ public class CumulationComputationRule
 			}
 		}
 		
+		QualTXComponentDataExtension qualTXCompDetails = null;
+		if(aQualTXComp.deList != null && !aQualTXComp.deList.isEmpty())
+		{
+			for(QualTXComponentDataExtension qualTXCompDe: aQualTXComp.deList)
+			{
+				if(qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
+				{
+					qualTXCompDetails = qualTXCompDe;
+					break;
+				}
+			}
+		}
+		if(qualTXCompDetails == null)
+			qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
+		
+		Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 		// TA 64389 - Addition of COO to cumulation configuration
 		if (!"Y".equalsIgnoreCase(aQualTXComp.cumulation_rule_applied) && !"QUALIFIED".equalsIgnoreCase(aQualTXComp.qualified_flg))
 		{
@@ -223,29 +240,24 @@ public class CumulationComputationRule
 		{
 			Long theIvakey =  cumulative_fta_iva_key != 0 ? cumulative_fta_iva_key : aQualTXComp.prod_src_iva_key; 
 			GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(theIvakey);
-			if (claimdetailsContainer == null) return;
+			if (claimdetailsContainer == null)
+			{
+				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), aQualTXComp.ctry_of_origin);
+				return;
+			}
 			GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
-			if (aClaimDetails == null) return;
+			if (aClaimDetails == null) 
+			{
+				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), aQualTXComp.ctry_of_origin);
+				return;
+			}
 
 			String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(aQualTXComp.org_code, aQualTXComp.cumulation_rule_fta_used != null ? aQualTXComp.cumulation_rule_fta_used : aQualTXComp.qualTX.fta_code, propertySheetManager);
 			Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
 
 			String cumulationCtryList = (String) aClaimDetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CTRY_LIST").toLowerCase());
 
-			QualTXComponentDataExtension qualTXCompDetails = null;
-			if(aQualTXComp.deList != null && !aQualTXComp.deList.isEmpty())
-			{
-				for(QualTXComponentDataExtension qualTXCompDe: aQualTXComp.deList)
-				{
-					if(qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
-					{
-						qualTXCompDetails = qualTXCompDe;
-						break;
-					}
-				}
-			}
 
-			Map<String,String> qualtxCOmpDtlflexFieldMap = getFeildMapping("QUALTX","COMP_DTLS");
 			
 			if(cumulationrule.useCOOList() && cumulative_fta_iva_key == 0 && cumulationCtryList != null)
 			{
@@ -262,8 +274,7 @@ public class CumulationComputationRule
 					cumulationCtryList = aQualTXComp.ctry_of_origin;
 			}
 			
-			if(qualTXCompDetails == null)
-				qualTXCompDetails = aQualTXComp.createDataExtension("QUALTX:COMP_DTLS", dataExtRepos, null);
+
 
 			if(cumulationCtryList != null && !cumulationCtryList.isEmpty())
 				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
@@ -311,6 +322,7 @@ public class CumulationComputationRule
 				else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
 					aQualTXComp.in_cumulation_value = aQualTXComp.cumulation_value;
 		}
+	
 	}	
 	
 	public Double	calculateCumulationValue	(QualTXComponent aQualTXComp, GPMClaimDetails claimdetails)
