@@ -234,6 +234,10 @@ public class CumulationComputationRule
 						aQualTXComp.cumulation_rule_applied = "Y";
 					}
 				}
+				else {
+					aQualTXComp.cumulation_rule_applied = "N";
+					aQualTXComp.qualified_flg = "NOT_QUALIFIED";
+				}
 			}
 		}
 		if("Y".equals(aQualTXComp.cumulation_rule_applied))
