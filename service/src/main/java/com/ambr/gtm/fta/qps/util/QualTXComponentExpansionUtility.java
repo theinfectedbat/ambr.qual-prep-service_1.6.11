@@ -308,31 +308,33 @@ public class QualTXComponentExpansionUtility
 						}
 						// Create the component if it already does not exist and
 						// pull Basic Info, Ctry Cmpl & IVA data.
-						QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
-						QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
-						aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
-						aQualTXComponentUtility.setBOMUniverse(this.bomUniverse);
-						aQualTXComponentUtility.pullComponentData();
-						if (this.isRawMaterialApproach)
-						{
-							aNewQualTXComp.raw_material_ind = "Y";
-							aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
-							aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
-							aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
-							aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
-
-						}
-
-						if (this.isIntermediateApproach)
-						{
-							aNewQualTXComp.intermediate_ind = "Y";
-							aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
-							aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
-							aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
-							aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
-						}
-						aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}", aSubBOMComp.comp_num);
-						theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
+						if(!subBOMCompAlreadyInQualtxComp(aSubBOMComp)){
+							QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
+							QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
+							aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
+							aQualTXComponentUtility.setBOMUniverse(this.bomUniverse);
+							aQualTXComponentUtility.pullComponentData();
+							if (this.isRawMaterialApproach)
+							{
+								aNewQualTXComp.raw_material_ind = "Y";
+								aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
+								aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
+								aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
+								aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
+	
+							}
+	
+							if (this.isIntermediateApproach)
+							{
+								aNewQualTXComp.intermediate_ind = "Y";
+								aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
+								aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
+								aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
+								aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
+							}
+							aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}", aSubBOMComp.comp_num);
+							theUniqueComponents.put(aUniqueCompKey.getKey(), aNewQualTXComp);
+					    }
 					}
 
 				}
@@ -349,6 +351,36 @@ public class QualTXComponentExpansionUtility
 		return true;
 	}
 
+	private boolean subBOMCompAlreadyInQualtxComp(BOMComponent aSubBOMComp)
+	{
+		if(this.qualTX.compList == null || this.qualTX.compList.isEmpty()) return false;
+	
+		for(QualTXComponent qualTXComponent : this.qualTX.compList)
+		{
+			if(qualTXComponent.prod_key.equals(aSubBOMComp.prod_key) && qualTXComponent.prod_src_key.equals(aSubBOMComp.prod_src_key) && qualTXComponent.unit_cost.equals(aSubBOMComp.unit_cost))
+			{
+				if(this.isRawMaterialApproach)
+				{	
+					qualTXComponent.rm_qty_per = (qualTXComponent.rm_qty_per != null ? qualTXComponent.rm_qty_per : 0) + aSubBOMComp.qty_per;
+					qualTXComponent.rm_cost = aSubBOMComp.unit_cost * qualTXComponent.rm_qty_per;
+					qualTXComponent.rm_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
+					qualTXComponent.rm_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
+					qualTXComponent.raw_material_ind = "Y";
+				}
+				if(this.isIntermediateApproach)
+				{
+					qualTXComponent.in_qty_per = (qualTXComponent.in_qty_per != null ? qualTXComponent.in_qty_per : 0) + aSubBOMComp.qty_per;
+					qualTXComponent.in_cost = aSubBOMComp.unit_cost * qualTXComponent.in_qty_per;
+					qualTXComponent.in_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
+					qualTXComponent.in_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
+					qualTXComponent.intermediate_ind = "Y";
+				}
+				return true;
+			}
+		}
+	
+		return false;
+	}
 
 	class UniqueComponent
 	{
