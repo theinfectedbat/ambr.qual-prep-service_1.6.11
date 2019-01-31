@@ -69,12 +69,15 @@ public class ArQtxWorkUtility
 
 		ArrayList<Object> paramList = new ArrayList<>();
 		if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION)
-		{
+		{   paramList.addAll(altKeyList);
 			sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
-			if (null != ftaList && !ftaList.isEmpty()) sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+			if (null != ftaList && !ftaList.isEmpty()){
+				sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+				paramList.addAll(ftaList);
+			}
 		}
-		paramList.addAll(altKeyList);
-		paramList.addAll(ftaList);
+		
+		
 
 		List<Long> data = this.template.query(sql.toString(),paramList.toArray(), new RowMapper<Long>(){
             public Long mapRow(ResultSet rs, int rowNum) 
