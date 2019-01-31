@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +13,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.ambr.gtm.fta.qps.util.ComponentType;
-import com.ambr.gtm.fta.qps.util.QualTXComponentExpansionUtility;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMComponentDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMUniverse;
@@ -27,13 +26,14 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
-import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductSourceContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentPrice;
+import com.ambr.gtm.fta.qps.util.ComponentType;
+import com.ambr.gtm.fta.qps.util.QualTXComponentExpansionUtility;
 import com.ambr.gtm.fta.qps.util.QualTXComponentUtility;
 import com.ambr.gtm.fta.qps.util.QualTXUtility;
 import com.ambr.gtm.fta.qts.QTXCompWork;
@@ -66,6 +66,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 	
 	private DataExtensionConfigurationRepository repos;
 	private QualTXBusinessLogicProcessor qtxBusinessLogicProcessor;
+	private JdbcTemplate jdbcTemplate;
 	public QualTXBusinessLogicProcessor getQtxBusinessLogicProcessor()
 	{
 		return qtxBusinessLogicProcessor;
@@ -89,6 +90,11 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 	public void setDataExtensionRepository(DataExtensionConfigurationRepository repos)
 	{
 		this.repos = repos;
+	}
+	
+	public void setJdbcTemplate(JdbcTemplate jdbcTemplate)
+	{
+		this.jdbcTemplate = jdbcTemplate;
 	}
 	
 	//TODO what if bomcomp is removed then added, merged into one work item.  based on logic below the add will execute then the remove.  consolidation logic might have to detect this and skip the add.
@@ -130,23 +136,28 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 
 			if (qualtxComp == null)
 			{
-			
 				if (bomComp.component_type != null && !bomComp.component_type.isEmpty() && !ComponentType.DEFUALT.EXCLUDE_QUALIFICATION.name().equalsIgnoreCase(bomComp.component_type) && !ComponentType.DEFUALT.PACKING.name().equalsIgnoreCase(bomComp.component_type))
 				{
-					qualtxComp = addComponent(qualtx, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache,
-							aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
-					parentWorkPackage.qualtx.compList.add(qualtxComp);
-					if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
+					if (!isComponentExists(qualtx.alt_key_qualtx, work.bom_comp_key))
 					{
-						qualtxComp.top_down_ind = "Y";
+						qualtxComp = addComponent(qualtx, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache,
+								aDataExtensionConfigurationRepository, gpmClassCache, bomUniverse);
+						
+						parentWorkPackage.qualtx.compList.add(qualtxComp);
+						if (parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal())
+						{
+							qualtxComp.top_down_ind = "Y";
+						}
+						
+						if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
+						{
+							parentWorkPackage.isReadyForQualification = false;
+							qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+							qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+						}
+						compWorkPackage.qualtxComp = qualtxComp;
 					}
-					if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
-					{
-						parentWorkPackage.isReadyForQualification = false;
-						qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-						qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-					}
-					compWorkPackage.qualtxComp = qualtxComp;
+					
 				}
 			}
 		}
@@ -495,6 +506,13 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.created_by = parentWork.userId;
 			qualtxComp.created_date = currentDate;
 		}
+	}
+
+	private boolean isComponentExists(long alt_key_qualtx, long bom_comp_key) {
+		
+		String	aSqlText = "select count(1) from mdi_qualtx_comp where alt_key_qualtx=? and src_key=? ";
+		Integer count = this.jdbcTemplate.queryForObject(aSqlText, new Object[]{alt_key_qualtx, bom_comp_key}, Integer.class);
+		return (count == 1) ? true : false;
 	}
 
 	private void compareBomCompPricesWithQualtxComponentPrices(QTXWork parentWork, QualTXComponent qualtxComp,
