@@ -359,12 +359,19 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 					rowKeyColumns.put("SEQ_NUM", ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).seq_num);
 					Long altkey = ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).seq_num;
 					BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-					if (compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES", STATE.DELETE);
-					compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
-					compDeAudit.setState(STATE.DELETE);
-					compDeAudit.setRowKeyColumns(rowKeyColumns);
-					auditMap.put(altkey, compDeAudit);
-					audit.addChildTable(compDeAudit);
+					if(compDeAudit == null)
+					{
+						String thegroupName = ((QualTXComponentDataExtension)deletedRecord.modifiableRecord).group_name;
+						if("IMPL_BOM_PROD_FAMILY:TEXTILES".equalsIgnoreCase(thegroupName))
+							compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES", STATE.DELETE);
+						else if("QUALTX:COMP_DTLS".equalsIgnoreCase(thegroupName))
+								compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "QUALTX_COMP_DTLS", STATE.DELETE);
+						compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
+						compDeAudit.setState(STATE.DELETE);
+						compDeAudit.setRowKeyColumns(rowKeyColumns);
+						auditMap.put(altkey, compDeAudit);
+						audit.addChildTable(compDeAudit);
+					}
 				}
 
 			}
