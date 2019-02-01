@@ -222,11 +222,9 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		//TODO double check
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_CHANGE) == true)
 		{
-			qualtx.prod_src_key = null;
+			qualtx.prod_src_iva_key = null;
 			qualtx.supplier_key = null;
 			qualtx.manufacturer_key = null;
-			qualtx.prod_src_key = -1l;
-			qualtx.prod_src_key = null;
 			workPackage.deleteBOMQual = true;
 		}
 
@@ -353,10 +351,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 						+ ", workcomp count = "
 						+ workPackage.work.compWorkList.size());
 
-				//TODO uncomment this for full end to end testing
-				// workPackage.lockId = TradeQualtxClient.acquireLock(workPackage.work.company_code,
-				// 	workPackage.work.userId,
-				// 	workPackage.work.details.qualtx_key);
+				workPackage.lockId = TradeQualtxClient.acquireLock(workPackage.work.company_code,
+						workPackage.work.userId,workPackage.work.details.qualtx_key);
 
 				// Do all business logic
 				this.doWork(workPackage);
