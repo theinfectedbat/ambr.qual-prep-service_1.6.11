@@ -481,6 +481,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.supplier_key = null;
 					qualtxComp.manufacturer_key = null;
 					qualtxComp.prod_src_iva_key = null;
+					qualtxComp.qualified_flg = "";
 					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
 					aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
