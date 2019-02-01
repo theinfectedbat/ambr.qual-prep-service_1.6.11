@@ -359,19 +359,16 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 					rowKeyColumns.put("SEQ_NUM", ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).seq_num);
 					Long altkey = ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).seq_num;
 					BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-					if(compDeAudit == null)
+					if (compDeAudit == null)
 					{
-						String thegroupName = ((QualTXComponentDataExtension)deletedRecord.modifiableRecord).group_name;
-						if("IMPL_BOM_PROD_FAMILY:TEXTILES".equalsIgnoreCase(thegroupName))
-							compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES", STATE.DELETE);
-						else if("QUALTX:COMP_DTLS".equalsIgnoreCase(thegroupName))
-								compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "QUALTX_COMP_DTLS", STATE.DELETE);
-						compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
-						compDeAudit.setState(STATE.DELETE);
-						compDeAudit.setRowKeyColumns(rowKeyColumns);
-						auditMap.put(altkey, compDeAudit);
-						audit.addChildTable(compDeAudit);
+						String thegroupName = ((QualTXComponentDataExtension) deletedRecord.modifiableRecord).group_name;
+						compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, thegroupName.replaceAll(":", "_"), STATE.DELETE);
 					}
+					compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
+					compDeAudit.setState(STATE.DELETE);
+					compDeAudit.setRowKeyColumns(rowKeyColumns);
+					auditMap.put(altkey, compDeAudit);
+					audit.addChildTable(compDeAudit);
 				}
 
 			}
@@ -462,7 +459,10 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 
 				Long altkey = ((QualTXComponentDataExtension) modRecord.modifiableRecord).seq_num;
 				BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-				if (compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES", STATE.MODIFY);
+				if (compDeAudit == null) {
+					String thegroupName = ((QualTXComponentDataExtension) modRecord.modifiableRecord).group_name;
+					compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, thegroupName.replaceAll(":", "_"), STATE.MODIFY);
+				}
 				compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 				compDeAudit.setState(STATE.MODIFY);
 				for (DataRecordColumnModification columnMod : modRecord.getColumnModifications())
@@ -568,7 +568,8 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 
 				Long altkey = qualTXCompDe.seq_num;
 				BOMQualAuditEntity compDeAudit = auditMap.get(altkey);
-				if (compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, "IMPL_BOM_PROD_FAMILY_TEXTILES", STATE.CREATE);
+				String thegroupName = qualTXCompDe.group_name;
+				if (compDeAudit == null) compDeAudit = new BOMQualAuditEntity("MDI_QUALTX_COMP", altkey, thegroupName.replaceAll(":", "_"), STATE.CREATE);
 				compDeAudit.setSurrogateKeyColumn("SEQ_NUM");
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR1", qualTXCompDe.getValue("FLEXFIELD_VAR1"), null);
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR2", qualTXCompDe.getValue("FLEXFIELD_VAR2"), null);
@@ -577,7 +578,24 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR5", qualTXCompDe.getValue("FLEXFIELD_VAR5"), null);
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR6", qualTXCompDe.getValue("FLEXFIELD_VAR6"), null);
 				compDeAudit.setModifiedColumn("FLEXFIELD_VAR7", qualTXCompDe.getValue("FLEXFIELD_VAR7"), null);
-				compDeAudit.setModifiedColumn("FLEXFIELD_NUM1", qualTXCompDe.getValue("FLEXFIELD_NUM1"), null);
+				if ("IMPL_BOM_PROD_FAMILY:TEXTILES".equalsIgnoreCase(thegroupName))
+				{
+					compDeAudit.setModifiedColumn("FLEXFIELD_NUM1", qualTXCompDe.getValue("FLEXFIELD_NUM1"), null);
+				}
+				if ("QUALTX:COMP_DTLS".equalsIgnoreCase(thegroupName))
+				{
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR8", qualTXCompDe.getValue("FLEXFIELD_VAR8"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR9", qualTXCompDe.getValue("FLEXFIELD_VAR9"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR10", qualTXCompDe.getValue("FLEXFIELD_VAR10"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR11", qualTXCompDe.getValue("FLEXFIELD_VAR11"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR12", qualTXCompDe.getValue("FLEXFIELD_VAR12"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR13", qualTXCompDe.getValue("FLEXFIELD_VAR13"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR14", qualTXCompDe.getValue("FLEXFIELD_VAR14"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR15", qualTXCompDe.getValue("FLEXFIELD_VAR15"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR16", qualTXCompDe.getValue("FLEXFIELD_VAR16"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_VAR17", qualTXCompDe.getValue("FLEXFIELD_VAR17"), null);
+					compDeAudit.setModifiedColumn("FLEXFIELD_NOTE1", qualTXCompDe.getValue("FLEXFIELD_NOTE1"), null);
+				}
 				compDeAudit.setRowKeyColumns(rowKeyColumns);
 				compDeAudit.setState(STATE.CREATE);
 				auditMap.put(altkey, compDeAudit);
