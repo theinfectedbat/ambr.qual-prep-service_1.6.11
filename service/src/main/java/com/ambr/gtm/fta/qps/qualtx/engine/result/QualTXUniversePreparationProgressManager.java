@@ -57,7 +57,7 @@ public class QualTXUniversePreparationProgressManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public void clearResults()
+	public synchronized void clearResults()
 		throws Exception
 	{
 		this.request = null;
@@ -88,7 +88,7 @@ public class QualTXUniversePreparationProgressManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public BOMStatusManager getStatusManager()
+	public synchronized BOMStatusManager getStatusManager()
 		throws Exception
 	{
 		BOMStatusManager aStatusMgr;
@@ -396,7 +396,7 @@ public class QualTXUniversePreparationProgressManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public void rawMaterialAndOrIntermediateAnalysisStart()
+	public synchronized void rawMaterialAndOrIntermediateAnalysisStart()
 		throws Exception
 	{
 		this.bomRawMaterialAndOrIntermediateStatusMgr.setStartTime();
@@ -408,7 +408,7 @@ public class QualTXUniversePreparationProgressManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public void rawMaterialAndOrIntermediateAnalysisComplete()
+	public synchronized void rawMaterialAndOrIntermediateAnalysisComplete()
 		throws Exception
 	{
 		this.bomRawMaterialAndOrIntermediateStatusMgr.setEndTime();
@@ -420,7 +420,7 @@ public class QualTXUniversePreparationProgressManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public void topDownAnalysisStart()
+	public synchronized void topDownAnalysisStart()
 		throws Exception
 	{
 		this.bomTopDownStatusMgr.setStartTime();
@@ -432,7 +432,7 @@ public class QualTXUniversePreparationProgressManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public void topDownAnalysisComplete()
+	public synchronized void topDownAnalysisComplete()
 		throws Exception
 	{
 		this.bomTopDownStatusMgr.setEndTime();
