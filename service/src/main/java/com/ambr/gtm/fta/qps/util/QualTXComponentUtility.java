@@ -355,7 +355,7 @@ public class QualTXComponentUtility
 			if (aSourceIVAProductSourceContainer == null) 
 				return null;
 			
-			this.qualTXComp.prod_src_key = this.bomComp.prod_src_key;
+			if(aSourceIVAProductSourceContainer.ivaList.size() > 0) this.qualTXComp.prod_src_key = this.bomComp.prod_src_key;
 			for (GPMSourceIVA aSrcIVA : aSourceIVAProductSourceContainer.ivaList) {
 				//This api allow only SYSTEM_DECISION=M and Full Year IVA Records
 				if(!aSrcIVA.isIVAEligibleForProcessing())
@@ -451,7 +451,7 @@ public class QualTXComponentUtility
 		TradeLane tradeLane = new TradeLane(this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import);
 		
 		boolean useNonOriginatingMaterials = false;
-		if(tradelaneCintainer.getTradeLaneData(tradeLane) != null) tradelaneCintainer.getTradeLaneData(tradeLane).isUseNonOriginatingMaterials();
+		if(tradelaneCintainer.getTradeLaneData(tradeLane) != null) useNonOriginatingMaterials = tradelaneCintainer.getTradeLaneData(tradeLane).isUseNonOriginatingMaterials();
 		if(useNonOriginatingMaterials && (this.qualTXComp.make_buy_flg == null || this.qualTXComp.make_buy_flg.equals("B"))) 
 		{
 			setNonOriginatingMaterialCost();
