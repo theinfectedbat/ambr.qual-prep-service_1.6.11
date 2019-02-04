@@ -281,7 +281,7 @@ public class QTXStageProducer extends QTXProducer
 		
 		this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap, bestTime);
 		this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap, bestTime);
-		//this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
+		this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
 
 		return consolidatedWork;
 	}
@@ -339,7 +339,7 @@ public class QTXStageProducer extends QTXProducer
 
 			//logger.error("@@@@ getConsolidatedQualtxForContentUpdate=qualtx.src_key= " +thequaltx.src_key + " qualtx.alt_key_qualtx="+thequaltx.alt_key_qualtx+" bomConsolMap"+bomConsolMap.keySet());
 			QTXWork theQtxWork = this.utility.createQtxWorkObj(thequaltx, 0, bomConsolMap, thequaltx.src_key);
-
+			theQtxWork.setWorkStatus(QualtxStatus.READY_FOR_QUALIFICATION);
 			consolidatedWork.put(thequaltx.alt_key_qualtx, theQtxWork);
 		}
 
@@ -387,6 +387,8 @@ public class QTXStageProducer extends QTXProducer
 					bomKeyList.add(bomkey);
 				}
 
+				if(ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION == theHeaderReasonCodes.optLong(index)) continue;
+				
 				bomRequalMap.put(theHeaderReasonCodes.optLong(index), bomKeyList);
 			}
 		}
