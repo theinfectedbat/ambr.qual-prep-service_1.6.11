@@ -261,7 +261,13 @@ public class CumulationComputationRule
 
 			String cumulationCtryList = (String) aClaimDetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CTRY_LIST").toLowerCase());
 
+			Object cumulationValueObj =  aClaimDetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_VALUE").toLowerCase());
 
+			if(null != cumulationValueObj) aQualTXComp.cumulation_value = ((Number)cumulationValueObj).doubleValue();
+			
+			Object cumulationCurrencyObj =  aClaimDetails.claimDetailsValue.get(flexFieldMap.get("CUMULATION_CURRENCY").toLowerCase());
+			
+			if(null != cumulationCurrencyObj) aQualTXComp.cumulation_currency = (String)cumulationCurrencyObj;
 			
 			if(cumulationrule.useCOOList() && cumulative_fta_iva_key == 0 && cumulationCtryList != null)
 			{
