@@ -451,7 +451,7 @@ public class QualTXComponentUtility
 		TradeLane tradeLane = new TradeLane(this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import);
 		
 		boolean useNonOriginatingMaterials = false;
-		if(tradelaneCintainer.getTradeLaneData(tradeLane) != null) tradelaneCintainer.getTradeLaneData(tradeLane).isUseNonOriginatingMaterials();
+		if(tradelaneCintainer.getTradeLaneData(tradeLane) != null) useNonOriginatingMaterials = tradelaneCintainer.getTradeLaneData(tradeLane).isUseNonOriginatingMaterials();
 		if(useNonOriginatingMaterials && (this.qualTXComp.make_buy_flg == null || this.qualTXComp.make_buy_flg.equals("B"))) 
 		{
 			setNonOriginatingMaterialCost();
