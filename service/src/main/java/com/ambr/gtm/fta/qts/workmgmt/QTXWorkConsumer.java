@@ -225,6 +225,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			qualtx.prod_src_iva_key = null;
 			qualtx.supplier_key = null;
 			qualtx.manufacturer_key = null;
+			qualtx.qualified_flg = "";
 			workPackage.deleteBOMQual = true;
 		}
 
@@ -251,7 +252,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			// are not processing this reason code.
 		}
 
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_CHANGE) == false && work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
 		{
 			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache = ((QTXWorkProducer)(this.producer)).queueUniverse.ivaCache;
 			GPMSourceIVA gpmSourceIVA = null;
