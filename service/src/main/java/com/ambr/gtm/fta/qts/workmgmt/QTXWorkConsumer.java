@@ -186,8 +186,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				}
 			}
 			qualtx.priceList.removeAll(deleteBomPrice);
-			qualtx.cost = (isTransactionValueExist) ? transactionValue : 0.0;
-			qualtx.value = (isNetValueExist) ? netValue : 0.0;
+			qualtx.value = (isTransactionValueExist) ? transactionValue : 0.0;
+			qualtx.cost = (isNetValueExist) ? netValue : 0.0;
 			qtxBusinessLogicProcessor.populateRollupPriceDetails(bom, qualtx, "ALL");
 		}
 
