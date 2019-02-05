@@ -219,16 +219,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			workPackage.deleteBOMQual = true;
 		}
 
-		//TODO double check
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_CHANGE) == true)
-		{
-			qualtx.prod_src_iva_key = null;
-			qualtx.supplier_key = null;
-			qualtx.manufacturer_key = null;
-			qualtx.qualified_flg = "";
-			workPackage.deleteBOMQual = true;
-		}
-
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE) == true)
 		{
 			// As discussed with Pavan, we donot need to pull the any data to
@@ -252,7 +242,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			// are not processing this reason code.
 		}
 
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_CHANGE) == false && work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_SRC_CHANGE) == true || work.details.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_IVA_CHANGE_M_I))
 		{
 			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache = ((QTXWorkProducer)(this.producer)).queueUniverse.ivaCache;
 			GPMSourceIVA gpmSourceIVA = null;
@@ -267,8 +257,14 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				aContainer.indexByProdSourceKey();
 			    gpmSourceIVA = aContainer.getGPMSourceIVA(prodSourceKey, qualtx.prod_src_iva_key);
 			}
-
-			if (gpmSourceIVA != null)
+			
+			qualtx.prod_src_iva_key = null;
+			qualtx.supplier_key = null;
+			qualtx.manufacturer_key = null;
+			qualtx.qualified_flg = "";
+			workPackage.deleteBOMQual = true;
+			qualtx.is_active = "N";
+			/*if (gpmSourceIVA != null)
 			{
 				if (STPDecisionEnum.M.equals(gpmSourceIVA.systemDecision))
 				{
@@ -279,7 +275,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 					qualtx.is_active = "N";
 					workPackage.deleteBOMQual = true;
 				}
-			}
+			}*/
 
 		}
 
