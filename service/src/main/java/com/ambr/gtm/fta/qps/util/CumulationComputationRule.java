@@ -269,12 +269,7 @@ public class CumulationComputationRule
 			
 			if(null != cumulationCurrencyObj) aQualTXComp.cumulation_currency = (String)cumulationCurrencyObj;
 			
-			if(cumulationrule.useCOOList() && cumulative_fta_iva_key == 0 && cumulationCtryList != null)
-			{
-				if(aQualTXComp.ctry_of_origin != null && !aQualTXComp.ctry_of_origin.isEmpty() && !cumulationCtryList.contains(aQualTXComp.ctry_of_origin))
-					cumulationCtryList = cumulationCtryList  + ";" + aQualTXComp.ctry_of_origin;
-			}
-			else if(cumulationrule.useCOOList() && cumulationCtryList == null)
+            if(cumulationrule.useCOOList() && cumulationCtryList == null)
 			{
 				cumulationCtryList = aQualTXComp.ctry_of_origin;
 			}
