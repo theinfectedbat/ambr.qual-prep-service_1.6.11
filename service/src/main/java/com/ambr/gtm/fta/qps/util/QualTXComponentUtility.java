@@ -410,6 +410,7 @@ public class QualTXComponentUtility
 			}
 		}
 		
+		if (this.qualTXComp.prod_src_iva_key==null) return aSourceIVAProductSourceContainer;
 		this.qualTXComp.setClaimDetails(
 				
 			this.claimDetailsCache.getClaimDetails(this.qualTXComp.prod_src_iva_key),
