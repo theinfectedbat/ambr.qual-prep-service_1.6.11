@@ -72,6 +72,12 @@ public class QTXWorkPersistenceProducer extends QTXProducer
 						tradeLaneStats.qualtxKey = workPackage.qualtx.alt_key_qualtx;
 						tradeLaneStats.requestTime = requestTime;
 						
+						tradeLaneStats.ftaCode = workPackage.qualtx.fta_code;
+						tradeLaneStats.ivaCode = workPackage.qualtx.iva_code;
+						tradeLaneStats.effectiveFrom = (workPackage.qualtx.effective_from != null) ? workPackage.qualtx.effective_from.getTime() : null;
+						tradeLaneStats.effectiveTo = (workPackage.qualtx.effective_to != null) ? workPackage.qualtx.effective_to.getTime() : null;
+						tradeLaneStats.coi = workPackage.qualtx.ctry_of_import;
+
 						//Calculate estimate based on metrics
 						tradeLaneStats.estimate = System.currentTimeMillis();
 										

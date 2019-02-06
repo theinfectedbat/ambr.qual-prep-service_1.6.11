@@ -110,7 +110,11 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			}
 			if (!statusUpdated) this.updateWorkToSuccess(workPackage, template);
 
-			if (workPackage.lockId != null) tradeQualtxClient.releaseLock(workPackage.lockId);
+			Long lockId = workPackage.getLockId();
+			if (lockId != null)
+			{
+				tradeQualtxClient.releaseLock(lockId);
+			}
 
 			// if the current analysis method is Top-Down mark the
 			// TD_CONSTRUCTION_STATUS as COMPLETE

@@ -23,7 +23,9 @@ public class WorkPackage
 	public boolean headerProcessed = false;
 	private int childCompletedCount = 0;
 
-	public Long lockId;
+	//lockId is only set on rootPackage (lock only acquired once)
+	private Long lockId;
+	
 	public Exception failure;
 	
 	public BOM bom;
@@ -49,6 +51,22 @@ public class WorkPackage
 			
 			next = next.linkedPackage;
 		}
+	}
+	
+	public Long getLockId()
+	{
+		if (this.rootPackage != null)
+			return this.rootPackage.lockId;
+		else
+			return this.lockId;
+	}
+	
+	public void setLockId(Long lockId)
+	{
+		if (this.rootPackage != null)
+			this.rootPackage.lockId = lockId;
+		else
+			this.lockId = lockId;
 	}
 	
 	public void setBOM(BOM bom)

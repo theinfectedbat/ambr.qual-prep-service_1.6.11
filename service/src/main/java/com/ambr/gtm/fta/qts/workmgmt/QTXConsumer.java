@@ -51,9 +51,14 @@ public abstract class QTXConsumer<T> implements Runnable
 		}
 		finally
 		{
-			if (this.workList != null)
+			ArrayList<T> list = this.workList;
+
+			//Free work list immediately.  thread may continue in producer queue as a future for some duration after work has completed.
+			this.workList = null;
+
+			if (list != null)
 			{
-				int size = this.workList.size();
+				int size = list.size();
 				
 				if (size > 0)
 					this.producer.completedStats(size, System.currentTimeMillis() - start);

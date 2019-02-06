@@ -721,6 +721,8 @@ public class ApplicationConfiguration
 			workRepository,
 			idGenerator);
 			
+			qtxWorkProducer.setMaxObjects(Long.parseLong(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".max_objects", "1000000")));
+			
 			String bomClientURL = this.propertyResolver.getPropertyValue(BOMUniverseBOMClientAPI.class.getName() + ".url", "");
 			BOMUniverseBOMClientAPI bomUniverseBOMClientAPI = new BOMUniverseBOMClientAPI(new URL(bomClientURL));
 			
@@ -759,15 +761,17 @@ public class ApplicationConfiguration
 		if (requalServiceRequired)
 		{
 			qtxStageProducer.init(
-					Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".threads", "20")), 
-					Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".read_ahead", "5000")), 
-					Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".fetch_size", "1000")), 
-					Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".batch_size", "1")),
-			Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".sleep_interval", "" + 5*60*1000)),
-			qualTxRepository,
-			workRepository,
-			idGenerator,
-			bomUniverse,qeConfigCache);
+				Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".threads", "20")), 
+				Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".read_ahead", "5000")), 
+				Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".fetch_size", "1000")), 
+				Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".batch_size", "1")),
+				Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkProducer.class.getName() + ".sleep_interval", "" + 5*60*1000)),
+				Long.parseLong(this.propertyResolver.getPropertyValue(QTXStageProducer.class.getName() + ".max_stage_work", "" + 1000000)),
+				Long.parseLong(this.propertyResolver.getPropertyValue(QTXStageProducer.class.getName() + ".max_work", "" + 1000000)),
+				qualTxRepository,
+				workRepository,
+				idGenerator,
+				bomUniverse,qeConfigCache);
 			
 			String cacheRefreshUrl = this.propertyResolver.getPropertyValue(GetCacheRefreshInformationClientAPI.class.getName() + ".url", "");
 			GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI = new GetCacheRefreshInformationClientAPI(new URL(cacheRefreshUrl));
