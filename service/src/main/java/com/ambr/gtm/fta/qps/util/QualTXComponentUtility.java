@@ -410,14 +410,6 @@ public class QualTXComponentUtility
 			}
 		}
 		
-		if (this.qualTXComp.prod_src_iva_key == null) 
-		{
-			MessageFormatter.debug(logger, "pullIVAData", "BOM Component with Key [{0,number,#}]: did not have an IVA identified for FTA [{1}], COI[{2}], Effective From[{3, date, dd-MMM-yyyy}], Effective To[{4, date, dd-MMM-yyyy}, Unable to process Component COO Determination, Cumulation Computation and Previous Year Qualification for Component ]", 
-					this.bomComp.alt_key_comp, 
-					this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import,
-					this.qualTXComp.qualTX.effective_from, this.qualTXComp.qualTX.effective_to);
-			return aSourceIVAProductSourceContainer;
-		}
 		this.qualTXComp.setClaimDetails(
 				
 			this.claimDetailsCache.getClaimDetails(this.qualTXComp.prod_src_iva_key),
@@ -432,7 +424,7 @@ public class QualTXComponentUtility
 			coo = determineComponentCOO.determineCOOForComponentSource(this.qualTXComp, this.bomComp, aSourceIVAProductSourceContainer, aGPMClassContainer, this.qualTXBusinessLogicProcessor.propertySheetManager);
 			this.qualTXComp.ctry_of_origin = coo;
 		}
-
+		
 		if (this.cumulationComputationRule != null) cumulationComputationRule.applyCumulationForComponent(this.qualTXComp, aSourceIVAProductSourceContainer, this.claimDetailsCache, this.dataExtCfgRepos);
 
 		if (!"Y".equalsIgnoreCase(this.qualTXComp.cumulation_rule_applied) && (this.qualTXComp.qualified_flg == null || "".equalsIgnoreCase(this.qualTXComp.qualified_flg)))

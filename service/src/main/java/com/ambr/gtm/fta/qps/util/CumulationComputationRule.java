@@ -135,7 +135,12 @@ public class CumulationComputationRule
 
 				if (!markAsNonOriginating)
 				{
-					Long theIvakey =  cumulative_fta_iva_key != 0 ? cumulative_fta_iva_key : aQualTXComp.prod_src_iva_key; 
+					Long theIvakey =  null;
+					if( cumulative_fta_iva_key > 0)
+						theIvakey = cumulative_fta_iva_key; 
+					else if(aQualTXComp.prod_src_iva_key != null && aQualTXComp.prod_src_iva_key > 0)
+						theIvakey =  aQualTXComp.prod_src_iva_key;
+					
 					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(theIvakey);
 					if (claimdetailsContainer == null) return;
 					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
@@ -242,7 +247,12 @@ public class CumulationComputationRule
 		}
 		if("Y".equals(aQualTXComp.cumulation_rule_applied))
 		{
-			Long theIvakey =  cumulative_fta_iva_key != 0 ? cumulative_fta_iva_key : aQualTXComp.prod_src_iva_key; 
+			Long theIvakey =  null;
+			if( cumulative_fta_iva_key > 0)
+				theIvakey = cumulative_fta_iva_key; 
+			else if(aQualTXComp.prod_src_iva_key != null && aQualTXComp.prod_src_iva_key > 0)
+				theIvakey =  aQualTXComp.prod_src_iva_key;
+			
 			GPMClaimDetailsSourceIVAContainer claimdetailsContainer = claimDetailsCache.getClaimDetails(theIvakey);
 			if (claimdetailsContainer == null)
 			{
