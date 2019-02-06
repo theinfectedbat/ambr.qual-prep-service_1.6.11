@@ -520,7 +520,7 @@ public class QualTXComponentUtility
 
 			if (useNonOriginatingMaterialsExists && theTotalNonOriginatingComp.doubleValue() > 0)
 			{
-				double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.unit_cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
+				double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
 				
 				if(this.qualTXComp.qualTX.analysis_method == null 
 						|| "".equals(this.qualTXComp.qualTX.analysis_method))
