@@ -116,7 +116,7 @@ public class ArQtxWorkUtility
 				+ " COMP.PROD_CTRY_CMPL_KEY AS COMP_PROD_CTRY_CMPL_KEY, COMP.SRC_KEY AS COMP_KEY, COMP.SRC_ID AS COMP_ID , QUALTX.ALT_KEY_QUALTX, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY,"
 				+ " QUALTX.PROD_SRC_KEY, QUALTX.PROD_CTRY_CMPL_KEY, QUALTX.SRC_KEY AS BOM_KEY, QUALTX.SUB_PULL_CTRY, QUALTX.IVA_CODE as HEADER_IVA_CODE, QUALTX.FTA_CODE as HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT as HEADER_CTRY_OF_IMPORT "
 				+ " FROM MDI_QUALTX_COMP COMP JOIN MDI_QUALTX QUALTX "
-				+ " ON (QUALTX.ALT_KEY_QUALTX = COMP.ALT_KEY_QUALTX) WHERE ");
+				+ " ON (QUALTX.ALT_KEY_QUALTX = COMP.ALT_KEY_QUALTX AND ");
 
 		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
@@ -143,7 +143,8 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
-
+		sql.append(")");
+		
 		List<QualTX> list = new ArrayList<QualTX>();
 			
 		logger.debug("getImpactedQtxCompKeys reason code " + reasonCode + " key size " + altKeyList.size());
@@ -198,10 +199,11 @@ public class ArQtxWorkUtility
 
 	public List<QualTX> getImpactedQtxCompKeysForNewComp(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT QUALTX.ALT_KEY_QUALTX, QUALTX.ORG_CODE, QUALTX.PROD_SRC_KEY,  QUALTX.SRC_KEY AS BOM_KEY, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY, BOM_COMP.ALT_KEY_COMP  AS COMP_KEY, " + " BOM_COMP.PROD_KEY AS COMP_PROD_KEY, BOM_COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, QUALTX.IVA_CODE AS HEADER_IVA_CODE, QUALTX.FTA_CODE AS HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT AS HEADER_CTRY_OF_IMPORT " + " FROM MDI_QUALTX QUALTX JOIN MDI_BOM_COMP BOM_COMP ON ( QUALTX.SRC_KEY = BOM_COMP.ALT_KEY_BOM ) WHERE ");
+		StringBuilder sql = new StringBuilder("SELECT QUALTX.ALT_KEY_QUALTX, QUALTX.ORG_CODE, QUALTX.PROD_SRC_KEY,  QUALTX.SRC_KEY AS BOM_KEY, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY, BOM_COMP.ALT_KEY_COMP  AS COMP_KEY, " + " BOM_COMP.PROD_KEY AS COMP_PROD_KEY, BOM_COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, QUALTX.IVA_CODE AS HEADER_IVA_CODE, QUALTX.FTA_CODE AS HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT AS HEADER_CTRY_OF_IMPORT " + " FROM MDI_QUALTX QUALTX JOIN MDI_BOM_COMP BOM_COMP ON ( QUALTX.SRC_KEY = BOM_COMP.ALT_KEY_BOM AND ");
 
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED) sql.append(this.getSimpleClause("BOM_COMP.ALT_KEY_COMP", "=", "OR", altKeyList.size()));
-
+		
+		sql.append(")");
 		List<QualTX> list = new ArrayList<QualTX>();
 
 		logger.debug("getImpactedQtxCompKeysForNewComp  key size " + altKeyList.size());
