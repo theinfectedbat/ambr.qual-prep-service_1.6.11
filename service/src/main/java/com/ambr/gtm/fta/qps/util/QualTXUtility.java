@@ -108,7 +108,10 @@ public class QualTXUtility
 		{
 			for (GPMSourceIVA gpmSRCIva : prodSourceContainer.ivaList)
 			{
-				isMatched = gpmSRCIva.ftaCode.equals(fta_code);
+				if(gpmSRCIva == null)
+					continue;
+				
+				isMatched = fta_code.equals(gpmSRCIva.ftaCode);
 				if (ctry_of_import != null) isMatched = isMatched && gpmSRCIva.ctryOfImport.equals(ctry_of_import);
 
 				Date srcIVAeffectiveFrom = new Date(gpmSRCIva.effectiveFrom.getTime());
