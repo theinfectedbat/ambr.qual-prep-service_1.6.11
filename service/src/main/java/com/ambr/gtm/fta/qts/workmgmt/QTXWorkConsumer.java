@@ -66,8 +66,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		if (workPackage.failure != null)
 			throw workPackage.failure;
 		
-		Thread.sleep(1000);
-		
 		QTXWork work = workPackage.work;
 		QualTX qualtx = workPackage.qualtx;
 		BOM bom = workPackage.bom;
