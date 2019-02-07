@@ -54,6 +54,7 @@ public class BOM
 	@Column(name = "uom") 						public String	uom;
 	@Column(name = "weight_uom") 				public String	weight_uom;
 	@Column(name = "is_active") 				public String	is_active;
+	@Column(name = "net_weight") 				public Double	net_weight;
 	
 	public int									componentCount;
 	public int									referenceCount; // number of bom components that reference this BOM

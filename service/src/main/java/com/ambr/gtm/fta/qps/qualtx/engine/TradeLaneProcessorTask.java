@@ -436,6 +436,7 @@ public class TradeLaneProcessorTask
 		this.qualTX.src_key 					= this.bom.alt_key_bom;
 		this.qualTX.uom 						= this.bom.weight_uom;
 		this.qualTX.value 						= this.bom.getBOMPrice(BOMPrice.TRANSACTION_VALUE);
+		this.qualTX.net_weight                  = this.bom.net_weight;
 //		this.qualTX.rvc_limit_safety_factor		= this.qeConfigCache.getQEConfig(this.qualTX.org_code).getAnalysisConfig().getRvcLimitSafFactor();
 //		this.qualTX.rvc_threshold_safety_factor	= this.qeConfigCache.getQEConfig(this.qualTX.org_code).getAnalysisConfig().getRvcThreshHoldSaffactor();
 		this.qualTX.rvc_restricted				= TrackerCodes.AssemblyType.INTERMEDIATE.name().equals(this.qualTX.assembly_type) ? "Y" : "";

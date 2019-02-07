@@ -79,6 +79,7 @@ public class QualTX
 	@Column(name = "rvc_threshold_safety_factor")	public Double	rvc_threshold_safety_factor;
 	@Column(name = "rvc_restricted")				public String	rvc_restricted;
 	@Column(name = "target_roo_id")					public String	target_roo_id;
+	@Column(name = "net_weight")                    public Double	net_weight;
 	
 	@OneToMany(targetEntity = QualTXComponent.class) 		public ArrayList<QualTXComponent>		compList;
 	@OneToMany(targetEntity = QualTXPrice.class) 			public ArrayList<QualTXPrice>			priceList;
