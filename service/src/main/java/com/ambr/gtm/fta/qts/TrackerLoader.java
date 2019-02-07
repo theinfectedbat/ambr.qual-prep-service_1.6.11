@@ -305,28 +305,54 @@ public class TrackerLoader
 			this.trackerContainer.deleteQtxWorkTrackers(reloadWorkList);
 		}
 	}
+	
 	@Bean(destroyMethod = "destroy")
 	public void shutdown()
 	{
+		initiateShutdown();
+		ensureTrackerShutdownCompleted();
+	}
+	
+	public void initiateShutdown()
+	{
 		if (bomTrackerStatusObserver != null)
 		{
+			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver shutdown initiated.");
 			bomTrackerStatusObserver.shutdown();
+		}
+		
+		if (qtxStatusObserver != null)
+		{
+			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver shutdown initiated.");
+			qtxStatusObserver.shutdown();
+		}
+		
+		if (reloadQtxWorkObserver != null)
+		{
+			MessageFormatter.info(logger, "shutdown", "ReloadQtxWorkObserver shutdown initiated.");
+			reloadQtxWorkObserver.shutdown();
+			MessageFormatter.info(logger, "shutdown", "ReloadQtxWorkObserver has shutdown sunccessfully.");
+		}
+		
+		if (trackerGarbageCollector != null)
+		{
+			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector shutdown initiated.");
+			trackerGarbageCollector.shutdown();
+			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector has shutdown sunccessfully.");
+		}
+	}
+	
+	public void ensureTrackerShutdownCompleted()
+	{
+		if (bomTrackerStatusObserver != null)
+		{
+			bomTrackerStatusObserver.ensureShutdown();
 			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver has shutdown sunccessfully.");
 		}
 		if (qtxStatusObserver != null)
 		{
-			qtxStatusObserver.shutdown();
+			qtxStatusObserver.ensureShutdown();
 			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver has shutdown sunccessfully.");
-		}
-		if (reloadQtxWorkObserver != null)
-		{
-			reloadQtxWorkObserver.shutdown();
-			MessageFormatter.info(logger, "shutdown", "ReloadQtxWorkObserver has shutdown sunccessfully.");
-		}
-		if (trackerGarbageCollector != null)
-		{
-			trackerGarbageCollector.shutdown();
-			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector has shutdown sunccessfully.");
 		}
 	}
 	

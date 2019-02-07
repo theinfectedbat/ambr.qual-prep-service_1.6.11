@@ -19,7 +19,7 @@ public class QtxStatusObserver implements Runnable
 	private static int								THREAD_INTERVAL	= 10;
 	private TrackerContainer trackerContainer;
 	private volatile boolean exit = false;
-
+	private volatile boolean	isShutdownSuccess		= false;
 	public QtxStatusObserver(TrackerContainer trackerContainer, int interval)
 	{
 		this.trackerContainer = trackerContainer;
@@ -48,6 +48,7 @@ public class QtxStatusObserver implements Runnable
 		{
 			MessageFormatter.error(logger, "run",theException, "Exception  in QtxStatusObserver ");
 		}
+		isShutdownSuccess = true;
 	}
 	
 	public boolean getWaiForNextAnalysisMethodFlg(QtxTracker qtxTracker) throws Exception
@@ -67,6 +68,22 @@ public class QtxStatusObserver implements Runnable
 	public void shutdown()
 	{
 		exit = true;
+	}
+	
+	public void ensureShutdown()
+	{
+		while (true)
+		{
+			if (isShutdownSuccess) break;
+			try
+			{
+				Thread.sleep(5000);
+			}
+			catch (Exception e)
+			{
+				MessageFormatter.error(logger, "run", e, "Exception  in shuttingdown the Qualtx Status observer ");
+			}
+		}
 	}
 	
 }
