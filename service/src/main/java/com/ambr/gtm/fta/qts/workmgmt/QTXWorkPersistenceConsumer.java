@@ -241,18 +241,18 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			ArrayList<QTXWork> workList = new ArrayList<QTXWork>();
 			workList.add(next.work);
 
-			producer.getWorkRepository().updateWorkStatus(workList, (retry) ? TrackerCodes.QualtxStatus.INIT : TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED);
+			producer.getWorkRepository().updateWorkStatus(workList, (retry) ? TrackerCodes.QualtxStatus.RETRY : TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED);
 
 			// TODO wrap all of the common table updates into batch update
 			// statements
-			producer.getWorkRepository().updateWorkHSStatus(next.work.workHSList, (retry) ? TrackerCodes.QualtxHSPullStatus.INIT : TrackerCodes.QualtxHSPullStatus.ERROR);
+			producer.getWorkRepository().updateWorkHSStatus(next.work.workHSList, (retry) ? TrackerCodes.QualtxHSPullStatus.RETRY : TrackerCodes.QualtxHSPullStatus.ERROR);
 
-			producer.getWorkRepository().updateCompWorkStatus(next.work.compWorkList, (retry) ? TrackerCodes.QualtxCompStatus.INIT : TrackerCodes.QualtxCompStatus.ERROR);
+			producer.getWorkRepository().updateCompWorkStatus(next.work.compWorkList, (retry) ? TrackerCodes.QualtxCompStatus.RETRY : TrackerCodes.QualtxCompStatus.ERROR);
 
 			for (QTXCompWork compWork : next.work.compWorkList)
 			{
-				producer.getWorkRepository().updateCompWorkHSStatus(compWork.compWorkHSList, (retry) ? TrackerCodes.QualtxCompHSPullStatus.INIT : TrackerCodes.QualtxCompHSPullStatus.ERROR);
-				producer.getWorkRepository().updateCompWorkIVAStatus(compWork.compWorkIVAList, (retry) ? TrackerCodes.QualtxCompIVAPullStatus.INIT : TrackerCodes.QualtxCompIVAPullStatus.ERROR);
+				producer.getWorkRepository().updateCompWorkHSStatus(compWork.compWorkHSList, (retry) ? TrackerCodes.QualtxCompHSPullStatus.RETRY : TrackerCodes.QualtxCompHSPullStatus.ERROR);
+				producer.getWorkRepository().updateCompWorkIVAStatus(compWork.compWorkIVAList, (retry) ? TrackerCodes.QualtxCompIVAPullStatus.RETRY : TrackerCodes.QualtxCompIVAPullStatus.ERROR);
 			}
 
 			next = next.getLinkedPackage();

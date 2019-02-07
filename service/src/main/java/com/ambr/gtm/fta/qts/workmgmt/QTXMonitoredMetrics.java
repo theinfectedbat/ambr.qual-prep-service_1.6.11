@@ -35,4 +35,25 @@ public class QTXMonitoredMetrics
 	{
 		this.monitorEnd = System.currentTimeMillis();
 	}
+	
+	public synchronized void increment()
+	{
+		long time = System.currentTimeMillis();
+		
+		if (this.firstItemAdded == 0) this.firstItemAdded = time;
+		
+		this.lastItemAdded = time;
+		this.added++;
+	}
+	
+	public synchronized void add(long itemCount, long duration)
+	{
+		long time = System.currentTimeMillis();
+		
+		if (this.firstItemCompleted == 0) this.firstItemCompleted = time;
+		this.lastItemCompleted = time;
+		
+		this.completed = this.completed + itemCount;
+		this.aggregatedDuration = this.aggregatedDuration + duration;
+	}
 }

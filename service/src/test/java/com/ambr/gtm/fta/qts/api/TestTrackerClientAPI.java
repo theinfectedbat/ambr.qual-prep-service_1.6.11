@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 
 import com.ambr.gtm.fta.qts.QTXWork;
@@ -25,8 +26,8 @@ public class TestTrackerClientAPI
 	public static Integer				ANALYSIS_METHOD		= TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal();
 	public static Long					TOTAL_COMPONENTS	= 1L;
 
-	private static String			trackerURL				= "http://localhost:8080";
-	private static String			tradeURL				= "http://18.206.147.107:7566/TA/service";
+	private static String			trackerURL				= "http://paa20481f:8380";
+	private static String			tradeURL				= "http://paa20481f.amberroad.com:18300/gtm/service";
 	private static TrackerClientAPI		trackerAPI			= null;
 	private static TradeQualtxClient	tradeAPI			= null;
 
@@ -40,6 +41,7 @@ public class TestTrackerClientAPI
 //		TestTrackerClientAPI.trackerAPI.template.setInterceptors(interceptors);
 		
 		TestTrackerClientAPI.tradeAPI = new TradeQualtxClient(tradeURL);
+		TestTrackerClientAPI.tradeAPI.setTradekey("@MBERr0@D");
 //		TestTrackerClientAPI.tradeAPI.getTemplate().setInterceptors(interceptors);
 		
 		// trackerAPI.loadTracker(10000);
@@ -68,36 +70,63 @@ public class TestTrackerClientAPI
 		TestTrackerClientAPI.tradeAPI.doFullEntityAudit(auditEntity);
 	}
 	
-	//@Test
+	@Test
 	public void testLock() throws Exception
 	{
 		long time = System.currentTimeMillis();
 
-		Long lockId = TestTrackerClientAPI.tradeAPI.acquireLock("AMBER_ROAD","AMBER_ROAD",System.currentTimeMillis());
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5446850115907833085L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-6844208730638327871L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-6383442079756980897L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5449282853572251061L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-4886724277077986756L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-7077751031062415745L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8462549902658588941L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8881742555428293318L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-7744821164925035625L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5443255914845557379L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-6743280403583650595L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8498009882072781757L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8913810529894261422L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-7678474229423220282L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5759292617519527396L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5589316585022760048L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-9097180848879751962L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-4653678903295887472L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5093122480765659980L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5804807513191767188L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8650148629559870412L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5199525799655232009L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-6545507031039293411L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-7864178616482490857L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8993027249502539969L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5229575922862886985L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-8694454651826444206L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5992852653936424584L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-5959436262816277514L);
+		TestTrackerClientAPI.tradeAPI.acquireLock("RENAULT","REN_ADMIN_TEST",-7187781223524449966L);
 		
-		logger.debug("Lock id = " + lockId);
-		
-		boolean result = TestTrackerClientAPI.tradeAPI.releaseLock(lockId);
-		
-		logger.debug("Lock release = " + result);
-		
-		Assert.assertTrue(result);
-		
-		long altKeys[] = new long[3];
-		altKeys[0] = time+1;
-		altKeys[1] = time+2;
-		altKeys[2] = time+3;
-
-		long locks[] = TestTrackerClientAPI.tradeAPI.acquireLocks("AMBER_ROAD", "AMBER_ROAD", altKeys);
-		
-		for (int i=0; i<locks.length; i++)
-			logger.debug("Locks [" + i + "] = " + locks[i]);
-		
-		int results = TestTrackerClientAPI.tradeAPI.releaseLocks(locks);
-		
-		logger.debug("Locks Released " + locks.length + " = " + results);
-		
-		Assert.assertEquals(results, locks.length);
+//		boolean result = TestTrackerClientAPI.tradeAPI.releaseLock(lockId);
+//		
+//		logger.debug("Lock release = " + result);
+//		
+//		Assert.assertTrue(result);
+//		
+//		long altKeys[] = new long[3];
+//		altKeys[0] = time+1;
+//		altKeys[1] = time+2;
+//		altKeys[2] = time+3;
+//
+//		long locks[] = TestTrackerClientAPI.tradeAPI.acquireLocks("AMBER_ROAD", "AMBER_ROAD", altKeys);
+//		
+//		for (int i=0; i<locks.length; i++)
+//			logger.debug("Locks [" + i + "] = " + locks[i]);
+//		
+//		int results = TestTrackerClientAPI.tradeAPI.releaseLocks(locks);
+//		
+//		logger.debug("Locks Released " + locks.length + " = " + results);
+//		
+//		Assert.assertEquals(results, locks.length);
 	}
 
 //	@Test

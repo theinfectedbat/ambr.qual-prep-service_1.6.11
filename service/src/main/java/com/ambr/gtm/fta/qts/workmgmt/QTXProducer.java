@@ -70,20 +70,26 @@ public abstract class QTXProducer implements Runnable
 		return this.processingTimes.getThroughput(perUnitTime);
 	}
 	
-	public synchronized QTXMonitoredMetrics addMonitoredMetrics()
+	public QTXMonitoredMetrics addMonitoredMetrics()
 	{
 		QTXMonitoredMetrics monitoredMetric = new QTXMonitoredMetrics(this.getClass().getSimpleName());
 		
 		monitoredMetric.start();
 		
-		this.monitoredMetrics.add(monitoredMetric);
+		synchronized (this.monitoredMetrics)
+		{
+			this.monitoredMetrics.add(monitoredMetric);
+		}
 		
 		return monitoredMetric;
 	}
 	
-	public synchronized QTXMonitoredMetrics removeMonitoredMetrics(QTXMonitoredMetrics monitoredMetric)
+	public QTXMonitoredMetrics removeMonitoredMetrics(QTXMonitoredMetrics monitoredMetric)
 	{
-		this.monitoredMetrics.remove(monitoredMetric);
+		synchronized (this.monitoredMetrics)
+		{
+			this.monitoredMetrics.remove(monitoredMetric);
+		}
 		
 		monitoredMetric.stop();
 		
@@ -142,7 +148,7 @@ public abstract class QTXProducer implements Runnable
 		return this.qualtxRepository;
 	}
 	
-	public synchronized void completedStats(long itemCount, long duration)
+	public void completedStats(long itemCount, long duration)
 	{
 		this.updateCompletedStats(this.metrics, itemCount, duration);
 		
@@ -154,19 +160,13 @@ public abstract class QTXProducer implements Runnable
 	
 	private void updateCompletedStats(QTXMonitoredMetrics monitoredMetric, long itemCount, long duration)
 	{
-		long time = System.currentTimeMillis();
+		monitoredMetric.add(itemCount, duration);
 		
-		if (monitoredMetric.firstItemCompleted == 0) monitoredMetric.firstItemCompleted = time;
-		monitoredMetric.lastItemCompleted = time;
-		
-		monitoredMetric.completed = monitoredMetric.completed + itemCount;
-		monitoredMetric.aggregatedDuration = monitoredMetric.aggregatedDuration + duration;
-
 		LongStatistic longStat = new LongStatistic(duration);
 		this.processingTimes.addStatistic(itemCount, longStat);
 	}
 	
-	public synchronized void submit(QTXConsumer<?> task)
+	public void submit(QTXConsumer<?> task)
 	{
 		this.addedStats();
 		
@@ -174,24 +174,14 @@ public abstract class QTXProducer implements Runnable
 		this.threadExecutor.submit(task);
 	}
 	
-	private synchronized void addedStats()
+	private void addedStats()
 	{
-		this.updateAddedStats(this.metrics);
+		this.metrics.increment();
 		
 		for (QTXMonitoredMetrics monitoredMetric : this.monitoredMetrics)
 		{
-			this.updateAddedStats(monitoredMetric);
+			monitoredMetric.increment();
 		}
-	}
-	
-	private synchronized void updateAddedStats(QTXMonitoredMetrics monitoredMetric)
-	{
-		long time = System.currentTimeMillis();
-		
-		if (monitoredMetric.firstItemAdded == 0) monitoredMetric.firstItemAdded = time;
-		
-		monitoredMetric.lastItemAdded = time;
-		monitoredMetric.added++;
 	}
 	
 	public void setTrackWork(boolean track)
@@ -287,7 +277,7 @@ public abstract class QTXProducer implements Runnable
 		return this.idGenerator;
 	}
 	
-	public synchronized void initializeStats()
+	public void initializeStats()
 	{
 		this.metrics = new QTXMonitoredMetrics(this.getClass().getSimpleName());
 		

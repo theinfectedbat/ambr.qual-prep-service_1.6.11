@@ -23,6 +23,7 @@ import com.ambr.gtm.fta.qps.qualtx.engine.api.GetCacheRefreshInformationClientAP
 import com.ambr.gtm.fta.qts.RequalificationBOMStatus;
 import com.ambr.gtm.fta.qts.RequalificationTradeLaneStatus;
 import com.ambr.gtm.fta.qts.util.RunnableTuple;
+import com.ambr.gtm.fta.qts.workmgmt.WorkPackage.PackageState;
 import com.ambr.platform.rdbms.bootstrap.SchemaDescriptorService;
 import com.ambr.platform.utils.log.PerformanceTracker;
 
@@ -122,24 +123,26 @@ public class QTXWorkProducer extends QTXProducer
 		this.status = status;
 	}
 
-	protected synchronized void registeredWorkCompleted(WorkPackage workPackage)
+	protected void registeredWorkCompleted(WorkPackage workPackage)
 	{
-		logger.debug("Registering work completed " + workPackage.work.qtx_wid);
+		if (logger.isDebugEnabled())
+			logger.debug("Registering work completed " + workPackage.work.qtx_wid);
 
-		workPackage.headerProcessed = true;
+		PackageState packageState = workPackage.headerWorkCompleted();
 
-		this.checkWorkForCompleteness(workPackage);
+		this.handlePackageState(packageState, workPackage);
 	}
 
-	protected synchronized void registeredCompWorkCompleted(CompWorkPackage compWorkPackage)
+	protected void registeredCompWorkCompleted(CompWorkPackage compWorkPackage)
 	{
-		logger.trace("Registering work component completed " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_comp_wid);
+		if (logger.isDebugEnabled())
+			logger.trace("Registering work component completed " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_comp_wid);
 
 		WorkPackage workPackage = compWorkPackage.getParentWorkPackage();
 
-		workPackage.compWorkCompleted(compWorkPackage);
+		PackageState packageState = workPackage.compWorkCompleted(compWorkPackage);
 
-		this.checkWorkForCompleteness(workPackage);
+		this.handlePackageState(packageState, workPackage);
 	}
 
 	// The next linked work package can only process once the head and comps are
@@ -147,19 +150,23 @@ public class QTXWorkProducer extends QTXProducer
 	// process out of order or other concurrency issues if two+ consumers target
 	// the same comp.
 	// TODO check to see if work package failed due to LockException - if so flag the whole set as RETRY and discard set of workpackages
-	private void checkWorkForCompleteness(WorkPackage workPackage)
+	private void handlePackageState(PackageState packageState, WorkPackage workPackage)
 	{
 		WorkPackage linkedPackage = workPackage.getLinkedPackage();
-		if (workPackage.isWorkComplete() && linkedPackage != null)
+		if (packageState == PackageState.PACKAGE_COMPLETE && linkedPackage != null)
 		{
+			if (logger.isDebugEnabled())
+				logger.debug("Work complete " + workPackage.work.qtx_wid + " submitting linked package " + linkedPackage.work.qtx_wid);
+
 			this.submitWork(linkedPackage);
 
 			return;
 		}
 
-		if (workPackage.isChainComplete())
+		if (packageState == PackageState.CHAIN_COMPLETE)
 		{
-			logger.debug("Work fully complete " + workPackage.work.qtx_wid + " submitting root " + workPackage.getRootPackage().work.qtx_wid);
+			if (logger.isDebugEnabled())
+				logger.debug("Work fully complete " + workPackage.work.qtx_wid + " submitting root " + workPackage.getRootPackage().work.qtx_wid);
 
 			this.workPersistenceProducer.submitWork(workPackage.getRootPackage());
 		}
@@ -167,7 +174,8 @@ public class QTXWorkProducer extends QTXProducer
 
 	public void submitWork(WorkPackage workPackage)
 	{
-		logger.debug("Submitting work " + workPackage.work.qtx_wid);
+		if (logger.isDebugEnabled())
+			logger.debug("Submitting work " + workPackage.work.qtx_wid);
 
 		QTXWorkConsumer consumer = new QTXWorkConsumer(workPackage);
 		consumer.setQtxBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
