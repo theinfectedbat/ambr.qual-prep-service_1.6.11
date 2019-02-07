@@ -175,6 +175,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 				}
 				isCompDeleted = true;
+				return;
 			}
 			
 		}
