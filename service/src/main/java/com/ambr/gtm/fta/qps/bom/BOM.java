@@ -188,7 +188,7 @@ public class BOM
      * @param	theComponent
      *************************************************************************************
      */
-	public void addComponent(BOMComponent theComponent)
+	void addComponent(BOMComponent theComponent)
 		throws Exception
 	{
 		theComponent.setBOM(this);
@@ -205,6 +205,27 @@ public class BOM
 	 * <P>
 	 * </P>
 	 * 
+	 * @param	theBOMCompDE
+	 *************************************************************************************
+	 */
+	void addComponentDataExtension(BOMComponentDataExtension theBOMCompDE)
+		throws Exception
+	{
+		BOMComponent	aBOMComp;
+		
+		this.initializeComponentBOMReferences();
+		
+		aBOMComp = this.altKeyBOMComponentIndex.get(theBOMCompDE.alt_key_comp);
+		if (aBOMComp != null) {
+			aBOMComp.addDataExtension(theBOMCompDE);
+		}
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
 	 * @param	theBOMDataExtension
 	 *************************************************************************************
 	 */
@@ -212,6 +233,81 @@ public class BOM
 		throws Exception
 	{
 		this.deList.add(theBOMDataExtension);
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 * 
+	 * @param	thePrice
+	 *************************************************************************************
+	 */
+	void addPrice(BOMPrice thePrice)
+		throws Exception
+	{
+		thePrice.setBOM(this);
+		this.priceList.add(thePrice);
+	}
+
+	public void addQual(BOMQual theQual)
+			throws Exception
+	{
+		theQual.setBOM(this);
+		this.qualList.add(theQual);
+	}
+
+	public BOMComponent getBOMComponentByAltKey(long theAltKeyComp)
+	{
+		return this.altKeyBOMComponentIndex.get(theAltKeyComp);
+	}
+
+	public double getBOMPrice(String priceType) {
+		if(this.priceList == null)
+			return 0;
+		
+		Optional<BOMPrice> bomPriceOptional = this.priceList.stream().filter(p-> p.price_type.equals(priceType)).findFirst();
+		if(bomPriceOptional.isPresent())
+		{
+			BOMPrice bomPrice = bomPriceOptional.get();
+			return bomPrice.price;
+		}
+		return 0;
+	}
+
+	public String getBOMQualifiedFlag(String theFTACode, String theIVACode, String theCOI, Date theEffectiveFrom, Date theEffectiveTo) throws Exception 
+	{
+		if(this.qualList == null || this.qualList.isEmpty())
+			return null;
+		
+		Optional<BOMQual> bomQualOptional = this.qualList.stream().filter(p -> p.fta_code.equalsIgnoreCase(theFTACode)
+																			&& p.iva_code.equalsIgnoreCase(theIVACode)
+																			&& p.ctry_of_import.equalsIgnoreCase(theCOI)
+																			&& p.effective_from.equals(theEffectiveFrom)
+																			&& p.effective_to.equals(theEffectiveTo)
+																		).findFirst();
+		if(bomQualOptional.isPresent())
+		{
+			BOMQual bomQual = bomQualOptional.get();
+			if(this.isIntermediateBOM() && "QUALIFIED".equalsIgnoreCase(bomQual.qualified_flag))
+			{
+				passedViaRVC = true;
+			}
+			return bomQual.qualified_flag;
+		}
+		return null;
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public int getComponentCount()
+		throws Exception
+	{
+		return this.componentCount;
 	}
 
 	/**
@@ -233,33 +329,6 @@ public class BOM
 		}
 
 		return bomDataExtensions;
-	}
-	
-	/**
-	 *************************************************************************************
-	 * <P>
-	 * </P>
-	 * 
-	 * @param	thePrice
-	 *************************************************************************************
-	 */
-	public void addPrice(BOMPrice thePrice)
-		throws Exception
-	{
-		thePrice.setBOM(this);
-		this.priceList.add(thePrice);
-	}
-
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     *************************************************************************************
-     */
-	public int getComponentCount()
-		throws Exception
-	{
-		return this.componentCount;
 	}
 	
 	/**
@@ -291,6 +360,19 @@ public class BOM
 	}
 	
 	
+	private void indexByAltKeyBOMComponent()
+	{
+		this.altKeyBOMComponentIndex = new HashMap<Long, BOMComponent>();
+		
+		if (this.compList != null)
+		{
+			for (BOMComponent bomComponent : this.compList)
+			{
+				this.altKeyBOMComponentIndex.put(bomComponent.alt_key_comp, bomComponent);
+			}
+		}
+	}
+
 	/**
      *************************************************************************************
      * <P>
@@ -300,9 +382,22 @@ public class BOM
 	void initializeComponentBOMReferences()
 		throws Exception
 	{
+		if (this.altKeyBOMComponentIndex != null) {
+			// already initialized
+			return;
+		}
+		
+		this.altKeyBOMComponentIndex = new HashMap<Long, BOMComponent>();
+
 		for (BOMComponent aBomComp : this.compList) {
 			aBomComp.setBOM(this);
+			this.altKeyBOMComponentIndex.put(aBomComp.alt_key_comp, aBomComp);
 		}
+	}
+
+	public boolean isIntermediateBOM() throws Exception
+	{
+		return TrackerCodes.AssemblyType.INTERMEDIATE.name().equals(this.assembly_type);
 	}
 
 	/**
@@ -319,94 +414,6 @@ public class BOM
 		for (BOMDataExtension aBOMDataExt : this.deList) {
 			aBOMDataExt.setRepository(theDataExtensionRepos);
 		}
-	}
-
-	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     * 
-     * @param	theBOMCompDE
-     *************************************************************************************
-     */
-	public void addComponentDataExtension(BOMComponentDataExtension theBOMCompDE)
-		throws Exception
-	{
-		Optional<BOMComponent>	aOptionalBOMComp;
-		
-		aOptionalBOMComp = this.compList.stream().filter(
-			aBOMComp->aBOMComp.alt_key_comp == theBOMCompDE.alt_key_comp
-		).findFirst();
-		
-		if (aOptionalBOMComp.isPresent()) {
-			aOptionalBOMComp.get().addDataExtension(theBOMCompDE);
-		}
-	}
-
-	public double getBOMPrice(String priceType) {
-		if(this.priceList == null)
-			return 0;
-		
-		Optional<BOMPrice> bomPriceOptional = this.priceList.stream().filter(p-> p.price_type.equals(priceType)).findFirst();
-		if(bomPriceOptional.isPresent())
-		{
-			BOMPrice bomPrice = bomPriceOptional.get();
-			return bomPrice.price;
-		}
-		return 0;
-	}
-	
-	public BOMComponent getBOMComponentByAltKey(long theAltKeyComp)
-	{
-		return this.altKeyBOMComponentIndex.get(theAltKeyComp);
-	}
-	
-	public void indexByAltKeyBOMComponent()
-	{
-		this.altKeyBOMComponentIndex = new HashMap<Long, BOMComponent>();
-		
-		if (this.compList != null)
-		{
-			for (BOMComponent bomComponent : this.compList)
-			{
-				this.altKeyBOMComponentIndex.put(bomComponent.alt_key_comp, bomComponent);
-			}
-		}
-	}
-	
-	public void addQual(BOMQual theQual)
-			throws Exception
-	{
-		theQual.setBOM(this);
-		this.qualList.add(theQual);
-	}
-	
-	public String getBOMQualifiedFlag(String theFTACode, String theIVACode, String theCOI, Date theEffectiveFrom, Date theEffectiveTo) throws Exception 
-	{
-		if(this.qualList == null || this.qualList.isEmpty())
-			return null;
-		
-		Optional<BOMQual> bomQualOptional = this.qualList.stream().filter(p -> p.fta_code.equalsIgnoreCase(theFTACode)
-																			&& p.iva_code.equalsIgnoreCase(theIVACode)
-																			&& p.ctry_of_import.equalsIgnoreCase(theCOI)
-																			&& p.effective_from.equals(theEffectiveFrom)
-																			&& p.effective_to.equals(theEffectiveTo)
-																		).findFirst();
-		if(bomQualOptional.isPresent())
-		{
-			BOMQual bomQual = bomQualOptional.get();
-			if(this.isIntermediateBOM() && "QUALIFIED".equalsIgnoreCase(bomQual.qualified_flag))
-			{
-				passedViaRVC = true;
-			}
-			return bomQual.qualified_flag;
-		}
-		return null;
-	}
-	
-	public boolean isIntermediateBOM() throws Exception
-	{
-		return TrackerCodes.AssemblyType.INTERMEDIATE.name().equals(this.assembly_type);
 	}
 
 }

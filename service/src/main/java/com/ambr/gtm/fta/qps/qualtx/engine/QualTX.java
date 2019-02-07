@@ -34,7 +34,7 @@ public class QualTX
 	@Column(name = "assembly_type") 				public String	assembly_type;
 	@Column(name = "bom_type") 						public String	bom_type;	
 	@Column(name = "cost") 							public Double	cost;
-	@Column(name = "ctry_of_import") 				public String	ctry_of_import;
+	@Column(name = "ctry_of_import") 				public String	ctry_of_import;	
 	@Column(name = "ctry_of_manufacture") 			public String	ctry_of_manufacture;
 	@Column(name = "ctry_of_origin") 				public String	ctry_of_origin;
 	@Column(name = "created_by") 					public String	created_by;
@@ -80,6 +80,7 @@ public class QualTX
 	@Column(name = "rvc_restricted")				public String	rvc_restricted;
 	@Column(name = "target_roo_id")					public String	target_roo_id;
 	@Column(name = "net_weight")                    public Double	net_weight;
+	
 	@OneToMany(targetEntity = QualTXComponent.class) 		public ArrayList<QualTXComponent>		compList;
 	@OneToMany(targetEntity = QualTXPrice.class) 			public ArrayList<QualTXPrice>			priceList;
 	@OneToMany(targetEntity = QualTXDataExtension.class) 	public ArrayList<QualTXDataExtension>	deList;
@@ -101,6 +102,7 @@ public class QualTX
 		this.compList = new ArrayList<>();
 		this.priceList = new ArrayList<>();
 		this.deList = new ArrayList<>();
+		this.is_active = "Y";
 	}
 	
     /**
@@ -458,4 +460,24 @@ public class QualTX
 	{
 		this.persistFailedFlag = true;
 	}
+	
+	public QualTXPrice getQualtxPrice(String priceType)
+	{
+		if (priceType == null) return null;
+		QualTXPrice qtxPrice = null;
+		if (this.priceList != null)
+		{
+			for (QualTXPrice qualTXPrice : priceList)
+			{
+				if (priceType.equalsIgnoreCase(qualTXPrice.price_type))
+				{
+					qtxPrice = qualTXPrice;
+					break;
+				}
+			}
+		}
+		return qtxPrice;
+	}
+	
+	
 }
