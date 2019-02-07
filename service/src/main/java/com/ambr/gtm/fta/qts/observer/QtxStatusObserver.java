@@ -68,19 +68,6 @@ public class QtxStatusObserver implements Runnable
 	public void shutdown()
 	{
 		exit = true;
-		
-		while (true)
-		{
-			if (isShutdownSuccess) break;
-			try
-			{
-				Thread.sleep(5000);
-			}
-			catch (Exception e)
-			{
-				MessageFormatter.error(logger, "run",e , "Exception  in shuttingdown the BOM Status observer ");
-			}
-		}
 	}
 	
 	public void ensureShutdown()
