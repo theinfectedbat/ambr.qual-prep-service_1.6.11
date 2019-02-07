@@ -3,9 +3,6 @@ package com.ambr.gtm.fta.qps.qualtx.engine;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +12,7 @@ import com.ambr.gtm.fta.qps.bom.BOM;
 import com.ambr.gtm.fta.qps.bom.BOMComponent;
 import com.ambr.gtm.fta.qps.bom.BOMDataExtension;
 import com.ambr.gtm.fta.qps.bom.BOMPrice;
+import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetails;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.qualtx.engine.result.TradeLaneStatusTracker;
@@ -61,7 +59,6 @@ public class TradeLaneProcessorTask
 	private TradeLaneStatusTracker				statusTracker;
 	private PersistenceTaskHandler				taskHandler;
 	private DataExtensionConfigurationRepository dataExtCfgRepos;
-	private QualTXBusinessLogicProcessor        qtxBusinessLogicProcessor;
 	/**
 	 *************************************************************************************
 	 * <P>
@@ -161,9 +158,7 @@ public class TradeLaneProcessorTask
 		this.dataExtCfgRepos = this.tradeLaneQueue.queueUniverse.dataExtCfgRepos;
 		this.newQualTXKey = theNewQualTXKey;
 		this.qeConfigCache = this.tradeLaneQueue.queueUniverse.qeConfigCache;
-		this.qtxBusinessLogicProcessor = this.tradeLaneQueue.queueUniverse.qtxBusinessLogicProcessor;
-		this.propertySheetManager = this.qtxBusinessLogicProcessor.propertySheetManager;
-		
+		this.propertySheetManager = this.tradeLaneQueue.queueUniverse.qtxBusinessLogicProcessor.propertySheetManager;
 		this.description = "BOM." + this.bom.alt_key_bom + "QTX." + this.newQualTXKey;
 		this.taskHandler = new PersistenceTaskHandler();
 	}
@@ -232,10 +227,7 @@ public class TradeLaneProcessorTask
 				this.mapPriceFields(aQualTXPrice, aBOMPrice);
 			}
 			
-			this.qtxBusinessLogicProcessor.populateRollupPriceDetails(this.bom, this.qualTX, "ALL");
-			
 			for (BOMDataExtension aBOMDE : this.bom.deList) {
-				
 				if (!this.tradeLaneQueue.isDECopyEnabled(aBOMDE.group_name)) {
 					continue;
 				}
@@ -253,11 +245,6 @@ public class TradeLaneProcessorTask
 		finally {
 		}
 	}
-	
-	
-	
-	
-				
 
 	/**
 	 *************************************************************************************
@@ -436,6 +423,7 @@ public class TradeLaneProcessorTask
 		this.qualTX.src_key 					= this.bom.alt_key_bom;
 		this.qualTX.uom 						= this.bom.weight_uom;
 		this.qualTX.value 						= this.bom.getBOMPrice(BOMPrice.TRANSACTION_VALUE);
+		this.qualTX.net_weight                  = this.bom.net_weight;
 //		this.qualTX.rvc_limit_safety_factor		= this.qeConfigCache.getQEConfig(this.qualTX.org_code).getAnalysisConfig().getRvcLimitSafFactor();
 //		this.qualTX.rvc_threshold_safety_factor	= this.qeConfigCache.getQEConfig(this.qualTX.org_code).getAnalysisConfig().getRvcThreshHoldSaffactor();
 		this.qualTX.rvc_restricted				= TrackerCodes.AssemblyType.INTERMEDIATE.name().equals(this.qualTX.assembly_type) ? "Y" : "";
