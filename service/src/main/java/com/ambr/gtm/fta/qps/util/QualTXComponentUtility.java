@@ -499,7 +499,7 @@ public class QualTXComponentUtility
 				{
 					Object monOrignValue = aNonOriginatingMaterialRdc.getValue(columnName);
 					if(monOrignValue != null)
-						theNonOriginatingValue = (BigDecimal)monOrignValue;
+						theNonOriginatingValue = new BigDecimal(((Number)monOrignValue).doubleValue());
 				}
 
 				if (aBOMHeaderCurrency != null && !aBOMHeaderCurrency.trim().isEmpty() 
@@ -520,7 +520,7 @@ public class QualTXComponentUtility
 
 			if (useNonOriginatingMaterialsExists && theTotalNonOriginatingComp.doubleValue() > 0)
 			{
-				double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
+				Double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
 				
 				if(this.qualTXComp.qualTX.analysis_method == null 
 						|| "".equals(this.qualTXComp.qualTX.analysis_method))
