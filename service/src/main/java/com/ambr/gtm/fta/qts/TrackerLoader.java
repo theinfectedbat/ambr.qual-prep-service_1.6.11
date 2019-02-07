@@ -309,17 +309,21 @@ public class TrackerLoader
 	@Bean(destroyMethod = "destroy")
 	public void shutdown()
 	{
+		initiateShutdown();
+		ensureTrackerShutdownCompleted();
+	}
+	
+	public void initiateShutdown()
+	{
 		if (bomTrackerStatusObserver != null)
 		{
 			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver shutdown initiated.");
 			bomTrackerStatusObserver.shutdown();
-			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver has shutdown sunccessfully.");
 		}
 		if (qtxStatusObserver != null)
 		{
 			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver shutdown initiated.");
 			qtxStatusObserver.shutdown();
-			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver has shutdown sunccessfully.");
 		}
 		if (reloadQtxWorkObserver != null)
 		{
@@ -332,6 +336,20 @@ public class TrackerLoader
 			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector shutdown initiated.");
 			trackerGarbageCollector.shutdown();
 			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector has shutdown sunccessfully.");
+		}
+	}
+	
+	public void ensureTrackerShutdownCompleted()
+	{
+		if (bomTrackerStatusObserver != null)
+		{
+			bomTrackerStatusObserver.ensureShutdown();
+			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver has shutdown sunccessfully.");
+		}
+		if (qtxStatusObserver != null)
+		{
+			qtxStatusObserver.ensureShutdown();
+			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver has shutdown sunccessfully.");
 		}
 	}
 	
