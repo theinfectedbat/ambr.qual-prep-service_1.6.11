@@ -194,12 +194,25 @@ public class TrackerServiceAPI
 
     }
 
+    @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_STAGE_PRODUCER, method = RequestMethod.GET)
+    public void qtxExecuteStageProducer() throws Exception
+    {
+    	try
+    	{
+     			this.qtxStageProducer.executeFindWork();
+    	}
+    	catch (Exception e)
+    	{
+    		MessageFormatter.error(logger, "qtxExecuteStageProducer",e, "Exception while executeFindWork ");
+    	}
+    }
+
     @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_REQUAL_PRODUCER, method = RequestMethod.GET)
     public void qtxExecuteRequalProducer() throws Exception
     {
     	try
     	{
-    		if(this.qtxWorkProducer.getStatus() == qtxWorkProducer.REQUAL_SERVICE_AVAILABLE)
+    		if(this.qtxWorkProducer.getStatus() == QTXWorkProducer.REQUAL_SERVICE_AVAILABLE)
     			this.qtxWorkProducer.executeFindWork();
     		else
     			throw new Exception("Requal service is in progress");
@@ -207,7 +220,6 @@ public class TrackerServiceAPI
     	catch (Exception e)
     	{
     		MessageFormatter.error(logger, "qtxExecuteRequalProducer",e, "Exception while executeFindWork ");
-    		
     	}
     }
 

@@ -20,7 +20,7 @@ public class WorkPackage
 	public HashMap<Long, CompWorkPackage> compWorks = new HashMap<Long, CompWorkPackage>();
 	public List<WorkPackage> mergedPackages = new ArrayList<WorkPackage>();
 	
-	public boolean headerProcessed = false;
+	private boolean headerProcessed = false;
 	private int childCompletedCount = 0;
 
 	//lockId is only set on rootPackage (lock only acquired once)
@@ -36,6 +36,13 @@ public class WorkPackage
 	
 	private WorkPackage linkedPackage = null;
 	private WorkPackage rootPackage = null;
+	
+	public enum PackageState
+	{
+		INCOMPLETE,
+		PACKAGE_COMPLETE,
+		CHAIN_COMPLETE
+	}
 	
 	public WorkPackage()
 	{
@@ -104,20 +111,6 @@ public class WorkPackage
 			return this;
 	}
 	
-	public int getLinkedPackageLength()
-	{
-		int length = 0;
-		
-		WorkPackage workPackage = this.linkedPackage;
-		while (workPackage != null)
-		{
-			length++;
-			workPackage = workPackage.linkedPackage;
-		}
-		
-		return length;
-	}
-	
 	public Exception getFailure()
 	{
 		if (this.failure != null)
@@ -132,17 +125,43 @@ public class WorkPackage
 		return null;
 	}
 	
-	public void compWorkCompleted(CompWorkPackage compWorkPackage)
+	/*
+	 * This method is synchronized since multiple threads can register work completed concurrently.
+	 * The boolean returned lets the producers know a piece of work is complete and can continue by persisting the work
+	 * or processing the next linkedPackage.
+	 * Key goal is to make sure two threads cannot update the package AND detect it is complete at the same time,
+	 * otherwise the work could be submitted twice for persistence or double submission for linkedPackage.
+	 */
+	public synchronized PackageState compWorkCompleted(CompWorkPackage compWorkPackage)
 	{
 		this.childCompletedCount++;
+		
+		return this.getPackageState();
 	}
 	
-	public boolean isWorkComplete()
+	public synchronized PackageState headerWorkCompleted()
+	{
+		this.headerProcessed = true;
+		
+		return this.getPackageState();
+	}
+	
+	private PackageState getPackageState()
+	{
+		if (this.isChainComplete())
+			return PackageState.CHAIN_COMPLETE;
+		else if (this.isWorkComplete())
+			return PackageState.PACKAGE_COMPLETE;
+		else
+			return PackageState.INCOMPLETE;
+	}
+	
+	private boolean isWorkComplete()
 	{
 		return headerProcessed && (this.childCompletedCount == this.compWorks.size());
 	}
 	
-	public boolean isChainComplete()
+	private boolean isChainComplete()
 	{
 		WorkPackage start = this.getRootPackage();
 
