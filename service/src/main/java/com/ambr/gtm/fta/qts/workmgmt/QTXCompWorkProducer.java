@@ -145,6 +145,12 @@ public class QTXCompWorkProducer extends QTXProducer
 						tradeLaneStats.qualtxKey = workPackage.qualtxComp.alt_key_qualtx;
 						tradeLaneStats.requestTime = requestTime;
 						
+						tradeLaneStats.ftaCode = workPackage.getParentWorkPackage().qualtx.fta_code;
+						tradeLaneStats.ivaCode = workPackage.getParentWorkPackage().qualtx.iva_code;
+						tradeLaneStats.effectiveFrom = (workPackage.getParentWorkPackage().qualtx.effective_from != null) ? workPackage.getParentWorkPackage().qualtx.effective_from.getTime() : null;
+						tradeLaneStats.effectiveTo = (workPackage.getParentWorkPackage().qualtx.effective_to != null) ? workPackage.getParentWorkPackage().qualtx.effective_to.getTime() : null;
+						tradeLaneStats.coi = workPackage.getParentWorkPackage().qualtx.ctry_of_import;
+						
 						//Calculate estimate based on metrics
 						tradeLaneStats.estimate = System.currentTimeMillis();
 						

@@ -2,6 +2,7 @@ package com.ambr.gtm.fta.qts.util;
 
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -74,6 +75,22 @@ public class BlockingExecutor extends ThreadPoolExecutor
 		this.taskQueue.clear();
 		
 		return false;
+	}
+	
+	public void waitTillQueueEmpty()
+	{
+		for (RunnableTuple tuple : this.taskQueue)
+		{
+			try
+			{
+				tuple.future.get();
+			}
+			catch (Exception e)
+			{
+				//Eat error InterruptedException, ExecutionException
+				//In either case the task is complete
+			}
+		}
 	}
 	
 	public void clearTrackedWork()

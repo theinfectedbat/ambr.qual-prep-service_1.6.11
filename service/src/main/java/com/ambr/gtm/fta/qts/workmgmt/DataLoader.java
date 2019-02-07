@@ -1,23 +1,18 @@
 package com.ambr.gtm.fta.qts.workmgmt;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+//import java.sql.Connection;
+//import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.HashMap;
-
-import com.ambr.gtm.fta.qts.TrackerCodes;
-import com.ambr.gtm.fta.qts.util.JDBCUtility;
 
 public class DataLoader<T>
 {
 	private Class<T> classType;
 	private HashMap<String, Field> mapping;
-	
-	private Integer fetchSize;
 	
 	public DataLoader(Class<T> classType)
 	{
@@ -25,18 +20,6 @@ public class DataLoader<T>
 		this.mapping = this.getColumnAnnotatedFieldMap(this.classType);
 	}
 
-	public DataLoader(Integer fetchSize)
-	{
-		super();
-		
-		this.setFetchSize(fetchSize);
-	}
-	
-	public void setFetchSize(Integer fetchSize)
-	{
-		this.fetchSize = fetchSize;
-	}
-	
 	private HashMap<String, Field> getColumnAnnotatedFieldMap(Class<?> targetClass)
 	{
 		HashMap<String, Field> mapping = new HashMap<String, Field>();
@@ -117,42 +100,4 @@ public class DataLoader<T>
 		
 		return null;
 	}
-		
-	public ArrayList<T> getObjectsFromSQL(String sql, Connection connection, Object... params) throws Exception
-	{
-		 ArrayList<T> list = new  ArrayList<T>();
-		PreparedStatement stmt = null;
-		try
-		{
-			stmt = JDBCUtility.prepareStatement(sql, connection);
-			
-			if (this.fetchSize != null)
-				stmt.setFetchSize(this.fetchSize);
-			
-			stmt.setInt(1, TrackerCodes.QualtxCompStatus.PENDING.ordinal());
-			
-			ResultSet results = null;
-			try
-			{
-				results = JDBCUtility.executeQuery(stmt);
-				while (results.next())
-				{
-					T target = this.getObjectFromResultSet(results);
-					
-					list.add(target);
-				}
-			}
-			finally
-			{
-				JDBCUtility.closeResultSet(results);
-			}
-		}
-		finally
-		{
-			JDBCUtility.closeStatement(stmt);
-		}
-		
-		return list;
-	}
-
 }

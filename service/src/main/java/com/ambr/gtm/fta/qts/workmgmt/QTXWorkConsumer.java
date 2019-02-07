@@ -348,8 +348,13 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 						+ ", workcomp count = "
 						+ workPackage.work.compWorkList.size());
 
-				workPackage.lockId = TradeQualtxClient.acquireLock(workPackage.work.company_code,
-						workPackage.work.userId,workPackage.work.details.qualtx_key);
+				//Lock is acquired only once for chain of workpackages - set on rootWorkPackage
+				if (workPackage.getLockId() == null)
+				{
+					workPackage.setLockId(TradeQualtxClient.acquireLock(workPackage.work.company_code,
+					 	workPackage.work.userId,
+					 	workPackage.work.details.qualtx_key));
+				}
 
 				// Do all business logic
 				this.doWork(workPackage);

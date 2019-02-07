@@ -2,7 +2,6 @@ package com.ambr.gtm.fta.qts;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.ambr.gtm.fta.qts.util.JDBCUtility;
 import com.ambr.platform.uoid.UniversalObjectIDGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

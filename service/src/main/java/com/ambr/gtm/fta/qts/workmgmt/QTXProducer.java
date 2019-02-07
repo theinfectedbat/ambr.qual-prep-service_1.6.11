@@ -199,6 +199,11 @@ public abstract class QTXProducer implements Runnable
 		this.threadExecutor.setTrackWork(track);
 	}
 	
+	public void waitTillQueueEmpty()
+	{
+		this.threadExecutor.waitTillQueueEmpty();
+	}
+	
 	public void startup() throws WorkManagementException
 	{
 		logger.debug("Startup called");

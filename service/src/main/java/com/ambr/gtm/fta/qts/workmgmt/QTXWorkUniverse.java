@@ -49,6 +49,7 @@ public class QTXWorkUniverse
 	private SchemaDescriptor schemaDesc;
 	
 	private int batchSize;
+	private long maxObjects;
 
 	private HashMap<Long, WorkPackage> workByIDMap = new HashMap<Long, WorkPackage>();
 	private HashMap<Long, WorkPackage> workByQualtxMap = new HashMap<Long, WorkPackage>();
@@ -75,7 +76,7 @@ public class QTXWorkUniverse
 	
 	UniversalObjectIDGenerator idGenerator;
 	
-	public QTXWorkUniverse(UniversalObjectIDGenerator idGenerator, PlatformTransactionManager txMgr, SchemaDescriptor schemaDesc, JdbcTemplate template, BOMUniverseBOMClientAPI bomUniverseBOMClientAPI, GetGPMClassificationsByProductFromUniverseClientAPI gpmClassificationsByProductAPI, GetGPMSourceIVAByProductFromUniverseClientAPI gpmSourceIVAByProductFromUniverseClientAPI, int batchSize)
+	public QTXWorkUniverse(UniversalObjectIDGenerator idGenerator, PlatformTransactionManager txMgr, SchemaDescriptor schemaDesc, JdbcTemplate template, BOMUniverseBOMClientAPI bomUniverseBOMClientAPI, GetGPMClassificationsByProductFromUniverseClientAPI gpmClassificationsByProductAPI, GetGPMSourceIVAByProductFromUniverseClientAPI gpmSourceIVAByProductFromUniverseClientAPI, int batchSize, long maxObjects)
 	{
 		this.txMgr = txMgr;
 		this.schemaDesc = schemaDesc;
@@ -85,6 +86,8 @@ public class QTXWorkUniverse
 		
 		this.batchSize = batchSize;
 		
+		this.maxObjects = maxObjects;
+		
 		this.bomUniverseBOMClientAPI = bomUniverseBOMClientAPI;
 		this.gpmClassificationsByProductAPI = gpmClassificationsByProductAPI;
 		this.gpmSourceIVAByProductFromUniverseClientAPI = gpmSourceIVAByProductFromUniverseClientAPI;
@@ -92,38 +95,284 @@ public class QTXWorkUniverse
 	
 	public HashMap <Long, WorkPackage> stageWork(long bestTime, JdbcTemplate template) throws Exception
 	{
-		//Order of following steps are important
+		//TODO Chain qualtxcomp just like qualtx.  that will allow a single consumer to process all qualtxcomp records across all work packages chained together
+		//TODO also allows qtxworkconsumer to process all qualtx records in a single loop without having to wait for consumers to process.  avoid the whole resubmit thing
+		//TODO review with nagesh.
 		
-		//Step 1
-		this.updateInitWorkToPending(bestTime);
-		this.workLoaded = this.loadPendingWork();
+		this.updateAvailableWorkToPending(bestTime);
+		this.updateWorkHSToPending();
+		this.updateWorkCompToPending();
+		this.updateWorkCompHSToPending();
+		this.updateWorkCompIVAToPending();
 		
-		//Step 2
-		//TODO review - this could be handled with one update to each child table (after ar_qtx_work_status is set to pending)
-		this.updateWorkRecordsToPending("update ar_qtx_work_status set status=? where qtx_wid=?");
-		this.updateWorkRecordsToPending("update ar_qtx_work_hs set status=? where qtx_wid=?");
-		this.updateWorkRecordsToPending("update ar_qtx_comp_work_status set status=? where qtx_wid=?");
-		this.updateWorkRecordsToPending("update ar_qtx_comp_work_hs set status=? where qtx_wid=?");
-		this.updateWorkRecordsToPending("update ar_qtx_comp_work_iva set status=? where qtx_wid=?");
+		long objectCount = 0L;
+		try
+		{
+			this.prepareWorkStatements();
 		
-		//Step 3
-		this.loadPendingQualtx();
-		this.workHSLoaded = this.loadPendingWorkHS();
+			boolean continueLoading = true;
+			while (continueLoading)
+			{
+				continueLoading = this.loadWorkRecord();
+				
+				objectCount = this.getLoadedCount();
+				
+				if (objectCount > this.maxObjects)
+					continueLoading = false;
+				
+				logger.info("Loaded " + objectCount + " ar_qtx items");
+			}
+			
+			//Verify all cursor result sets are exhausted
+			if (objectCount <= this.maxObjects)
+			{
+				if (this.workResultSet.current() != null) logger.error("Work result set not empty!");
+				if (this.workHSResultSet.current() != null) logger.error("HS Work result set not empty!");
+				if (this.workCompResultSet.current() != null) logger.error("Comp Work result set not empty!");
+				if (this.workCompHSResultSet.current() != null) logger.error("Comp HS Work result set not empty!");
+				if (this.workCompIVAResultSet.current() != null) logger.error("Comp IVA Work result set not empty!");
+			}
+		}
+		catch (Exception e)
+		{
+			logger.error("Failed to load work records", e);
+			
+			throw e;
+		}
+		finally
+		{
+			this.cleanupWorkResultSets();
+		}
+		
+		this.updateWorkRecordsToInProgress("update ar_qtx_work_status set status=? where qtx_wid=?");
+			
+		this.loadInProgressQualtx();
 
-		//Step 4
-		this.compWorkLoaded = this.loadPendingCompWork();
-		this.loadPendingQualtxComp();
-		this.compWorkIVALoaded = this.loadPendingCompWorkIVA();
-		this.compWorkHSLoaded = this.loadPendingCompWorkHS();
+		this.loadInProgressQualtxComp();
 		
-		//Loading of BOM resource data must take place prior to GPMClassification loading
 		this.loadRequiredBOMResources();
 		this.loadRequiredGPMClassificationResources();
 		this.loadRequiredGPMIVAResources();
 		this.setupEntityManagers();
-		logger.debug("Staged work items " + this.workByIDMap.size() + " root work items " + this.workByQualtxMap.size());
+		
+		logger.info("Staged work items " + this.workByIDMap.size() + " root work items " + this.workByQualtxMap.size());
 		
 		return this.workByQualtxMap;
+	}
+	
+	private QTXWorkResultSet workResultSet = null;
+	private SimpleDataLoaderResultSet<QTXWorkHS> workHSResultSet = null;
+	private SimpleDataLoaderResultSet<QTXCompWork> workCompResultSet = null;
+	private SimpleDataLoaderResultSet<QTXCompWorkHS> workCompHSResultSet = null;
+	private SimpleDataLoaderResultSet<QTXCompWorkIVA> workCompIVAResultSet = null;
+	
+	private long getLoadedCount()
+	{
+		return this.workLoaded + this.workHSLoaded + this.compWorkLoaded + this.compWorkHSLoaded + this.compWorkIVALoaded++;
+	}
+	
+	private void prepareWorkStatements() throws SQLException
+	{
+		PerformanceTracker tracker = null;
+		
+		tracker = new PerformanceTracker(logger, Level.INFO, "executeWorkSelectStatement");
+		tracker.start();
+		try
+		{
+			String sql = 
+				"select AR_QTX_WORK.QTX_WID,AR_QTX_WORK.COMPANY_CODE,AR_QTX_WORK.PRIORITY,AR_QTX_WORK.BOM_KEY,AR_QTX_WORK.IVA_KEY,AR_QTX_WORK.ENTITY_KEY, "
+				+ "AR_QTX_WORK.ENTITY_TYPE,AR_QTX_WORK.USER_ID,AR_QTX_WORK.TIME_STAMP, "
+				+ "AR_QTX_WORK_STATUS.STATUS, "
+				+ "AR_QTX_WORK_DETAILS.QUALTX_KEY,AR_QTX_WORK_DETAILS.ANALYSIS_METHOD,AR_QTX_WORK_DETAILS.COMPONENTS, "
+				+ "AR_QTX_WORK_DETAILS.REASON_CODE,AR_QTX_WORK_DETAILS.CTRY_OF_IMPORT "
+				+ "from AR_QTX_WORK_STATUS "
+				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+				+ "join AR_QTX_WORK_DETAILS ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_DETAILS.QTX_WID "
+				+ "WHERE AR_QTX_WORK_STATUS.STATUS=? "
+				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP, AR_QTX_WORK.QTX_WID desc";
+			
+			this.workResultSet = new QTXWorkResultSet(this.template);
+			this.workResultSet.execute(sql, new Object[] {TrackerCodes.QualtxStatus.PENDING.ordinal()});
+			this.workResultSet.next();
+		}
+		finally
+		{
+			tracker.stop("Work select complete", null);
+		}
+		
+		tracker = new PerformanceTracker(logger, Level.INFO, "executeWorkSelectStatement");
+		tracker.start();
+		try
+		{
+			String sql =
+				"select * from AR_QTX_WORK_HS "
+				+ "join AR_QTX_WORK_STATUS ON AR_QTX_WORK_STATUS.QTX_WID = AR_QTX_WORK_HS.QTX_WID "
+				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+				+ "WHERE AR_QTX_WORK_STATUS.STATUS=? "
+				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP, AR_QTX_WORK.QTX_WID desc";
+			this.workHSResultSet = new SimpleDataLoaderResultSet<QTXWorkHS>(QTXWorkHS.class, template);
+			this.workHSResultSet.execute(sql, new Object[] {TrackerCodes.QualtxStatus.PENDING.ordinal()});
+			this.workHSResultSet.next();
+		}
+		finally
+		{
+			tracker.stop("Work HS select complete", null);
+		}
+		
+		tracker = new PerformanceTracker(logger, Level.INFO, "executeWorkCompSelectStatement");
+		tracker.start();
+		try
+		{
+			String sql =
+				"select * "
+				+ "from AR_QTX_COMP_WORK "
+				+ "join AR_QTX_WORK_STATUS on AR_QTX_WORK_STATUS.qtx_wid = AR_QTX_COMP_WORK.qtx_wid "
+				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+				+ "WHERE AR_QTX_WORK_STATUS.STATUS=? "
+				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP, AR_QTX_WORK.QTX_WID desc";
+			this.workCompResultSet = new SimpleDataLoaderResultSet<QTXCompWork>(QTXCompWork.class, template);
+			this.workCompResultSet.execute(sql, new Object[] {TrackerCodes.QualtxStatus.PENDING.ordinal()});
+			this.workCompResultSet.next();
+		}
+		finally
+		{
+			tracker.stop("Work Comp select complete", null);
+		}
+		
+		tracker = new PerformanceTracker(logger, Level.INFO, "executeWorkCompHSSelectStatement");
+		tracker.start();
+		try
+		{
+			String sql =
+				"select * "
+				+ "from AR_QTX_COMP_WORK_HS "
+				+ "join AR_QTX_WORK_STATUS on AR_QTX_WORK_STATUS.qtx_wid = AR_QTX_COMP_WORK_HS.qtx_wid "
+				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+				+ "WHERE AR_QTX_WORK_STATUS.STATUS=? "
+				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP, AR_QTX_WORK.QTX_WID desc";
+			this.workCompHSResultSet = new SimpleDataLoaderResultSet<QTXCompWorkHS>(QTXCompWorkHS.class, template);
+			this.workCompHSResultSet.execute(sql, new Object[] {TrackerCodes.QualtxStatus.PENDING.ordinal()});
+			this.workCompHSResultSet.next();
+		}
+		finally
+		{
+			tracker.stop("Work Comp HS select complete", null);
+		}
+
+		tracker = new PerformanceTracker(logger, Level.INFO, "executeWorkCompIVASelectStatement");
+		tracker.start();
+		try
+		{
+			String sql = 
+				"select * "
+				+ "from AR_QTX_COMP_WORK_IVA "
+				+ "join AR_QTX_WORK_STATUS on AR_QTX_WORK_STATUS.qtx_wid = AR_QTX_COMP_WORK_IVA.qtx_wid "
+				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+				+ "WHERE AR_QTX_WORK_STATUS.STATUS=? "
+				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP, AR_QTX_WORK.QTX_WID desc";
+			this.workCompIVAResultSet = new SimpleDataLoaderResultSet<QTXCompWorkIVA>(QTXCompWorkIVA.class, template);
+			this.workCompIVAResultSet.execute(sql, new Object[] {TrackerCodes.QualtxStatus.PENDING.ordinal()});
+			this.workCompIVAResultSet.next();
+		}
+		finally
+		{
+			tracker.stop("Work Comp IVA select complete", null);
+		}
+	}
+	
+	private void cleanupWorkResultSets()
+	{
+		if (this.workResultSet != null) this.workResultSet.close();
+		if (this.workHSResultSet != null) this.workHSResultSet.close();
+		if (this.workCompResultSet != null) this.workCompResultSet.close();
+		if (this.workCompHSResultSet != null) this.workCompHSResultSet.close();
+		if (this.workCompIVAResultSet != null) this.workCompIVAResultSet.close();
+	}
+	
+	private boolean loadWorkRecord() throws SQLException
+	{
+		QTXWork work = this.workResultSet.current();
+		
+		if (work != null)
+		{
+			this.addWorkPackage(work);
+			this.workLoaded++;
+			
+			if (logger.isDebugEnabled())
+				logger.debug("Loaded work " + work.qtx_wid);
+			
+			while (true)
+			{
+				QTXWorkHS workHS = this.workHSResultSet.current();
+				
+				if (logger.isDebugEnabled())
+					logger.debug("work " + work.qtx_wid + " compared to current hswork " + ((workHS != null) ? workHS.qtx_hspull_wid : "null"));				
+
+				if (workHS != null && workHS.qtx_wid == work.qtx_wid)
+				{
+					this.setWorkHSOnWorkPackage(workHS);
+					this.workHSLoaded++;
+					this.workHSResultSet.next();
+				}
+				else break;
+			}
+			
+			while (true)
+			{
+				QTXCompWork compWork = this.workCompResultSet.current();
+
+				if (logger.isDebugEnabled())
+					logger.debug("work " + work.qtx_wid + " compared to current compwork " + ((compWork != null) ? compWork.qtx_wid : "null"));				
+
+				if (compWork != null && compWork.qtx_wid == work.qtx_wid)
+				{
+					this.setCompWorkOnWorkPackage(compWork);
+					this.compWorkLoaded++;
+					this.workCompResultSet.next();
+				}
+				else break;
+			}
+			
+			while (true)
+			{
+				QTXCompWorkHS compWorkHS = this.workCompHSResultSet.current();
+				
+				if (logger.isDebugEnabled())
+					logger.debug("work " + work.qtx_wid + " compared to current comphswork " + ((compWorkHS != null) ? compWorkHS.qtx_comp_hspull_wid : "null"));				
+
+				if (compWorkHS != null && compWorkHS.qtx_wid == work.qtx_wid)
+				{
+					this.setCompWorkHSOnWorkPackage(compWorkHS);
+					this.compWorkHSLoaded++;
+					this.workCompHSResultSet.next();
+				}
+				else break;
+			}
+			
+			while (true)
+			{
+				QTXCompWorkIVA compWorkIVA = this.workCompIVAResultSet.current();
+				
+				if (logger.isDebugEnabled())
+					logger.debug("work " + work.qtx_wid + " compared to current compivawork " + ((compWorkIVA != null) ? compWorkIVA.qtx_comp_iva_wid : "null"));				
+				
+				if (compWorkIVA != null && compWorkIVA.qtx_wid == work.qtx_wid)
+				{
+					this.setCompWorkIVAOnWorkPackage(compWorkIVA);
+					this.compWorkIVALoaded++;
+					this.workCompIVAResultSet.next();
+				}
+				else break;
+			}
+		}
+		else
+		{
+			logger.debug("workResultSet exhausted");
+		}
+		
+		this.workResultSet.next();
+		
+		return work != null;
 	}
 	
 	private void setupEntityManagers() throws Exception
@@ -136,19 +385,17 @@ public class QTXWorkUniverse
 			{
 				qualtxMgr.setExistingEntity(workPackage.qualtx);
 				workPackage.setEntityManager(qualtxMgr);
-
 			}
 			catch (Exception e)
 			{
 				MessageFormatter.error(logger, "setupEntityManagers", e, "Work package does not have qualtx assigned for the Ar qtx work Id : [{0}] ", workPackage.work.qtx_wid);
-
 			}
 		}
 	}
 
-	private int updateWorkRecordsToPending(String sql) throws SQLException
+	private int updateWorkRecordsToInProgress(String sql) throws SQLException
 	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkRecordsToPending");
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkRecordsToInProgress");
 		int rowsAffected = 0;
 		
 		tracker.start();
@@ -157,7 +404,7 @@ public class QTXWorkUniverse
 			int updateMatrix[][] = template.batchUpdate(sql, this.workByIDMap.values(), this.batchSize, new ParameterizedPreparedStatementSetter<WorkPackage>() {
 					@Override
 					public void setValues(PreparedStatement ps, WorkPackage argument) throws SQLException {
-						ps.setInt(1, TrackerCodes.QualtxStatus.PENDING.ordinal());
+						ps.setInt(1, TrackerCodes.QualtxStatus.IN_PROGRESS.ordinal());
 						ps.setLong(2, argument.work.qtx_wid);
 					}
 				  });
@@ -176,36 +423,9 @@ public class QTXWorkUniverse
 		return rowsAffected;
 	}
 	
-	private long loadPendingWork() throws Exception
+	private int loadInProgressQualtx() throws Exception
 	{
-		logger.debug("Loading init work records");
-		
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingWork");
-		
-		tracker.start();
-		
-		try
-		{
-			List<QTXWork> workList = this.template.query(this.getProducerSQL(), new Object[] {TrackerCodes.QualtxStatus.PENDING.ordinal()},  new QTXWorkResultSetExtractor());
-			
-			for (QTXWork work : workList)
-			{
-				this.addWorkPackage(work);
-			}
-		}
-		finally
-		{
-			tracker.stop("ar_qtx_work records loaded = {0}" , new Object[]{this.workByIDMap.size()});
-		}
-		
-		logger.debug("Loaded work items = " + this.workByIDMap.size());
-		
-		return this.workByIDMap.size();
-	}
-	
-	private int loadPendingQualtx() throws Exception
-	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingQualtx");
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadInProgressQualtx");
 		logger.debug("Loading related qualtx records");
 		
 		String sql = "select MDI_QUALTX.* "
@@ -222,7 +442,7 @@ public class QTXWorkUniverse
 		{
 			SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
 			
-			qualtxList = this.template.query(sql, new Object[]{TrackerCodes.QualtxStatus.PENDING.ordinal()}, extractor);
+			qualtxList = this.template.query(sql, new Object[]{TrackerCodes.QualtxStatus.IN_PROGRESS.ordinal()}, extractor);
 			
 			for (QualTX qualtx : qualtxList)
 			{
@@ -241,140 +461,7 @@ public class QTXWorkUniverse
 		return qualtxList.size();
 	}
 	
-	private long loadPendingWorkHS() throws Exception
-	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingWorkHS");
-		logger.debug("Loading pending work hs records ...");
-
-		tracker.start();
-		
-		List<QTXWorkHS> list = null;
-		try
-		{
-			String sql = "select * "
-					+ "from AR_QTX_WORK_HS "
-					+ "WHERE AR_QTX_WORK_HS.STATUS=?";
-			
-			SimpleDataLoaderResultSetExtractor<QTXWorkHS> extractor = new SimpleDataLoaderResultSetExtractor<QTXWorkHS>(QTXWorkHS.class);
-
-			list = this.template.query(sql, new Object[] {TrackerCodes.QualtxHSPullStatus.PENDING.ordinal()}, extractor);
-			
-			for (QTXWorkHS workHS : list)
-			{
-				this.setWorkHSOnWorkPackage(workHS);
-			}
-		}
-		finally
-		{
-			tracker.stop("ar_qtx_work_hs records loaded = {0}" , new Object[]{(list != null) ? list.size() : "ERROR"});
-		}
-		
-		logger.debug("Loaded pending work hs records = " + list.size());
-		
-		return list.size();
-	}
-	
-	private long loadPendingCompWork() throws Exception
-	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingCompWork");
-		logger.debug("Loading pending compwork records");
-
-		tracker.start();
-		
-		List<QTXCompWork> list = null;
-		try
-		{
-			String sql = "select AR_QTX_COMP_WORK.*,AR_QTX_COMP_WORK_STATUS.status "
-					+ "from AR_QTX_COMP_WORK_STATUS "
-					+ "join AR_QTX_COMP_WORK on AR_QTX_COMP_WORK.qtx_comp_wid = AR_QTX_COMP_WORK_STATUS.qtx_comp_wid "
-					+ "WHERE AR_QTX_COMP_WORK_STATUS.STATUS=?";
-			
-			SimpleDataLoaderResultSetExtractor<QTXCompWork> extractor = new SimpleDataLoaderResultSetExtractor<QTXCompWork>(QTXCompWork.class);
-			
-			list = this.template.query(sql, new Object[]{TrackerCodes.QualtxCompStatus.PENDING.ordinal()}, extractor);
-			
-			for (QTXCompWork compWork : list)
-			{
-				this.setCompWorkOnWorkPackage(compWork);
-			}
-		}
-		finally
-		{
-			tracker.stop("ar_qtx_comp_work records loaded = {0}" , new Object[]{(list != null) ? list.size() : "ERROR"});
-		}
-		
-		logger.debug("Loaded compwork records = " + list.size());
-		
-		return list.size();
-	}
-
-	private long loadPendingCompWorkHS() throws Exception
-	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingCompWorkHS");
-		logger.debug("Loading pending compwork hs records");
-
-		tracker.start();
-		
-		List<QTXCompWorkHS> list = null;
-		try
-		{
-			String sql = "select * "
-					+ "from AR_QTX_COMP_WORK_HS "
-					+ "WHERE AR_QTX_COMP_WORK_HS.STATUS=?";
-			
-			SimpleDataLoaderResultSetExtractor<QTXCompWorkHS> extractor = new SimpleDataLoaderResultSetExtractor<QTXCompWorkHS>(QTXCompWorkHS.class);
-			
-			list = this.template.query(sql, new Object[]{TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal()}, extractor);
-			
-			for (QTXCompWorkHS compWorkHS : list)
-			{
-				this.setCompWorkHSOnWorkPackage(compWorkHS);
-			}
-		}
-		finally
-		{
-			tracker.stop("ar_qtx_comp_work_hs records loaded = {0}" , new Object[]{(list != null) ? list.size() : "ERROR"});
-		}
-		
-		logger.debug("Load compwork hs records = " + list.size());
-		
-		return list.size();
-	}
-
-	private long loadPendingCompWorkIVA() throws Exception
-	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingCompWorkIVA");
-		logger.debug("Loading pending compwork iva records");
-
-		tracker.start();
-		
-		List<QTXCompWorkIVA> list = null;
-		try
-		{
-			String sql = "select * "
-					+ "from AR_QTX_COMP_WORK_IVA "
-					+ "WHERE AR_QTX_COMP_WORK_IVA.STATUS=?";
-			
-			SimpleDataLoaderResultSetExtractor<QTXCompWorkIVA> extractor = new SimpleDataLoaderResultSetExtractor<QTXCompWorkIVA>(QTXCompWorkIVA.class);
-			
-			list = this.template.query(sql, new Object[]{TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal()}, extractor);
-			
-			for (QTXCompWorkIVA compWorkIVA : list)
-			{
-				this.setCompWorkIVAOnWorkPackage(compWorkIVA);
-			}
-		}
-		finally
-		{
-			tracker.stop("ar_qtx_work_status records affected = {0}" , new Object[]{(list != null) ? list.size() : "ERROR"});
-		}
-		
-		logger.debug("Load compwork iva records = " + list.size());
-		
-		return list.size();
-	}
-
-	private void loadPendingQualtxComp() throws Exception
+	private void loadInProgressQualtxComp() throws Exception
 	{
 		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadPendingQualtxComp");
 		logger.debug("Loading related qualtx comp records");
@@ -388,13 +475,13 @@ public class QTXWorkUniverse
 					+ "from MDI_QUALTX_COMP "
 					+ "join ("
 					+ "   select distinct qualtx_comp_key from AR_QTX_COMP_WORK"
-					+ "   join AR_QTX_COMP_WORK_STATUS ON AR_QTX_COMP_WORK.QTX_COMP_WID = AR_QTX_COMP_WORK_STATUS.QTX_COMP_WID "
-					+ "   WHERE AR_QTX_COMP_WORK_STATUS.STATUS=?"
+					+ "   join AR_QTX_WORK_STATUS ON AR_QTX_COMP_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+					+ "   WHERE AR_QTX_WORK_STATUS.STATUS=?"
 					+ ") QTX_COMP on MDI_QUALTX_COMP.ALT_KEY_COMP = QTX_COMP.QUALTX_COMP_KEY";
 			
 			SimpleDataLoaderResultSetExtractor<QualTXComponent> extractor = new SimpleDataLoaderResultSetExtractor<QualTXComponent>(QualTXComponent.class);
 
-			qualtxCompList = this.template.query(sql, new Object[] {TrackerCodes.QualtxCompStatus.PENDING.ordinal()}, extractor);
+			qualtxCompList = this.template.query(sql, new Object[] {TrackerCodes.QualtxStatus.IN_PROGRESS.ordinal()}, extractor);
 				
 			for (QualTXComponent qualtxComp : qualtxCompList)
 			{
@@ -420,7 +507,11 @@ public class QTXWorkUniverse
 	{
 		WorkPackage workPackage = this.getWorkPackage(compWork.qtx_wid);
 		
-		if(null == workPackage) return;
+		if (null == workPackage)
+		{
+			logger.error("ERROR matching qtx component " + compWork.qtx_comp_wid + " to qtx " + compWork.qtx_wid);
+			return;
+		}
 		
 		CompWorkPackage compWorkPackage = new CompWorkPackage(workPackage);
 		
@@ -428,13 +519,6 @@ public class QTXWorkUniverse
 		
 		compWorkPackage.compWork = compWork;
 
-//		if(compWork.qualtx_comp_key == null) 
-//			compWorkPackage.qualtxCompAudit = new BOMQualAuditEntity(MDIQualTxComp.TABLE_NAME); //When new component added to a bom, there will be no qualtx_comp_key
-//		else 
-//			compWorkPackage.qualtxCompAudit = new BOMQualAuditEntity(MDIQualTxComp.TABLE_NAME, compWork.qualtx_comp_key); 
-//		
-//		workPackage.qualtxAudit.addChildTable(compWorkPackage.qualtxCompAudit);
-		
 		workPackage.addCompWorkPackage(compWorkPackage);
 		
 		if (compWork.qualtx_comp_key != null)
@@ -451,7 +535,6 @@ public class QTXWorkUniverse
 		}
 		
 		this.checkForBOMResourceRequirements(compWorkPackage);
-
 	}
 	
 	private void setCompWorkHSOnWorkPackage(QTXCompWorkHS compWorkHS)
@@ -504,36 +587,29 @@ public class QTXWorkUniverse
 			return ; //Invalid Data, Added for debuggging
 		}
 		
-		// qualtx will not have list of comps - managed separately
-
 		qualtx.addComponent(qualtxComp);
 
-		while (workPackage != null)
+		//TODO nagesh, is this necessary?
+		WorkPackage linkedPackage = workPackage;
+		while (linkedPackage != null)
 		{
-			workPackage.qualtx = qualtx;
+			linkedPackage.qualtx = qualtx;
 			
-			workPackage = workPackage.getLinkedPackage();
+			linkedPackage = linkedPackage.getLinkedPackage();
 		}
 
-			ArrayList<CompWorkPackage> compWorkList = this.compWorkByQualtxCompMap.get(qualtxComp.alt_key_comp);
-			
-			if(compWorkList == null || compWorkList.size() == 0)
-			{
-				logger.error("compWorkByQualtxCompMap returns empty for the component ID :" + qualtxComp.comp_id + " and qualtxComp.tx_id" + qualtxComp.tx_id +" and qualtxComp.src_key" + qualtxComp.src_key + "AND QTX_WID=" + workPackage.work.qtx_wid);
-				return ;  //Invalid, Added for debuggging
-			}
-			
-			// EntityManager<QualTXComponent> entityMgr = new
-			// EntityManager<QualTXComponent>(QualTXComponent.class, this.txMgr,
-			// this.schemaDesc, template);
-			// entityMgr.setExistingEntity(qualtxComp);
-			for (CompWorkPackage compWorkPackage : compWorkList)
-			{
-				compWorkPackage.qualtxComp = qualtxComp;
+		ArrayList<CompWorkPackage> compWorkList = this.compWorkByQualtxCompMap.get(qualtxComp.alt_key_comp);
+		
+		if(compWorkList == null || compWorkList.size() == 0)
+		{
+			logger.error("compWorkByQualtxCompMap returns empty for the component ID :" + qualtxComp.comp_id + " and qualtxComp.tx_id" + qualtxComp.tx_id +" and qualtxComp.src_key" + qualtxComp.src_key + "AND QTX_WID=" + workPackage.work.qtx_wid);
+			return ;  //Invalid, Added for debuggging
+		}
 
-				// compWorkPackage.entityMgr = entityMgr;
-			}
-
+		for (CompWorkPackage compWorkPackage : compWorkList)
+		{
+			compWorkPackage.qualtxComp = qualtxComp;
+		}
 	}
 	
 	private WorkPackage addWorkPackage(QTXWork work)
@@ -869,18 +945,18 @@ public class QTXWorkUniverse
 		}
 	}
 	
-	private int updateInitWorkToPending(long bestTime) throws SQLException
+	private int updateAvailableWorkToPending(long bestTime) throws SQLException
 	{
-		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateInitWorkToPending");
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateAvailableWorkToPending");
 		int rowsAffected = 0;
 		
 		tracker.start();
 		
 		try
 		{
-			rowsAffected = this.template.update("update ar_qtx_work_status set status=? where status=? ", TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.INIT.ordinal());
+			rowsAffected = this.template.update("update ar_qtx_work_status set status=? where status=? or status=? or status=?", TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.INIT.ordinal(), TrackerCodes.QualtxStatus.IN_PROGRESS.ordinal(), TrackerCodes.QualtxStatus.RETRY.ordinal());
 			
-			logger.debug("QTXWorkStaging init records found = " + rowsAffected);
+			logger.debug("ar_qtx_work_status records updated = " + rowsAffected);
 		}
 		finally
 		{
@@ -890,17 +966,101 @@ public class QTXWorkUniverse
 		return rowsAffected;
 	}
 	
-	private String getProducerSQL()
+	private int updateWorkHSToPending() throws SQLException
 	{
-		return "select AR_QTX_WORK.QTX_WID,AR_QTX_WORK.COMPANY_CODE,AR_QTX_WORK.PRIORITY,AR_QTX_WORK.BOM_KEY,AR_QTX_WORK.IVA_KEY,AR_QTX_WORK.ENTITY_KEY, "
-				+ "AR_QTX_WORK.ENTITY_TYPE,AR_QTX_WORK.USER_ID,AR_QTX_WORK.TIME_STAMP, "
-				+ "AR_QTX_WORK_STATUS.STATUS, "
-				+ "AR_QTX_WORK_DETAILS.QUALTX_KEY,AR_QTX_WORK_DETAILS.ANALYSIS_METHOD,AR_QTX_WORK_DETAILS.COMPONENTS, "
-				+ "AR_QTX_WORK_DETAILS.REASON_CODE,AR_QTX_WORK_DETAILS.CTRY_OF_IMPORT "
-				+ "from AR_QTX_WORK_STATUS "
-				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
-				+ "join AR_QTX_WORK_DETAILS ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_DETAILS.QTX_WID "
-				+ "WHERE STATUS=? "
-				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP desc";
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkHSToPending");
+		int rowsAffected = 0;
+		
+		tracker.start();
+		
+		try
+		{
+			rowsAffected = this.template.update("update ar_qtx_work_hs set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxHSPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxHSPullStatus.PENDING.ordinal());
+			
+			logger.debug("ar_qtx_work_hs init records found = " + rowsAffected);
+		}
+		finally
+		{
+			tracker.stop("ar_qtx_work_hs records affected = {0}" , new Object[]{rowsAffected});
+		}
+		
+		return rowsAffected;
 	}
+	
+	private int updateWorkCompToPending() throws SQLException
+	{
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkCompToPending");
+		int rowsAffected = 0;
+		
+		tracker.start();
+		
+		try
+		{
+			rowsAffected = this.template.update("update ar_qtx_comp_work_status set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxCompStatus.PENDING.ordinal());
+			
+			logger.debug("ar_qtx_comp_work_status init records found = " + rowsAffected);
+		}
+		finally
+		{
+			tracker.stop("ar_qtx_comp_work_status records affected = {0}" , new Object[]{rowsAffected});
+		}
+		
+		return rowsAffected;
+	}
+	
+	private int updateWorkCompHSToPending() throws SQLException
+	{
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkCompHSToPending");
+		int rowsAffected = 0;
+		
+		tracker.start();
+		
+		try
+		{
+			rowsAffected = this.template.update("update ar_qtx_comp_work_hs set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal());
+			
+			logger.debug("ar_qtx_comp_work_hs init records found = " + rowsAffected);
+		}
+		finally
+		{
+			tracker.stop("ar_qtx_comp_work_hs records affected = {0}" , new Object[]{rowsAffected});
+		}
+		
+		return rowsAffected;
+	}
+	
+	private int updateWorkCompIVAToPending() throws SQLException
+	{
+		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkCompIVAToPending");
+		int rowsAffected = 0;
+		
+		tracker.start();
+		
+		try
+		{
+			rowsAffected = this.template.update("update ar_qtx_comp_work_iva set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal());
+			
+			logger.debug("ar_qtx_comp_work_iva init records found = " + rowsAffected);
+		}
+		finally
+		{
+			tracker.stop("ar_qtx_comp_work_iva records affected = {0}" , new Object[]{rowsAffected});
+		}
+		
+		return rowsAffected;
+	}
+	
+//	private String getProducerSQL()
+//	{
+//		return "select AR_QTX_WORK.QTX_WID,AR_QTX_WORK.COMPANY_CODE,AR_QTX_WORK.PRIORITY,AR_QTX_WORK.BOM_KEY,AR_QTX_WORK.IVA_KEY,AR_QTX_WORK.ENTITY_KEY, "
+//				+ "AR_QTX_WORK.ENTITY_TYPE,AR_QTX_WORK.USER_ID,AR_QTX_WORK.TIME_STAMP, "
+//				+ "AR_QTX_WORK_STATUS.STATUS, "
+//				+ "AR_QTX_WORK_DETAILS.QUALTX_KEY,AR_QTX_WORK_DETAILS.ANALYSIS_METHOD,AR_QTX_WORK_DETAILS.COMPONENTS, "
+//				+ "AR_QTX_WORK_DETAILS.REASON_CODE,AR_QTX_WORK_DETAILS.CTRY_OF_IMPORT "
+//				+ "from AR_QTX_WORK_STATUS "
+//				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
+//				+ "join AR_QTX_WORK_DETAILS ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_DETAILS.QTX_WID "
+//				+ "WHERE STATUS=? "
+//				+ "ORDER BY AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP desc";
+//	}
 }

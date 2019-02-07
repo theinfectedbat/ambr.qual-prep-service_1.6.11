@@ -34,6 +34,7 @@ import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.container.TrackerContainer;
 import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.fta.qts.work.QtxWorkInfo;
+import com.ambr.gtm.fta.qts.workmgmt.QTXStageProducer;
 import com.ambr.gtm.fta.qts.workmgmt.QTXWorkInfo;
 import com.ambr.gtm.fta.qts.workmgmt.QTXWorkProducer;
 import com.ambr.platform.utils.log.MessageFormatter;
@@ -55,6 +56,9 @@ public class TrackerServiceAPI
 
     @Autowired
 	QTXWorkProducer qtxWorkProducer;
+    
+    @Autowired
+	QTXStageProducer qtxStageProducer;
     
     @Autowired
     QTXWorkRepository workRepository;
@@ -198,13 +202,27 @@ public class TrackerServiceAPI
     		if(this.qtxWorkProducer.getStatus() == qtxWorkProducer.REQUAL_SERVICE_AVAILABLE)
     			this.qtxWorkProducer.executeFindWork();
     		else
-    			throw new Exception("Requal serivce is in progress");
+    			throw new Exception("Requal service is in progress");
     	}
     	catch (Exception e)
     	{
     		MessageFormatter.error(logger, "qtxExecuteRequalProducer",e, "Exception while executeFindWork ");
     		
     	}
+    }
+
+    @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_WP_SET_LIMITS, method = RequestMethod.GET)
+    public void qtxWorkProducerSetLimits(@RequestParam(name="maxObjects", required=true) long maxObjects) throws Exception
+    {
+		this.qtxWorkProducer.setMaxObjects(maxObjects);
+    }
+
+    @RequestMapping(value = TrackerClientAPI.QTX_WORKMGMT_SP_SET_LIMITS, method = RequestMethod.GET)
+    public void qtxStageProducerSetLimits(
+    		@RequestParam(name="maxWork", required=true) long maxWork,
+    		@RequestParam(name="maxStage", required=true) long maxStage) throws Exception
+    {
+		this.qtxStageProducer.setLimits(maxWork, maxStage);
     }
 
     @RequestMapping(value = TrackerClientAPI.API_CREATE_UNIVERSE, method = RequestMethod.GET)
