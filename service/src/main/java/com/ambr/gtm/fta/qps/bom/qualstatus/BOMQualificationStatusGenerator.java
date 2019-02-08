@@ -156,6 +156,7 @@ public class BOMQualificationStatusGenerator
 	public BOMQualificationStatus generate(long theBOMKey)
 		throws Exception
 	{
+		this.bomKey=theBOMKey;
 		this.statusObj = new BOMQualificationStatus(theBOMKey);
 		this.loadTradeLaneUniverse();
 		this.updateActiveTradeLanes();
@@ -190,7 +191,7 @@ public class BOMQualificationStatusGenerator
 			);
 		}
 		catch (IllegalStateException e) {
-			if (this.queueUniverse.qtxDetailUniverse.getQualTXCount() == 0) {
+			if (this.queueUniverse.qtxDetailUniverse.getQualTXDetailContainer(this.bomKey) == null) {
 				aStatusDetail.statusText = QualificationPreparationStatusEnum.PENDING.name();
 			}
 			else {
