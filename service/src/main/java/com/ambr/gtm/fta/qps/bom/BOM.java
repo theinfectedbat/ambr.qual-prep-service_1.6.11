@@ -359,19 +359,6 @@ public class BOM
 	}
 	
 	
-	private void indexByAltKeyBOMComponent()
-	{
-		this.altKeyBOMComponentIndex = new HashMap<Long, BOMComponent>();
-		
-		if (this.compList != null)
-		{
-			for (BOMComponent bomComponent : this.compList)
-			{
-				this.altKeyBOMComponentIndex.put(bomComponent.alt_key_comp, bomComponent);
-			}
-		}
-	}
-
 	/**
      *************************************************************************************
      * <P>
