@@ -673,12 +673,12 @@ public class StageWorkConverter
 
 			List<QualTX> qualtxCompList = this.utility.getImpactedQtxCompKeys(keyList, reasonCode);
 
-			buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap, bestTime);
+			buildCompProdQtxWorkBean(qualtxCompList, reasonCode, consolidatedWork, prodConsolMap, bestTime, bomConsolMap);
 
 			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED || reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE)
 			{
 				List<QualTX> qualtxList = this.utility.getImpactedQtxKeys(keyList, reasonCode);
-				buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap, bestTime);
+				buildheaderProdQtxWorkBean(qualtxList, reasonCode, consolidatedWork, prodConsolMap, bestTime, bomConsolMap);
 			}
 		}catch(Exception e){
 				logger.error("getConsolidatedQualtxForProdUpdate, Error while processing the reasonCode:" + reasonCode + "newCtryCmpMap ="+newCtryCmpMap.keySet());
@@ -844,7 +844,7 @@ public class StageWorkConverter
 		}
 	}
 
-	private void buildheaderProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime) throws Exception
+	private void buildheaderProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime, Map<Long, QTXConsolWork> bomConsolMap) throws Exception
 	{
 		long workCode = this.utility.getQtxWorkReasonCodes(reasonCode);
 		for (QualTX qualtx : qualtxList)
@@ -874,6 +874,12 @@ public class StageWorkConverter
 			{
 				//logger.error("@@@@ buildheaderProdQtxWorkBean=qualtx.src_key= " +qualtx.src_key + " qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtx.prod_key);
+
+				if (null != bomConsolMap)
+				{
+					QTXConsolWork qtxConsolWork = bomConsolMap.get(qualtx.src_key);
+					if (null != qtxConsolWork) theQtxWork.priority = qtxConsolWork.priority;
+				}
 				if (reasonCode == ReQualificationReasonCodes.GPM_NEW_IVA_IDENTIFED || reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I || reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED || reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE)
 				{
 					theQtxWork.details.setReasonCodeFlag(workCode);
@@ -891,7 +897,7 @@ public class StageWorkConverter
 		}
 	}
 
-	private void buildCompProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime) throws Exception
+	private void buildCompProdQtxWorkBean(List<QualTX> qualtxList, long reasonCode, Map<Long, QTXWork> qtxWorkList, Map<Long, QTXConsolWork> prodConsolMap, Timestamp bestTime, Map<Long, QTXConsolWork> bomConsolMap) throws Exception
 	{
 		long workCode = this.utility.getQtxWorkReasonCodes(reasonCode);
 		for (QualTX qualtx : qualtxList)
@@ -1014,6 +1020,11 @@ public class StageWorkConverter
 			{
 				//logger.error("@@@@ buildCompProdQtxWorkBean=qualtx.src_key= " +qualtx.src_key + " qualtxComp.prod_key " +qualtxComp.prod_key+ "qualtxComp.src_key =" +qualtxComp.src_key+" qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtxComp.prod_key);
+				if (null != bomConsolMap)
+				{
+					QTXConsolWork qtxConsolWork = bomConsolMap.get(qualtx.src_key);
+					if (null != qtxConsolWork) theQtxWork.priority = qtxConsolWork.priority;
+				}
 				theQtxCompWork = this.createQtxCompWorkObj(qualtx, qualtxComp, 0, theQtxWork.qtx_wid);
 				theQtxCompWork.time_stamp = theQtxWork.time_stamp;
 				theQtxCompWork.status.time_stamp = theQtxWork.time_stamp;
