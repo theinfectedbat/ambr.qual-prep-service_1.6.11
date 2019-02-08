@@ -466,81 +466,100 @@ public class QualTXComponentUtility
 		List<GPMClaimDetails> gpmNonOriginatingClaimDetails = new ArrayList<>();
 	
 		try {
-		GPMClaimDetailsSourceIVAContainer  theClaimDetailsContainer = this.claimDetailsCache.getClaimDetails(this.qualTXComp.prod_src_iva_key);
-		for(GPMClaimDetails gpmClaimDetails : theClaimDetailsContainer.claimDetailList)
-		{
-			if(gpmClaimDetails.claimDetailsValue.get("group_name").equals(groupName))
+			if(this.qualTXComp.prod_src_iva_key == null)
 			{
-				gpmNonOriginatingClaimDetails.add(gpmClaimDetails);
-				break;
-			}
-		}
-
-		if(!gpmNonOriginatingClaimDetails.isEmpty())
-		{
-			Map<String,String> flexConfigmap = this.qualTXBusinessLogicProcessor.dataExtensionConfigRepos.getDataExtensionConfiguration(groupName).getFlexColumnMapping();
-			BigDecimal theTotalNonOriginatingComp = new BigDecimal(0);
-			boolean useNonOriginatingMaterialsExists = false;
-			for (GPMClaimDetails aNonOriginatingMaterialRdc : gpmNonOriginatingClaimDetails)
-			{
-				String aBOMHeaderCurrency = this.qualTXComp.qualTX.currency_code;
-				String theNonOriginatingCurrency = null;
-				String columnName = flexConfigmap.get("CURRENCY");
-				if(columnName != null)
-				{
-					Object theNonOriginatingCurrencyObj = aNonOriginatingMaterialRdc.getValue(columnName);
-					if(theNonOriginatingCurrencyObj != null)
-						theNonOriginatingCurrency = (String)theNonOriginatingCurrencyObj;
-				}
-
-				BigDecimal theNonOriginatingValue = null;
-				columnName = flexConfigmap.get("COST");
-				if(columnName != null)
-				{
-					Object monOrignValue = aNonOriginatingMaterialRdc.getValue(columnName);
-					if(monOrignValue != null)
-						theNonOriginatingValue = new BigDecimal(((Number)monOrignValue).doubleValue());
-				}
-
-				if (aBOMHeaderCurrency != null && !aBOMHeaderCurrency.trim().isEmpty() 
-						&& theNonOriginatingValue != null && theNonOriginatingValue.doubleValue() > 0 
-						&& theNonOriginatingCurrency != null && !theNonOriginatingCurrency.trim().isEmpty())
-				{
-					useNonOriginatingMaterialsExists = true;
-
-					if(!theNonOriginatingCurrency.equalsIgnoreCase(aBOMHeaderCurrency))
-					{		
-						double exchangeRate = this.qualTXBusinessLogicProcessor.currencyExchangeRateManager.getExchangeRate(theNonOriginatingCurrency,aBOMHeaderCurrency); 
-						if (exchangeRate != 0) 
-							theNonOriginatingValue = theNonOriginatingValue.multiply(BigDecimal.valueOf(exchangeRate));
-					}
-				}
-				theTotalNonOriginatingComp = theTotalNonOriginatingComp.add(theNonOriginatingValue);
-			}
-
-			if (useNonOriginatingMaterialsExists && theTotalNonOriginatingComp.doubleValue() > 0)
-			{
-				Double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
+				MessageFormatter.debug(logger, "setNonOriginatingMaterialCost", "BOM Component with Key [{0,number,#}]: did not have an IVA identified for FTA [{1}], COI[{2}], Effective From[{3, date, dd-MMM-yyyy}], Effective To[{4, date, dd-MMM-yyyy}]", 
+						this.bomComp.alt_key_comp, 
+						this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import,
+						this.qualTXComp.qualTX.effective_from, this.qualTXComp.qualTX.effective_to);
 				
-				if(this.qualTXComp.qualTX.analysis_method == null 
-						|| "".equals(this.qualTXComp.qualTX.analysis_method))
+				return;
+			}
+			
+			GPMClaimDetailsSourceIVAContainer  theClaimDetailsContainer = this.claimDetailsCache.getClaimDetails(this.qualTXComp.prod_src_iva_key);
+			if(theClaimDetailsContainer == null || theClaimDetailsContainer.claimDetailList == null)
+			{
+				MessageFormatter.debug(logger, "setNonOriginatingMaterialCost", "BOM Component with Key [{0,number,#}]: did not have claimdetails for FTA [{1}], COI[{2}], Effective From[{3, date, dd-MMM-yyyy}], Effective To[{4, date, dd-MMM-yyyy}, PROD SOURCE IVA KEY [{5,number,#}]", 
+						this.bomComp.alt_key_comp, 
+						this.qualTXComp.qualTX.fta_code, this.qualTXComp.qualTX.ctry_of_import,
+						this.qualTXComp.qualTX.effective_from, this.qualTXComp.qualTX.effective_to, this.qualTXComp.prod_src_iva_key);
+				
+				return;
+			}
+			for(GPMClaimDetails gpmClaimDetails : theClaimDetailsContainer.claimDetailList)
+			{
+				if(gpmClaimDetails.claimDetailsValue.get("group_name").equals(groupName))
 				{
-					String analysisMethod =  this.qualTXBusinessLogicProcessor.qeConfigCache.getQEConfig(this.qualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
-					if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+					gpmNonOriginatingClaimDetails.add(gpmClaimDetails);
+					break;
+				}
+			}
+
+			if(!gpmNonOriginatingClaimDetails.isEmpty())
+			{
+				Map<String,String> flexConfigmap = this.qualTXBusinessLogicProcessor.dataExtensionConfigRepos.getDataExtensionConfiguration(groupName).getFlexColumnMapping();
+				BigDecimal theTotalNonOriginatingComp = new BigDecimal(0);
+				boolean useNonOriginatingMaterialsExists = false;
+				for (GPMClaimDetails aNonOriginatingMaterialRdc : gpmNonOriginatingClaimDetails)
+				{
+					String aBOMHeaderCurrency = this.qualTXComp.qualTX.currency_code;
+					String theNonOriginatingCurrency = null;
+					String columnName = flexConfigmap.get("CURRENCY");
+					if(columnName != null)
+					{
+						Object theNonOriginatingCurrencyObj = aNonOriginatingMaterialRdc.getValue(columnName);
+						if(theNonOriginatingCurrencyObj != null)
+							theNonOriginatingCurrency = (String)theNonOriginatingCurrencyObj;
+					}
+
+					BigDecimal theNonOriginatingValue = null;
+					columnName = flexConfigmap.get("COST");
+					if(columnName != null)
+					{
+						Object monOrignValue = aNonOriginatingMaterialRdc.getValue(columnName);
+						if(monOrignValue != null)
+							theNonOriginatingValue = new BigDecimal(((Number)monOrignValue).doubleValue());
+					}
+
+					if (aBOMHeaderCurrency != null && !aBOMHeaderCurrency.trim().isEmpty() 
+							&& theNonOriginatingValue != null && theNonOriginatingValue.doubleValue() > 0 
+							&& theNonOriginatingCurrency != null && !theNonOriginatingCurrency.trim().isEmpty())
+					{
+						useNonOriginatingMaterialsExists = true;
+
+						if(!theNonOriginatingCurrency.equalsIgnoreCase(aBOMHeaderCurrency))
+						{		
+							double exchangeRate = this.qualTXBusinessLogicProcessor.currencyExchangeRateManager.getExchangeRate(theNonOriginatingCurrency,aBOMHeaderCurrency); 
+							if (exchangeRate != 0) 
+								theNonOriginatingValue = theNonOriginatingValue.multiply(BigDecimal.valueOf(exchangeRate));
+						}
+					}
+					theTotalNonOriginatingComp = theTotalNonOriginatingComp.add(theNonOriginatingValue);
+				}
+
+				if (useNonOriginatingMaterialsExists && theTotalNonOriginatingComp.doubleValue() > 0)
+				{
+					Double cumulationValue = (BigDecimal.valueOf(this.qualTXComp.cost).subtract(theTotalNonOriginatingComp)).multiply(BigDecimal.valueOf(this.qualTXComp.qty_per)).doubleValue();
+
+					if(this.qualTXComp.qualTX.analysis_method == null 
+							|| "".equals(this.qualTXComp.qualTX.analysis_method))
+					{
+						String analysisMethod =  this.qualTXBusinessLogicProcessor.qeConfigCache.getQEConfig(this.qualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
+						if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+							this.qualTXComp.td_cumulation_value = cumulationValue;
+						else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+							this.qualTXComp.rm_cumulation_value = cumulationValue;
+						else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+							this.qualTXComp.in_cumulation_value = cumulationValue;
+					}
+					else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
 						this.qualTXComp.td_cumulation_value = cumulationValue;
-					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
 						this.qualTXComp.rm_cumulation_value = cumulationValue;
-					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
 						this.qualTXComp.in_cumulation_value = cumulationValue;
 				}
-				else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
-					this.qualTXComp.td_cumulation_value = cumulationValue;
-				else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
-					this.qualTXComp.rm_cumulation_value = cumulationValue;
-				else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(this.qualTXComp.qualTX.analysis_method))
-					this.qualTXComp.in_cumulation_value = cumulationValue;
 			}
-		}
 		}
 		catch(Exception exec)
 		{
