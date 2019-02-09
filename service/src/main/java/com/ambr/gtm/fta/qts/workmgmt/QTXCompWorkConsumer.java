@@ -503,7 +503,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		
 		//TODO move all of this logic to QTXPersistenceConsumer.  use one date to update all records modified in qualtx hierarchy.
 		Timestamp currentDate = new Timestamp(System.currentTimeMillis());
-		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_ADDED))
+		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_ADDED) && qualtxComp != null)
 		{
 			qualtxComp.created_by = parentWork.userId;
 			qualtxComp.created_date = currentDate;
