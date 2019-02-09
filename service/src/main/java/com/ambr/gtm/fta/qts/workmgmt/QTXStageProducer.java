@@ -155,9 +155,6 @@ public class QTXStageProducer extends QTXProducer
 				if (consolidatedWork == null || consolidatedWork.isEmpty()) break;
 
 				getWorkRepository().storeWork(consolidatedWork.values());
-				
-				//TODO nagesh/sankar - is this call still necessary, part of the implementation is commented out
-				updateTrackerStatus(consolidatedWork.values());
 			}
 
 			updateStageRecordsStatus(processedStageList, QTXStageStatus.COMPLETED);

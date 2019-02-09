@@ -224,7 +224,10 @@ public class QTXWorkUniverse
 		try
 		{
 			String sql =
-				"select * "
+				"select AR_QTX_COMP_WORK.QTX_COMP_WID,AR_QTX_COMP_WORK.QTX_WID,AR_QTX_COMP_WORK.PRIORITY,"
+				+ "AR_QTX_COMP_WORK.BOM_KEY,AR_QTX_COMP_WORK.BOM_COMP_KEY,AR_QTX_COMP_WORK.ENTITY_KEY,"
+				+ "AR_QTX_COMP_WORK.ENTITY_SRC_KEY,AR_QTX_COMP_WORK.QUALTX_COMP_KEY,AR_QTX_COMP_WORK.TIME_STAMP,"
+				+ "AR_QTX_COMP_WORK.QUALTX_KEY,AR_QTX_COMP_WORK.REASON_CODE,AR_QTX_WORK.PRIORITY, AR_QTX_WORK.TIME_STAMP, AR_QTX_WORK.QTX_WID "
 				+ "from AR_QTX_COMP_WORK "
 				+ "join AR_QTX_WORK_STATUS on AR_QTX_WORK_STATUS.qtx_wid = AR_QTX_COMP_WORK.qtx_wid "
 				+ "join AR_QTX_WORK ON AR_QTX_WORK.QTX_WID = AR_QTX_WORK_STATUS.QTX_WID "
@@ -588,15 +591,6 @@ public class QTXWorkUniverse
 		}
 		
 		qualtx.addComponent(qualtxComp);
-
-		//TODO nagesh, is this necessary?
-		WorkPackage linkedPackage = workPackage;
-		while (linkedPackage != null)
-		{
-			linkedPackage.qualtx = qualtx;
-			
-			linkedPackage = linkedPackage.getLinkedPackage();
-		}
 
 		ArrayList<CompWorkPackage> compWorkList = this.compWorkByQualtxCompMap.get(qualtxComp.alt_key_comp);
 		
@@ -975,7 +969,7 @@ public class QTXWorkUniverse
 		
 		try
 		{
-			rowsAffected = this.template.update("update ar_qtx_work_hs set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxHSPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxHSPullStatus.PENDING.ordinal());
+			rowsAffected = this.template.update("update ar_qtx_work_hs set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxHSPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.INIT.ordinal(), TrackerCodes.QualtxHSPullStatus.PENDING.ordinal());
 			
 			logger.debug("ar_qtx_work_hs init records found = " + rowsAffected);
 		}
@@ -996,7 +990,7 @@ public class QTXWorkUniverse
 		
 		try
 		{
-			rowsAffected = this.template.update("update ar_qtx_comp_work_status set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxCompStatus.PENDING.ordinal());
+			rowsAffected = this.template.update("update ar_qtx_comp_work_status set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.INIT.ordinal(), TrackerCodes.QualtxCompStatus.PENDING.ordinal());
 			
 			logger.debug("ar_qtx_comp_work_status init records found = " + rowsAffected);
 		}
@@ -1017,7 +1011,7 @@ public class QTXWorkUniverse
 		
 		try
 		{
-			rowsAffected = this.template.update("update ar_qtx_comp_work_hs set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal());
+			rowsAffected = this.template.update("update ar_qtx_comp_work_hs set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.INIT.ordinal(), TrackerCodes.QualtxCompHSPullStatus.PENDING.ordinal());
 			
 			logger.debug("ar_qtx_comp_work_hs init records found = " + rowsAffected);
 		}
@@ -1038,7 +1032,7 @@ public class QTXWorkUniverse
 		
 		try
 		{
-			rowsAffected = this.template.update("update ar_qtx_comp_work_iva set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.PENDING.ordinal(), TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal());
+			rowsAffected = this.template.update("update ar_qtx_comp_work_iva set status=? where qtx_wid in (select qtx_wid from ar_qtx_work where status=?) and status<>?", TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal(), TrackerCodes.QualtxStatus.INIT.ordinal(), TrackerCodes.QualtxCompIVAPullStatus.PENDING.ordinal());
 			
 			logger.debug("ar_qtx_comp_work_iva init records found = " + rowsAffected);
 		}
