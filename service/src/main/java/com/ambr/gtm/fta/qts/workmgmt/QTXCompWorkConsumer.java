@@ -46,6 +46,7 @@ import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.SubPullConfigContainer;
 import com.ambr.gtm.fta.qts.util.SubPullConfigData;
 import com.ambr.gtm.fta.qts.util.TradeLane;
+import com.ambr.gtm.fta.trade.model.BOMQualAuditEntity;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfigurationRepository;
 import com.ambr.gtm.utils.legacy.rdbms.de.GroupNameSpecification;
@@ -211,23 +212,17 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				if(null != bomComp.unit_cost)
 					qualtxComp.unit_cost = bomComp.unit_cost;
 				qualtxComp.qualTX = qualtx;  
+				qualtxComp.unit_weight = bomComp.unit_weight;
+				qualtxComp.gross_weight = bomComp.net_weight == null? bomComp.unit_weight:bomComp.net_weight;
+				qualtxComp.weight = bomComp.net_weight == null? bomComp.unit_weight:bomComp.net_weight;
 				// //if the current analysis method is Top-Down mark the
 				// RM_CONSTRUCTION_STATUS as INIT, if a component
 				// unit_cost/qty_per is updated. The Preparation Engine will
 				// need to re-construct the Qual TX Components.
-				// if(parentWork.details.analysis_method ==
-				// TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS
-				// && (qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key
-				// != 0)
-				// && (!BOMQualAuditEntity.equal(bomComp.unit_cost,
-				// qualtxComp.unit_cost))
-				// || !BOMQualAuditEntity.equal(bomComp.qty_per,
-				// qualtxComp.qty_per))
-				// qualtxComp.qualTX.rm_construction_status =
-				// TrackerCodes.QualTXContructionStatus.INIT.ordinal();
-
+				if(parentWork.details.analysis_method ==  TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS  && (qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0)
+				 && (!BOMQualAuditEntity.equal(bomComp.unit_cost, qualtxComp.unit_cost)) || !BOMQualAuditEntity.equal(bomComp.qty_per,qualtxComp.qty_per))
+				 qualtxComp.qualTX.rm_construction_status =  TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 			}
-
 		}
 		
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_YARN_DTLS_CHG) == true)
