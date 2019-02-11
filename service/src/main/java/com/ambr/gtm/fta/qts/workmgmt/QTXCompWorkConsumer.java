@@ -33,7 +33,6 @@ import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponent;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentDataExtension;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXComponentPrice;
 import com.ambr.gtm.fta.qps.util.ComponentType;
-import com.ambr.gtm.fta.qps.util.QualTXComponentExpansionUtility;
 import com.ambr.gtm.fta.qps.util.QualTXComponentUtility;
 import com.ambr.gtm.fta.qps.util.QualTXUtility;
 import com.ambr.gtm.fta.qts.QTXCompWork;
@@ -600,27 +599,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				de.setValue("FLEXFIELD_NUM1", bomCompYarnDetail.getValue("FLEXFIELD_NUM1"));	//weight
 
 			} 
-		}
-	}
-
-	private void expandComponentsBasedOnAnalysisMethod(QTXWork parentWork, QualTX qualtx,
-			QualTXComponent qualtxComp, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
-			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
-			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
-			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
-		
-		if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
-			|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
-		{
-			if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
-			{
-				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
-				aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
-				if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
-					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-				else 
-					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-			}
 		}
 	}
 
