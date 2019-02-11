@@ -96,7 +96,7 @@ public class QTXStageProducer extends QTXProducer
 		
 		logger.info("QTXStageProducer: Requalification loading work as of " + bestTime);
 		
-		this.template.query("select ar_qtx_stage.qtx_sid, ar_qtx_stage.user_id, ar_qtx_stage_data.data, ar_qtx_stage.time_stamp, ar_qtx_stage.priority from ar_qtx_stage left join ar_qtx_stage_data on ar_qtx_stage.qtx_sid=ar_qtx_stage_data.qtx_sid where ar_qtx_stage.time_stamp<=? and status=? order by ar_qtx_stage.time_stamp", new Object[]{bestTime, QTXStageStatus.INIT.ordinal()}, 
+		this.template.query("select ar_qtx_stage.qtx_sid, ar_qtx_stage.user_id, ar_qtx_stage_data.data, ar_qtx_stage.time_stamp, ar_qtx_stage.priority, ar_qtx_stage.batch_id from ar_qtx_stage left join ar_qtx_stage_data on ar_qtx_stage.qtx_sid=ar_qtx_stage_data.qtx_sid where ar_qtx_stage.time_stamp<=? and status=? order by ar_qtx_stage.time_stamp", new Object[]{bestTime, QTXStageStatus.INIT.ordinal()}, 
 			new ResultSetExtractor<Object>() {
 				public Object extractData(java.sql.ResultSet results) throws java.sql.SQLException
 				{
