@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.ambr.gtm.fta.qps.bom.BOM;
 import com.ambr.gtm.fta.qps.bom.BOMUniverse;
@@ -191,22 +188,18 @@ public class QualTXComponentExpansionTask
 					aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
 					aQualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
 					
-					PlatformTransactionManager txMgr = this.queueUniverse.txMgr;
-					TransactionStatus txstatus = txMgr.getTransaction(new DefaultTransactionDefinition());
 					try {
-						aQualTXMgr.save(aQualTX.last_modified_by, false);
 						//Perform audit when NOT Initial Load.
 						if(aQualTX.raw_material_decision != null)
 						{
 							BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr);
 							tradeQualtxClient.doRecordLevelAudit(audit);
 						}
-						txMgr.commit(txstatus);
+						aQualTXMgr.save();
 					}
 					catch (Exception e)
 					{
 						MessageFormatter.error(logger, "execute", e, "Exception while persisting Raw-Material Analysis result on  QualTX [{0,number,#}]", qualTXDetail.alt_key_qualtx);
-						txMgr.rollback(txstatus);
 						return;
 					}
 					aQualTXUtility.readyForQualification(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal(), this.bom.priority);
@@ -234,22 +227,18 @@ public class QualTXComponentExpansionTask
 				aQualTXComponentExpansionUtility.determineIntermmediateComponentsList();
 				aQualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
 				
-				PlatformTransactionManager txMgr = this.queueUniverse.txMgr;
-				TransactionStatus txstatus = txMgr.getTransaction(new DefaultTransactionDefinition());
 				try {
-					aQualTXMgr.save(aQualTX.last_modified_by, false);
 					//Perform audit when NOT Initial Load.
 					if(aQualTX.intermediate_decision != null)
 					{
 						BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr);
 						tradeQualtxClient.doRecordLevelAudit(audit);
 					}
-					txMgr.commit(txstatus);
+					aQualTXMgr.save();
 				}
 				catch (Exception e)
 				{
 					MessageFormatter.error(logger, "execute", e, "Exception while persisting Intermediate Analysis results on QualTX [{0,number,#}]", qualTXDetail.alt_key_qualtx);
-					txMgr.rollback(txstatus);
 					return;
 				}
 				aQualTXUtility.readyForQualification(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal(), this.bom.priority);
