@@ -223,6 +223,11 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				 && (!BOMQualAuditEntity.equal(bomComp.unit_cost, qualtxComp.unit_cost)) || !BOMQualAuditEntity.equal(bomComp.qty_per,qualtxComp.qty_per))
 				 qualtxComp.qualTX.rm_construction_status =  TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 			}
+			
+			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
+			aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
+			aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
+			aQualTXComponentUtilityforComp.pullIVAData();
 		}
 		
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_YARN_DTLS_CHG) == true)
