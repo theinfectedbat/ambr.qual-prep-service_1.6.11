@@ -529,7 +529,7 @@ public class ApplicationConfiguration
 		return this.gpmIVAUniversePartition;
 	}
 
-	@Bean
+	@Bean(destroyMethod = "shutdown")
 	public TrackerLoader beanLoadTrackerUniverse(@Autowired TrackerContainer trackerContainer) throws Exception
 	{
 		int aFetchSize;

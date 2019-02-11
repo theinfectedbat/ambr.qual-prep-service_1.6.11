@@ -306,7 +306,6 @@ public class TrackerLoader
 		}
 	}
 	
-	@Bean(destroyMethod = "destroy")
 	public void shutdown()
 	{
 		initiateShutdown();
@@ -320,20 +319,17 @@ public class TrackerLoader
 			MessageFormatter.info(logger, "shutdown", "BomTrackerStatusObserver shutdown initiated.");
 			bomTrackerStatusObserver.shutdown();
 		}
-		
 		if (qtxStatusObserver != null)
 		{
 			MessageFormatter.info(logger, "shutdown", "QtxStatusObserver shutdown initiated.");
 			qtxStatusObserver.shutdown();
 		}
-		
 		if (reloadQtxWorkObserver != null)
 		{
 			MessageFormatter.info(logger, "shutdown", "ReloadQtxWorkObserver shutdown initiated.");
 			reloadQtxWorkObserver.shutdown();
 			MessageFormatter.info(logger, "shutdown", "ReloadQtxWorkObserver has shutdown sunccessfully.");
 		}
-		
 		if (trackerGarbageCollector != null)
 		{
 			MessageFormatter.info(logger, "shutdown", "TrackerGarbageCollector shutdown initiated.");
