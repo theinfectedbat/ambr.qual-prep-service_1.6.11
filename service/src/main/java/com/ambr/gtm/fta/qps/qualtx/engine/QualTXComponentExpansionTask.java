@@ -15,9 +15,12 @@ import com.ambr.gtm.fta.qps.util.QualTXComponentExpansionUtility;
 import com.ambr.gtm.fta.qps.util.QualTXUtility;
 import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
+import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.fta.qts.util.TradeLaneContainer;
 import com.ambr.gtm.fta.qts.util.TradeLaneData;
+import com.ambr.gtm.fta.trade.client.TradeQualtxClient;
+import com.ambr.gtm.fta.trade.model.BOMQualAuditEntity;
 import com.ambr.platform.rdbms.orm.EntityManager;
 import com.ambr.platform.rdbms.orm.exception.EntityDoesNotExistException;
 import com.ambr.platform.utils.log.MessageFormatter;
@@ -137,23 +140,10 @@ public class QualTXComponentExpansionTask
 				return;
 			}
 			
-			
-			
-			if(
-					//If RM is default analysis method.
-					((qualTXDetail.td_construction_status != null && TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal() == qualTXDetail.td_construction_status)  && TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() == TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal())
-	
-					//If TD is default method and it is NOT_QUALIFIED, and fall back is RM
-					|| (TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal() == TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal() && "NOT_QUALIFIED".equalsIgnoreCase(qualTXDetail.qualified_flg) && isFallBackRM)
-				)	
-			{
-				
-				MessageFormatter.debug(logger, "execute", "Processing QualTX [{0,number,#}]: component expansion for Raw Material approach.", qualTXDetail.alt_key_qualtx);
-				
-				QualTX						aQualTX;
-				EntityManager<QualTX>		aQualTXMgr;
-				
-				aQualTXMgr = new EntityManager<>(
+			QualTX						aQualTX;
+			EntityManager<QualTX>		aQualTXMgr;
+			TradeQualtxClient tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
+			aQualTXMgr = new EntityManager<>(
 					QualTX.class,
 					this.queueUniverse.txMgr, 
 					this.queueUniverse.schemaDesc, 
@@ -172,28 +162,49 @@ public class QualTXComponentExpansionTask
 					MessageFormatter.error(logger, "execute", e, "QualTX [{0,number,#}]: not found.", qualTXDetail.alt_key_qualtx);
 					return;
 				}
-			
-				//If there are no MAKE components and the default config is not RM the expansion need not be executed.
-				if(!aQualTX.hasMakeComponents() && TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() != TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal())
-				{
-					MessageFormatter.debug(logger, "execute", "QualTX [{0,number,#}]: does not have make components.", qualTXDetail.alt_key_qualtx);
-					return;
-				}
 				
 				QualTXUtility aQualTXUtility = new QualTXUtility(aQualTX, this.queueUniverse.trackerClientAPI, this.qualTXTracker);
-				
-			
 				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(aBOMUniverse, aQualTX, this.queueUniverse.dataExtCfgRepos, this.queueUniverse.gpmClaimDetailsCache, this.queueUniverse.ivaCache, this.queueUniverse.gpmClassCache,this.queueUniverse.qtxBusinessLogicProcessor, false, this.qualTXTracker);
-				aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
-				aQualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-				
-				aQualTXMgr.save();
-				
-				aQualTXUtility.readyForQualification(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal(), this.bom.priority);
 
-				MessageFormatter.debug(logger, "execute", "Done expanding components for QualTX [{0,number,#}], number of components identified for raw-material : [{1}]", qualTXDetail.alt_key_qualtx, aQualTX.getRawMaterialComponentList().size());
+				
+			if(
+					//If RM is default analysis method.
+					((qualTXDetail.td_construction_status != null && TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal() == qualTXDetail.td_construction_status)  && TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() == TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal())
+	
+					//If TD is default method and it is NOT_QUALIFIED, and fall back is RM
+					|| (TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal() == TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal() && "NOT_QUALIFIED".equalsIgnoreCase(qualTXDetail.qualified_flg) && isFallBackRM)
+			  )	
+			{
+				
+					MessageFormatter.debug(logger, "execute", "Processing QualTX [{0,number,#}]: component expansion for Raw Material approach.", qualTXDetail.alt_key_qualtx);
+				
+					//If there are no MAKE components and the default config is not RM the expansion need not be executed.
+					if(!aQualTX.hasMakeComponents() && TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() != TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal())
+					{
+						MessageFormatter.debug(logger, "execute", "QualTX [{0,number,#}]: does not have make components.", qualTXDetail.alt_key_qualtx);
+						return;
+					}
+					
+					aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
+					aQualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+					
+					try {
+						//Perform audit when NOT Initial Load.
+						if(aQualTX.raw_material_decision != null)
+						{
+							BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr);
+							tradeQualtxClient.doRecordLevelAudit(audit);
+						}
+						aQualTXMgr.save();
+					}
+					catch (Exception e)
+					{
+						MessageFormatter.error(logger, "execute", e, "Exception while persisting Raw-Material Analysis result on  QualTX [{0,number,#}]", qualTXDetail.alt_key_qualtx);
+						return;
+					}
+					aQualTXUtility.readyForQualification(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal(), this.bom.priority);
+					MessageFormatter.debug(logger, "execute", "Done expanding components for QualTX [{0,number,#}], number of components identified for raw-material : [{1}]", qualTXDetail.alt_key_qualtx, aQualTX.getRawMaterialComponentList().size());
 			}
-			
 			
 			if(
 					//If Intermediate is default analysis method.
@@ -201,34 +212,11 @@ public class QualTXComponentExpansionTask
 	
 					//If TD is default method and it is NOT_QUALIFIED, and fall back is Intermediate
 					|| (TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.ordinal() == TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal() && "NOT_QUALIFIED".equalsIgnoreCase(qualTXDetail.qualified_flg) && isFallBackIntermediate)
-				)	
+			  )	
 			{
 				
 				MessageFormatter.debug(logger, "execute", "Processing QualTX [{0,number,#}]: component expansion for Intermediate approach.", qualTXDetail.alt_key_qualtx);
 				
-				QualTX						aQualTX;
-				EntityManager<QualTX>		aQualTXMgr;
-				
-				aQualTXMgr = new EntityManager<>(
-					QualTX.class,
-					this.queueUniverse.txMgr, 
-					this.queueUniverse.schemaDesc, 
-					new JdbcTemplate(this.queueUniverse.dataSrc)
-				);
-				
-				aQualTXMgr.getLoader().setTableFilter(new String[]{"mdi_qualtx_comp"});
-				
-				try {
-					aQualTX = aQualTXMgr.loadExistingEntity(new QualTX(qualTXDetail.alt_key_qualtx));
-					aQualTX.idGenerator = this.queueUniverse.idGenerator;
-					this.qualTXTracker = this.bomTracker.trackTradeLane(aQualTX);
-					this.qualTXTracker.setStartTime();
-				}
-				catch (EntityDoesNotExistException e) {
-					MessageFormatter.error(logger, "execute", e, "QualTX [{0,number,#}]: not found.", qualTXDetail.alt_key_qualtx);
-					return;
-				}
-			
 				//If there are no MAKE components and the default config is not Intermediate the expansion need not be executed.
 				if(!aQualTX.hasMakeComponents() && TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal() != TrackerCodes.AnalysisMethodFromConfig.valueOf(analysisMethod).ordinal())
 				{
@@ -236,20 +224,26 @@ public class QualTXComponentExpansionTask
 					return;
 				}
 				
-				QualTXUtility aQualTXUtility = new QualTXUtility(aQualTX, this.queueUniverse.trackerClientAPI, this.qualTXTracker);
-				
-			
-				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(aBOMUniverse, aQualTX, this.queueUniverse.dataExtCfgRepos, this.queueUniverse.gpmClaimDetailsCache, this.queueUniverse.ivaCache, this.queueUniverse.gpmClassCache,this.queueUniverse.qtxBusinessLogicProcessor, false, this.qualTXTracker);
 				aQualTXComponentExpansionUtility.determineIntermmediateComponentsList();
 				aQualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
 				
-				aQualTXMgr.save();
-				
+				try {
+					//Perform audit when NOT Initial Load.
+					if(aQualTX.intermediate_decision != null)
+					{
+						BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr);
+						tradeQualtxClient.doRecordLevelAudit(audit);
+					}
+					aQualTXMgr.save();
+				}
+				catch (Exception e)
+				{
+					MessageFormatter.error(logger, "execute", e, "Exception while persisting Intermediate Analysis results on QualTX [{0,number,#}]", qualTXDetail.alt_key_qualtx);
+					return;
+				}
 				aQualTXUtility.readyForQualification(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal(), this.bom.priority);
-
 				MessageFormatter.debug(logger, "execute", "Done expanding components for QualTX [{0,number,#}], number of components identified for intermediate : [{1}]", qualTXDetail.alt_key_qualtx, aQualTX.getIntermediateComponentList().size());
 			}
-			
 		}
 		finally {
 			if(this.qualTXTracker != null)

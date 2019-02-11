@@ -80,6 +80,9 @@ public class QualTX
 	@Column(name = "rvc_restricted")				public String	rvc_restricted;
 	@Column(name = "target_roo_id")					public String	target_roo_id;
 	@Column(name = "net_weight")                    public Double	net_weight;
+	@Column(name = "top_down_decision")				public String	top_down_decision;
+	@Column(name = "raw_material_decision")			public String	raw_material_decision;
+	@Column(name = "intermediate_decision")			public String	intermediate_decision;
 	
 	@OneToMany(targetEntity = QualTXComponent.class) 		public ArrayList<QualTXComponent>		compList;
 	@OneToMany(targetEntity = QualTXPrice.class) 			public ArrayList<QualTXPrice>			priceList;
