@@ -2,27 +2,19 @@ package com.ambr.gtm.fta.qts.util;
 
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
- 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
  
-/**
- * An executor which blocks and prevents further tasks from
- * being submitted to the pool when the queue is full.
- * <p>
- * Based on the BoundedExecutor example in:
- * Brian Goetz, 2006. Java Concurrency in Practice. (Listing 8.4)
- */
 public class BlockingExecutor extends ThreadPoolExecutor
 {
-	private static final Logger LOGGER = LoggerFactory.getLogger(BlockingExecutor.class);
+	private static final Logger logger = LoggerFactory.getLogger(BlockingExecutor.class);
 	private final Semaphore semaphore;
   
 	private BlockingQueue<RunnableTuple> taskQueue = new LinkedBlockingQueue<RunnableTuple>();
@@ -89,6 +81,7 @@ public class BlockingExecutor extends ThreadPoolExecutor
 			{
 				//Eat error InterruptedException, ExecutionException
 				//In either case the task is complete
+				logger.error("Error on future get", e);
 			}
 		}
 	}
@@ -112,7 +105,7 @@ public class BlockingExecutor extends ThreadPoolExecutor
             semaphore.acquire();
             acquired = true;
         } catch (final InterruptedException e) {
-            LOGGER.warn("InterruptedException whilst aquiring semaphore", e);
+            logger.warn("InterruptedException while aquiring semaphore", e);
         }
     } while (!acquired);
  
