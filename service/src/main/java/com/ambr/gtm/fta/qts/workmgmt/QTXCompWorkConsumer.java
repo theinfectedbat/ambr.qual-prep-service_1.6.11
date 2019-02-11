@@ -602,26 +602,26 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		}
 	}
 
-	private void expandComponentsBasedOnAnalysisMethod(QTXWork parentWork, QualTX qualtx,
-			QualTXComponent qualtxComp, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
-			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
-			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
-			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
-		
-		if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
-			|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
-		{
-			if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
-			{
-				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
-				aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
-				if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
-					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-				else 
-					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
-			}
-		}
-	}
+//	private void expandComponentsBasedOnAnalysisMethod(QTXWork parentWork, QualTX qualtx,
+//			QualTXComponent qualtxComp, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
+//			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
+//			DataExtensionConfigurationRepository aDataExtensionConfigurationRepository,
+//			GPMClassificationProductContainerCache gpmClassCache, BOMUniverse bomUniverse) throws Exception {
+//		
+//		if (parentWork.details.analysis_method.ordinal() ==  TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.ordinal() 
+//			|| parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())  
+//		{
+//			if(qualtxComp.sub_bom_key != null && qualtxComp.sub_bom_key != 0 )
+//			{
+//				QualTXComponentExpansionUtility aQualTXComponentExpansionUtility = new QualTXComponentExpansionUtility(bomUniverse, qualtx, aDataExtensionConfigurationRepository, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, qtxBusinessLogicProcessor, false, null);
+//				aQualTXComponentExpansionUtility.determineRawMaterialComponentsList();
+//				if(parentWork.details.analysis_method.ordinal() == TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.ordinal())
+//					qualtxComp.qualTX.in_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+//				else 
+//					qualtxComp.qualTX.rm_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
+//			}
+//		}
+//	}
 
 	private QualTXComponent addComponent(QualTX qualtx, BOMComponent bomComp, GPMClaimDetailsCache aClaimsDetailCache,
 			GPMSourceIVAContainerCache aGPMSourceIVAContainerCache,
