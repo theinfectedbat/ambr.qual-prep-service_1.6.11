@@ -315,18 +315,18 @@ public class QualTXBusinessLogicProcessor
 						
 			//Check by Manufacturer Country if configured.
 			if(manfCtry != null)
-				dataMap	= getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, manfCtry, size);	
+				dataMap	= getComplianceHsData(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, manfCtry, size);	
 			
 			//Check by basic Header Country Configuration
 			if(dataMap.isEmpty())
-				dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
+				dataMap = getComplianceHsData(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
 			
 			//Check by fall-back  Header Country Configuration
 			if (dataMap.isEmpty())
 			{
 				for (BaseHSFallConfg baseHsconf : subpullConfigDate.getBaseHSfallConfList())
 				{
-					dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, baseHsconf.getHeaderCtry(), Integer.valueOf(baseHsconf.getHeaderHsLength()));
+					dataMap = getComplianceHsData(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, baseHsconf.getHeaderCtry(), Integer.valueOf(baseHsconf.getHeaderHsLength()));
 					if (!dataMap.isEmpty()) 
 					{
 						ctryCode = baseHsconf.getHeaderCtry();
@@ -338,7 +338,7 @@ public class QualTXBusinessLogicProcessor
 		}
 		else
 		{
-			dataMap = getComplianceHsDate(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
+			dataMap = getComplianceHsData(classificationList, qualtx.org_code, qualtx.effective_from, qualtx.effective_to, ctryCode, size);
 		}
 		
 
@@ -351,13 +351,19 @@ public class QualTXBusinessLogicProcessor
 		
 	}
 
-	public  Map<String, Object> getComplianceHsDate(List<GPMClassification> classificationList, String orgCode, Date ivaEffectiveFrom, Date ivaEffectiveTo, String ctrycode, int size) throws Exception
+	public  Map<String, Object> getComplianceHsData(List<GPMClassification> classificationList, String orgCode, Date ivaEffectiveFrom, Date ivaEffectiveTo, String ctrycode, int size) throws Exception
 	{
 		Map<String, Object> dataMap = new HashMap<>();
-		SimplePropertySheet propsertySheet = this.propertySheetManager.getPropertySheet(orgCode, "FTA_HS_CONFIGURATION_LEVEL");
-		List<String> propertyValue = Arrays.asList(propsertySheet.getStringValueList("BOM"));
-
 		if (classificationList == null || classificationList.isEmpty()) return dataMap;
+		
+		SimplePropertySheet propsertySheet = this.propertySheetManager.getPropertySheet(orgCode, "FTA_HS_CONFIGURATION_LEVEL");
+		
+		List<String> propertyValue = new ArrayList<>();
+		if(propsertySheet != null)
+			propertyValue = Arrays.asList(propsertySheet.getStringValueList("BOM"));
+		else
+			propertyValue.add(CURRENT_DATE);
+		
 
 		for (GPMClassification pmClassification : classificationList)
 		{
@@ -365,11 +371,11 @@ public class QualTXBusinessLogicProcessor
 			matched = (pmClassification.ctryCode.equalsIgnoreCase(ctrycode) && (pmClassification.imHS1 != null && "Y".equalsIgnoreCase(pmClassification.isActive) && !pmClassification.imHS1.isEmpty()));
 
 			boolean hsLevelPass = false;
-			if (propertyValue.contains(IVA_EFFECTIVE_FROM)) hsLevelPass = hsLevelPass || ((pmClassification.effectiveFrom.before(ivaEffectiveFrom) || pmClassification.effectiveFrom.equals(ivaEffectiveFrom)) && (pmClassification.effectiveTo.after(ivaEffectiveTo) || pmClassification.effectiveTo.equals(ivaEffectiveTo)));
+			if (propertyValue.contains(IVA_EFFECTIVE_FROM)) hsLevelPass = hsLevelPass || (pmClassification.effectiveFrom != null && (pmClassification.effectiveFrom.before(ivaEffectiveFrom) || pmClassification.effectiveFrom.equals(ivaEffectiveFrom)) && (pmClassification.effectiveTo != null && (pmClassification.effectiveTo.after(ivaEffectiveTo) || pmClassification.effectiveTo.equals(ivaEffectiveTo))));
 			if (propertyValue.contains(CURRENT_DATE))
 			{
 				Calendar calender = Calendar.getInstance();
-				hsLevelPass = hsLevelPass || ((pmClassification.effectiveFrom.before(calender.getTime()) || pmClassification.effectiveFrom.equals(calender.getTime())) && (pmClassification.effectiveTo.after(ivaEffectiveTo) || ivaEffectiveTo.equals(pmClassification.effectiveTo)));
+				hsLevelPass = hsLevelPass || (pmClassification.effectiveFrom != null && (pmClassification.effectiveFrom.before(calender.getTime()) || pmClassification.effectiveFrom.equals(calender.getTime())) && (pmClassification.effectiveTo != null && (pmClassification.effectiveTo.after(ivaEffectiveTo) || ivaEffectiveTo.equals(pmClassification.effectiveTo))));
 			}
 
 			if (matched && hsLevelPass)
@@ -407,11 +413,11 @@ public class QualTXBusinessLogicProcessor
 			
 			//Check by Manufacturer Country if configured.
 			if(manfCtry != null)
-				dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, manfCtry, size);
+				dataMap = getComplianceHsData(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, manfCtry, size);
 			
 			//Check by basic Header Country Configuration
 			if(dataMap.isEmpty())
-				dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
+				dataMap = getComplianceHsData(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
 			
 			
 			//Check by basic Component Country Configuration
@@ -419,14 +425,14 @@ public class QualTXBusinessLogicProcessor
 			{
 				for (BaseHSFallConfg baseHsconf : subpullConfigDate.getBaseHSfallConfList())
 				{
-					dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, baseHsconf.getCompCtry(), Integer.valueOf(baseHsconf.getCompHslength()));
+					dataMap = getComplianceHsData(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, baseHsconf.getCompCtry(), Integer.valueOf(baseHsconf.getCompHslength()));
 					if (!dataMap.isEmpty()) break;
 				}
 			}
 		}
 		else
 		{
-			dataMap = getComplianceHsDate(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
+			dataMap = getComplianceHsData(classificationList, aQualTXComp.org_code, aQualTXComp.qualTX.effective_from, aQualTXComp.qualTX.effective_to, ctryCode, size);
 		}
 		
 
