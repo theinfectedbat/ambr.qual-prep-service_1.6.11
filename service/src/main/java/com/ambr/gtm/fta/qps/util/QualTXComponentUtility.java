@@ -327,6 +327,12 @@ public class QualTXComponentUtility
 	public GPMSourceIVAProductSourceContainer pullIVAData() 
 		throws Exception
 	{
+		if (this.bomComp == null || this.qualTXComp == null)
+		{
+			MessageFormatter.debug(logger, "pullIVAData", "Unable to process to determine Conservative source, COO Determination, Cumulation Value and Previous Year Qualification because one one of from BOM component or Qualtx Component is null");
+			return null;
+		}
+		
 		GPMSourceIVAProductSourceContainer		aSourceIVAProductSourceContainer;
 		if((this.bomComp.prod_src_key == null) || this.bomComp.prod_src_key <= 0)
 		{
