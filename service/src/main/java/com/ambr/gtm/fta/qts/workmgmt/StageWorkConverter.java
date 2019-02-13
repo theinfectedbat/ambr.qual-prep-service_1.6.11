@@ -124,15 +124,17 @@ public class StageWorkConverter
 		if (this.newCtryCmpIterator == null) this.newCtryCmpIterator = this.newCtryCmpMap.entrySet().iterator();
 		if (this.configRequalIterator == null) this.configRequalIterator = this.configRequalMap.entrySet().iterator();
 		
-		//Process all of these items.  gets impacted keys and updates qualtx to invalid.  no memory concerns.
-		while (this.configRequalIterator.hasNext())
-		{
-			this.processMassQualificationWork(this.configRequalIterator.next());
-		}
 				
 		this.totalWorkSize = 0L;
 		Map<Long, QTXWork> consolidatedWork = new HashMap<>();
 		
+		//Process all of these items.  gets impacted keys and updates qualtx to invalid.  no memory concerns.
+		while (this.configRequalIterator.hasNext())
+		{
+			this.processMassQualificationWork(this.configRequalIterator.next(), consolidatedWork,bestTime);
+			
+		}
+
 		while (this.bomRequalIterator.hasNext())
 		{
 			Map.Entry<Long, ArrayList<Long>> entry = this.bomRequalIterator.next();
@@ -1115,16 +1117,17 @@ public class StageWorkConverter
 		return isValid;
 	}
 
-	private void processMassQualificationWork(Entry<Long, QtxStageData> entry) throws Exception
+	private void processMassQualificationWork(Entry<Long, QtxStageData> entry, Map<Long, QTXWork> consolidatedWork, Timestamp bestTime) throws Exception
 	{
 		try{
 			long reasonCode = entry.getKey();
 
 			QtxStageData stageData = entry.getValue();
 
-			List<Long> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
-	
-			updateQualtxToInactive(qualtxList);
+			List<QualTX> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
+			
+			this.createArQtxBomCompBean(qualtxList, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
+			//updateQualtxToInactive(qualtxList);
 		
 		}catch(Exception e){
 			
@@ -1139,7 +1142,6 @@ public class StageWorkConverter
 		if (workData.isNull("MASS_QUALIFICATION")) return;
 
 		JSONObject theMassQualDtlsObj = workData.getJSONObject("MASS_QUALIFICATION");
-		//String isForceQualification = theMassQualDtlsObj.optString("FORCE_RUN_QUALIFICATION");
 		JSONArray theBomDtls = theMassQualDtlsObj.optJSONArray("BOM_DTLS");
 		if (null != theBomDtls)
 		{
@@ -1149,6 +1151,21 @@ public class StageWorkConverter
 			{
 				JSONObject theBomDtl = theBomDtls.getJSONObject(index);
 				bomKeyList.add(theBomDtl.optLong("BOM_KEY"));
+				
+				QTXConsolWork qtxConsolWork = bomConsolMap.get(theBomDtl.optLong("BOM_KEY"));
+				if(qtxConsolWork == null)
+				{
+					qtxConsolWork = new QTXConsolWork();
+					qtxConsolWork.user_id = stageData.user_id;
+					qtxConsolWork.priority= stageData.priority;
+					qtxConsolWork.time_stamp = stageData.time_stamp;
+					this.addToBOMConsollMap(theBomDtl.optLong("BOM_KEY"), qtxConsolWork);
+				}
+				else
+				{
+					qtxConsolWork.priority = (qtxConsolWork.priority < stageData.priority) ? stageData.priority : qtxConsolWork.priority;
+				}
+
 			}
 
 			QtxStageData stageDatabean = new QtxStageData();
@@ -1163,7 +1180,6 @@ public class StageWorkConverter
 			stageDatabean.altKeylist = bomKeyList;
 			this.totalStageSize+=bomKeyList.size();
 
-			//stageDatabean.isforceQualification = (isForceQualification != null && isForceQualification.equalsIgnoreCase("Y")) ? true : false;
 			configRequalMap.put(ReQualificationReasonCodes.BOM_MASS_QUALIFICATION, stageDatabean);
 		}
 	}

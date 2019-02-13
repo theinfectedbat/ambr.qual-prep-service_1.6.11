@@ -83,6 +83,12 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			}
 		}
 		
+		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_MASS_QUALIFICATION) == true)
+		{
+			qualtx.is_active = "N";
+			return;
+		}
+		
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_HDR_CHG) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
@@ -355,9 +361,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 					 	workPackage.work.userId,
 					 	workPackage.work.details.qualtx_key));
 				}
-
 				// Do all business logic
-				this.doWork(workPackage);
+				this.doWork(workPackage); 
 			}
 			catch (Exception e)
 			{
