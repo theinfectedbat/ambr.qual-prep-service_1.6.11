@@ -133,6 +133,9 @@ public class StageWorkConverter
 		{
 			this.processMassQualificationWork(this.configRequalIterator.next(), consolidatedWork,bestTime);
 			
+			if (this.totalWorkSize > maxWork)
+				return consolidatedWork;
+	
 		}
 
 		while (this.bomRequalIterator.hasNext())
@@ -1127,7 +1130,6 @@ public class StageWorkConverter
 			List<QualTX> qualtxList = this.utility.getImpactedQtxKeysForMass(stageData.altKeylist, reasonCode, stageData.agreementList);
 			
 			this.createArQtxBomCompBean(qualtxList, consolidatedWork, reasonCode, true, bomConsolMap, false, bestTime);
-			//updateQualtxToInactive(qualtxList);
 		
 		}catch(Exception e){
 			

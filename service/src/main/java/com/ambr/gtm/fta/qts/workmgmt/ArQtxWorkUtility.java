@@ -79,13 +79,6 @@ public class ArQtxWorkUtility
 		
 		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
 		List<QualTX> qualtxList = this.template.query(sql.toString(), paramList.toArray(), extractor);
-
-		/*List<Long> data = this.template.query(sql.toString(),paramList.toArray(), new RowMapper<Long>(){
-            public Long mapRow(ResultSet rs, int rowNum) 
-                                         throws SQLException {
-                    return rs.getLong(1);
-            }
-       });*/
 		
 		return qualtxList;
 	}
