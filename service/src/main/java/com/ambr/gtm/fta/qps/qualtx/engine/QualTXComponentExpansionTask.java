@@ -87,7 +87,10 @@ public class QualTXComponentExpansionTask
 		boolean								isFallBackRM = false;
 		boolean								isFallBackIntermediate = false;
 		BOMUniverse							aBOMUniverse = this.queueUniverse.getBOMUniverse();
-		
+		Long 								lockId = null;
+		TradeQualtxClient tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
+		int sleepIntervalInSecs 			= 5;
+
 		try {
 			//Check if TD construction is completed.
 			if(qualTXDetail.td_construction_status == null || TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal() != qualTXDetail.td_construction_status)
@@ -142,7 +145,28 @@ public class QualTXComponentExpansionTask
 			
 			QualTX						aQualTX;
 			EntityManager<QualTX>		aQualTXMgr;
-			TradeQualtxClient tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
+			
+			while(true)
+			{
+				try {	
+					lockId = tradeQualtxClient.acquireLock(qualTXDetail.org_code, qualTXDetail.last_modified_by, qualTXDetail.alt_key_qualtx);
+					MessageFormatter.debug(logger, 
+						"execute", 
+						"Lock Acquired sucessfully on QualTX {0} with Lock Id {1}", 
+						qualTXDetail.alt_key_qualtx, 
+						lockId);
+					break;
+				}catch (Exception e)
+				{
+					MessageFormatter.error(logger, "execute", 
+							e, 
+							"Failed to acquire lock on QualTX {0}. Sleeping for [{1}] secs", 
+							qualTXDetail.alt_key_qualtx, 
+							sleepIntervalInSecs);
+					Thread.sleep(sleepIntervalInSecs * 1000);
+					//throw new LockException("Failed to acquire the lock on the QUALTX with key " + qualTXDetail.alt_key_qualtx, e);
+				}
+			}
 			aQualTXMgr = new EntityManager<>(
 					QualTX.class,
 					this.queueUniverse.txMgr, 
@@ -248,6 +272,24 @@ public class QualTXComponentExpansionTask
 		finally {
 			if(this.qualTXTracker != null)
 				this.qualTXTracker.setEndTime();
+			
+			if (lockId != null)
+			{
+				try
+				{
+					tradeQualtxClient.releaseLock(lockId);
+				}
+				catch (Exception e)
+				{
+					MessageFormatter.error(logger, "execute", 
+							e, 
+							"Exception releasing lock on QualTX {0} with Lock Id {1}", 
+							qualTXDetail.alt_key_qualtx, 
+							lockId);
+					throw e;
+				}
+				
+			}
 		}
 		
 		aTaskMgr.waitForCompletion();
