@@ -291,6 +291,11 @@ public class GPMClassificationUniversePartition
 		this.gpmClassList.clear();
 		this.gpmClassList = new ArrayList<>();
 		
+		this.classByProdTable.clear();
+		this.classByProdTable = new HashMap<>();
+		
+		this.rowCount = 0;
+		
 		aPerfTracker.start();
 		try {
 			try {

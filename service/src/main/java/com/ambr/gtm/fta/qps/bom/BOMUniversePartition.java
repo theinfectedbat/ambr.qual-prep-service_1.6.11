@@ -387,6 +387,8 @@ public class BOMUniversePartition
 		
 		this.componentList.clear();
 		this.componentList = new ArrayList<>();
+		this.rowCount = 0;
+		this.maxBOMDepth = 0;
 		
 		aPerfTracker.start();
 		try {

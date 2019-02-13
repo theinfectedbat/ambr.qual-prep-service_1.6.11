@@ -61,7 +61,7 @@ public class PreparationEngine
 	public void generateUniverse(QualTXUniverseGenerationRequest theRequest)
 		throws Exception
 	{
-		PerformanceTracker					aPerfTracker = new PerformanceTracker(logger, Level.INFO, "generateUniverse");
+		PerformanceTracker	aPerfTracker = new PerformanceTracker(logger, Level.INFO, "generateUniverse");
 		
 		if (this.qtxPrepProgressMgr.isInProgress()) {
 			MessageFormatter.info(logger, "generateUniverse", "Processing currently in progress.");
@@ -122,6 +122,11 @@ public class PreparationEngine
 						continue;
 					}
 					aBOM = aBOMUniverse.getBOM(aBOMMetricSet.metricSet.bomKey);
+					if (aBOM == null) {
+						MessageFormatter.error(logger, "topDownAnalysis", null, "BOM [{0,number,#}]: not found in the Universe cache.", aBOMMetricSet.metricSet.bomKey);
+						continue;
+					}
+					
 					this.queueUniverse.processBOM(aBOM);
 				}
 				catch (Exception e) {
@@ -178,6 +183,10 @@ public class PreparationEngine
 						continue;
 					}
 					aBOM = aBOMUniverse.getBOM(aBOMMetricSet.metricSet.bomKey);
+					if (aBOM == null) {
+						MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", null, "BOM [{0,number,#}]: not found in the Universe cache.", aBOMMetricSet.metricSet.bomKey);
+						continue;
+					}
 					this.queueUniverse.processBOMExpansion(aBOM);
 				}
 				catch (Exception e) {

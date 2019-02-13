@@ -146,11 +146,11 @@ public class QualTXDetailUniverse
 		
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			aContainer = this.localPartition.getQualTXDetailByBOM(theBOMKey);
 		}
 		else {
-			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetQualTXDetailFromPartitionClientAPI		aAPI = new GetQualTXDetailFromPartitionClientAPI(aServiceRef);

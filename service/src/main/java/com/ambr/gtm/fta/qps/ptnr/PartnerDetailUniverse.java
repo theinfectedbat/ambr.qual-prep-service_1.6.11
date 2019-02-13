@@ -114,11 +114,11 @@ public class PartnerDetailUniverse
 		
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			aContainer = this.localPartition.getPartnerDetail(thePtnrKey);
 		}
 		else {
-			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetPartnerDetailFromPartitionClientAPI aAPI = new GetPartnerDetailFromPartitionClientAPI(aServiceRef);
