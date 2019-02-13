@@ -88,8 +88,8 @@ public class QualTXComponentExpansionTask
 		boolean								isFallBackIntermediate = false;
 		BOMUniverse							aBOMUniverse = this.queueUniverse.getBOMUniverse();
 		Long 								lockId = null;
-		TradeQualtxClient tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
-		int sleepIntervalInSecs 			= 5;
+		TradeQualtxClient 					tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
+		int 								sleepIntervalInSecs	= 5;
 
 		try {
 			//Check if TD construction is completed.
