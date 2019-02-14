@@ -444,7 +444,7 @@ public class MDIBomRepository
 		logger.debug("MDIBomRepository deleting bom qual records: orgCode="+orgCode + "userId="+ userId);
 		try
 		{
-			lockId = tradeQualtxClient.acquireLock(orgCode, userId, bomkey);
+			lockId = tradeQualtxClient.acquireLock(orgCode, userId, bomkey, false);
 			logger.debug("MDIBomRepository Acquire Lock is successfull: lock Id ="+lockId);
 		}
 		catch (Exception e)
