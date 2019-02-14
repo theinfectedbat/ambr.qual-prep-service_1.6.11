@@ -197,13 +197,14 @@ public class QualTXUtility
 	 * @return
 	 * @throws Exception
 	 */
-	public static BOMQualAuditEntity buildAudit(Long theAltKeyQualTX, String theCompanyCode, String theUserId, EntityManager<QualTX> theEntityManager) throws Exception
+	public static BOMQualAuditEntity buildAudit(Long theAltKeyQualTX, String theCompanyCode, String theUserId, EntityManager<QualTX> theEntityManager,String theReason) throws Exception
 	{
 		BOMQualAuditEntity audit = new BOMQualAuditEntity(MDIQualTx.TABLE_NAME.toUpperCase(), theAltKeyQualTX);
 		audit.setSurrogateKeyColumn("ALT_KEY_QUALTX");
 		audit.setOrgCode(theCompanyCode);
 		audit.setUserID(theUserId);
 		audit.setState(STATE.MODIFY);
+		audit.setReason(theReason);
 		HashMap<Long, BOMQualAuditEntity> auditMap = new HashMap<Long, BOMQualAuditEntity>();
 		boolean componentDeleted = false;
 

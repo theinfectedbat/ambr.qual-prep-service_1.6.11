@@ -192,7 +192,7 @@ public class QualTXComponentExpansionTask
 						//Perform audit when NOT Initial Load.
 						if(aQualTX.raw_material_decision != null)
 						{
-							BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr);
+							BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr,"RM");
 							tradeQualtxClient.doRecordLevelAudit(audit);
 						}
 						aQualTXMgr.save();
@@ -231,7 +231,7 @@ public class QualTXComponentExpansionTask
 					//Perform audit when NOT Initial Load.
 					if(aQualTX.intermediate_decision != null)
 					{
-						BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr);
+						BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr,"RM");
 						tradeQualtxClient.doRecordLevelAudit(audit);
 					}
 					aQualTXMgr.save();
