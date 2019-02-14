@@ -21,6 +21,7 @@ import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatus;
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusGenerator;
 import com.ambr.gtm.fta.qps.bom.qualstatus.BOMQualificationStatusUtility;
 import com.ambr.gtm.fta.qps.gpmclaimdetail.GPMClaimDetailsSourceIVAContainer;
+import com.ambr.gtm.fta.qps.gpmclass.GPMClassificationProductContainer;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
 import com.ambr.gtm.fta.qps.qualtx.engine.PreparationEngineQueueUniverse;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
@@ -82,7 +83,7 @@ public class TestServiceAPI
 	public void execute()
 		throws Exception
 	{
-		this.test9();
+		this.test12();
 	}
 	
 	/**
@@ -499,6 +500,15 @@ public class TestServiceAPI
 		GPMSourceIVAProductContainer aContainer;
 		
 		aContainer = this.queueUniverse.ivaCache.getSourceIVAByProduct(646157351L);
+		aContainer = aContainer;
+	}
+
+	public void test12()
+		throws Exception
+	{
+		GPMClassificationProductContainer aContainer;
+		
+		aContainer = this.queueUniverse.gpmClassCache.getGPMClassificationsByProduct(4406338L);
 		aContainer = aContainer;
 	}
 }
