@@ -117,6 +117,7 @@ public class GPMClassificationUniverse
 		aUniverseContainer.prodKey = theProdKey;
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getGPMClassificationsByProduct(theProdKey);
 			if (aPartitionContainer != null) {
@@ -124,8 +125,6 @@ public class GPMClassificationUniverse
 			}
 		}
 		else {
-			
-			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetGPMClassificationsByProductFromPartitionClientAPI aAPI = new GetGPMClassificationsByProductFromPartitionClientAPI(aServiceRef);
@@ -525,6 +524,7 @@ public class GPMClassificationUniverse
 		if (this.localPartition != null) {
 			MessageFormatter.info(logger, "startup", "Local Partition enabled");
 			this.localPartition.load(new JdbcTemplate(this.dataSrc));
+			this.status = UniverseStatusEnum.AVAILABLE;
 			return;
 		}
 		

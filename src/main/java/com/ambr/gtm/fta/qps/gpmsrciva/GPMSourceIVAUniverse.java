@@ -177,6 +177,7 @@ public class GPMSourceIVAUniverse
 		
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getSourceIVAByProduct(theProdKey);
 			if (aPartitionContainer != null) {
@@ -184,8 +185,6 @@ public class GPMSourceIVAUniverse
 			}
 		}
 		else {
-		
-			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetGPMSourceIVAByProductFromPartitionClientAPI	aAPI = new GetGPMSourceIVAByProductFromPartitionClientAPI(aServiceRef);
@@ -233,6 +232,8 @@ public class GPMSourceIVAUniverse
 		aUniverseContainer.prodSrcKey = theProdSrcKey;
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
+
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getSourceIVABySource(theProdSrcKey);
 			if (aPartitionContainer != null) {
@@ -241,9 +242,6 @@ public class GPMSourceIVAUniverse
 			}
 		}
 		else {
-		
-			this.waitUntilAvailable();
-			
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetGPMSourceIVABySourceFromPartitionClientAPI	aAPI = new GetGPMSourceIVABySourceFromPartitionClientAPI(aServiceRef);
@@ -584,6 +582,7 @@ public class GPMSourceIVAUniverse
 		if (this.localPartition != null) {
 			MessageFormatter.info(logger, "startup", "Local Partition enabled");
 			this.localPartition.load(new JdbcTemplate(this.dataSrc));
+			this.status = UniverseStatusEnum.AVAILABLE;
 			return;
 		}
 		

@@ -542,6 +542,9 @@ public class PreparationEngineQueueUniverse
 	public void processBOM(BOM theBOM)
 		throws Exception
 	{
+		if (theBOM == null) {
+			throw new IllegalArgumentException("The BOM object must be specified");
+		}
 		this.bomQueue.put(theBOM);
 	}
 	
@@ -556,6 +559,9 @@ public class PreparationEngineQueueUniverse
 	public void processBOMExpansion(BOM theBOM)
 			throws Exception
 	{
+		if (theBOM == null) {
+			throw new IllegalArgumentException("The BOM object must be specified");
+		}
 		this.bomComponentExpansionQueue.put(theBOM);
 	}
 
@@ -569,9 +575,23 @@ public class PreparationEngineQueueUniverse
 	 * @param	theBOMTracker
 	 *************************************************************************************
 	 */
-	public void processQualTXExpansion(BOM theBOM, QualTXDetail theQualTXDetail, BOMStatusTracker theBOMTracker)
+	public void processQualTXExpansion(
+		BOM 				theBOM, 
+		QualTXDetail 		theQualTXDetail, 
+		BOMStatusTracker 	theBOMTracker)
 			throws Exception
 	{
+		if (theBOM == null) {
+			throw new IllegalArgumentException("The BOM object must be specified");
+		}
+		
+		if (theQualTXDetail == null) {
+			throw new IllegalArgumentException("The QualTXDetail object must be specified");
+		}
+		
+		if (theBOMTracker == null) {
+			throw new IllegalArgumentException("The BOM Tracker object must be specified");
+		}
 		this.qualTXComponentExpansionQueue.put(theBOM, theQualTXDetail, theBOMTracker);
 	}
 

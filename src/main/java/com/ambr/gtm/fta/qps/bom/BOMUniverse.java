@@ -129,11 +129,11 @@ public class BOMUniverse
 		
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			return this.localPartition.getBOM(theBOMKey);
 		}
 		else {
-			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetBOMFromPartitionClientAPI		aAPI = new GetBOMFromPartitionClientAPI(aServiceRef);
@@ -241,6 +241,7 @@ public class BOMUniverse
 		
 		aUniverseContainer = new BOMMetricSetUniverseContainer();
 
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			aPartitionContainer = this.localPartition.getAllBOMMetrics();
 			aUniverseContainer.addPartition(aPartitionContainer);
@@ -257,7 +258,6 @@ public class BOMUniverse
 			return aUniverseContainer;
 		}
 		
-		this.waitUntilAvailable();
 		for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 			try {
 				GetAllBOMMetricsFromPartitionClientAPI		aAPI = new GetAllBOMMetricsFromPartitionClientAPI(aServiceRef);

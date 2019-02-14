@@ -120,6 +120,11 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			throw new IllegalStateException("Queue Universe has not been initialized");
 		}
 		
+		if (parentWork.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_MASS_QUALIFICATION) == true)
+		{
+			return;
+		}
+		
 		GPMClaimDetailsCache aClaimsDetailCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.gpmClaimDetailsCache;
 		GPMSourceIVAContainerCache aGPMSourceIVAContainerCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.ivaCache;
 		

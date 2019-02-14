@@ -459,7 +459,7 @@ public class BOMStatusManager
 	 * </P>
 	 *************************************************************************************
 	 */
-	public void persisteFailures()
+	public void persistFailures()
 		throws Exception
 	{
 		String			aSqlText;
@@ -516,7 +516,7 @@ public class BOMStatusManager
 		throws Exception
 	{
 		this.endTime = new Timestamp(System.currentTimeMillis());
-		this.persisteFailures();
+		this.persistFailures();
 	}
 
 	/**

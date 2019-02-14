@@ -63,9 +63,9 @@ public class ArQtxWorkUtility
 		return qualtxList;
 	}
 
-	public List<Long> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
+	public List<QualTX> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX from MDI_QUALTX WHERE ");
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE, CREATED_DATE from MDI_QUALTX WHERE ");
 
 		ArrayList<Object> paramList = new ArrayList<>();
 		if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION)
@@ -77,16 +77,10 @@ public class ArQtxWorkUtility
 			}
 		}
 		
+		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
+		List<QualTX> qualtxList = this.template.query(sql.toString(), paramList.toArray(), extractor);
 		
-
-		List<Long> data = this.template.query(sql.toString(),paramList.toArray(), new RowMapper<Long>(){
-            public Long mapRow(ResultSet rs, int rowNum) 
-                                         throws SQLException {
-                    return rs.getLong(1);
-            }
-       });
-		
-		return data;
+		return qualtxList;
 	}
 	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyList, long reasonCode) throws Exception
@@ -419,6 +413,7 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) workCode = RequalificationWorkCodes.COMP_GPM_COO_CHG;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) workCode = RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION) workCode = RequalificationWorkCodes.BOM_MASS_QUALIFICATION;
 
 		return workCode;
 	}
