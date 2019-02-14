@@ -2,6 +2,7 @@ package com.ambr.gtm.fta.qts.workmgmt;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -816,8 +817,9 @@ public class QTXWorkUniverse
 		
 		if (container == null)
 		{
+			logger.info("GPMIVAContainer.execute API() invoked at : " + new Timestamp(System.currentTimeMillis()));
 			container = this.gpmSourceIVAByProductFromUniverseClientAPI.execute(prodKey);
-			
+			logger.info("GPMIVAContainer.execute API() completed at :" + new Timestamp(System.currentTimeMillis()));
 			if (container != null && container.prodKey == prodKey)
 			{
 				this.gpmSourceIVAProductCache.put(prodKey, container);
@@ -885,8 +887,9 @@ public class QTXWorkUniverse
 		
 		if (product == null)
 		{
+			logger.info("GPM CLassiofication.execute API() invoked at: " + new Timestamp(System.currentTimeMillis()));
 			product = this.gpmClassificationsByProductAPI.execute(prodKey);
-			
+			logger.info("GPM CLassiofication.execute API() completed at :" + new Timestamp(System.currentTimeMillis()));
 			if (product != null && product.prodKey == prodKey)
 			{
 				this.gpmClassificationCache.put(prodKey, product);
@@ -915,8 +918,9 @@ public class QTXWorkUniverse
 			{
 				try
 				{
+					logger.info("BOMUniverseBOMClientAPI.execute API() invoked at: " + new Timestamp(System.currentTimeMillis()));
 					BOM bom = this.bomUniverseBOMClientAPI.execute(bomKey);
-					 
+					logger.info("BOMUniverseBOMClientAPI.execute API() completed at: " + new Timestamp(System.currentTimeMillis()));  
 					if(bom == null) throw new Exception("Bom not found for the key : "+bomKey);
 					
 					for (WorkPackage workPackage : this.workByBOMMap.get(bomKey).values())
