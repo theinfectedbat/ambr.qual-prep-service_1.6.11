@@ -15,7 +15,6 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassification;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
-import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXDataExtension;
@@ -359,7 +358,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				{
 					workPackage.setLockId(TradeQualtxClient.acquireLock(workPackage.work.company_code,
 					 	workPackage.work.userId,
-					 	workPackage.work.details.qualtx_key));
+					 	workPackage.work.details.qualtx_key,
+					 	false));
 				}
 				// Do all business logic
 				this.doWork(workPackage); 
