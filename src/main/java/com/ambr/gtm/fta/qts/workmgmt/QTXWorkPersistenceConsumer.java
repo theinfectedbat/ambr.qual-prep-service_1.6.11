@@ -74,7 +74,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			// TODO set on all modified pojo classes
 			// TODO placeholder to make Audit API call (convert
 			// workPackage.entityMgr.get... to BOMQualAuditEntity record
-			BOMQualAuditEntity audit = QualTXUtility.buildAudit(workPackage.qualtx.alt_key_qualtx, workPackage.work.company_code, workPackage.work.userId, workPackage.entityMgr);
+			BOMQualAuditEntity audit = QualTXUtility.buildAudit(workPackage.qualtx.alt_key_qualtx, workPackage.work.company_code, workPackage.work.userId, workPackage.entityMgr,"TD");
 			tradeQualtxClient.doRecordLevelAudit(audit);
 
 			String aWorkId = null;
