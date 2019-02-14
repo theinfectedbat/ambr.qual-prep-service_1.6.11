@@ -192,8 +192,10 @@ public class QualTXComponentExpansionTask
 						//Perform audit when NOT Initial Load.
 						if(aQualTX.raw_material_decision != null)
 						{
+							aQualTXMgr.getTracker().stopTracking();
 							BOMQualAuditEntity audit = QualTXUtility.buildAudit(aQualTX.alt_key_qualtx, aQualTX.org_code, aQualTX.last_modified_by, aQualTXMgr,"EXPANSION");
 							tradeQualtxClient.doRecordLevelAudit(audit);
+							aQualTXMgr.getTracker().startTracking();
 						}
 						aQualTXMgr.save();
 					}
