@@ -323,10 +323,12 @@ public class GPMClassificationUniversePartition
 				if (aInputList == null) {
 					theJdbcTemplate.query(this.loadClassificationSQLText, new GPMClassificationRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadCtrySQLText, new GPMCountryRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadHeaderSQLText, new GPMHeaderRowCallbackHandler(this));
 				}
 				else {
 					theJdbcTemplate.query(this.loadClassificationSQLText, aInputList,new GPMClassificationRowCallbackHandler(this));
 					theJdbcTemplate.query(this.loadCtrySQLText, aInputList,new GPMCountryRowCallbackHandler(this));
+					theJdbcTemplate.query(this.loadHeaderSQLText, aInputList, new GPMHeaderRowCallbackHandler(this));
 				}
 			}
 			catch (DataAccessException e) {
