@@ -363,9 +363,17 @@ public class GPMSourceIVAUniversePartition
 
 		this.ivaByProdSrcTable.clear();
 		this.ivaByProdSrcTable = new HashMap<>();
+
+		this.ivaByProdTable.clear();
+		this.ivaByProdTable = new HashMap<>();
 		
 		this.gpmSrcIVAList.clear();
 		this.gpmSrcIVAList = new ArrayList<>();
+
+		this.inactiveSrcTable.clear();
+		this.inactiveSrcTable = new HashMap<>();
+		
+		this.rowCount = 0;
 		
 		aPerfTracker.start();
 		try {

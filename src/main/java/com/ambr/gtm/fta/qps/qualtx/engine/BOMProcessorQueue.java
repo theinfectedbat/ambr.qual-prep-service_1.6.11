@@ -91,6 +91,10 @@ public class BOMProcessorQueue
 	{
 		Future<BOMProcessorTask>	aFuture;
 		
+		if (theBOM == null) {
+			throw new IllegalArgumentException("The BOM object must be specified");
+		}
+		
 		this.cumulativeComponentCount += theBOM.componentCount;
 		
 		aFuture = this.execute(new BOMProcessorTask(this, theBOM));

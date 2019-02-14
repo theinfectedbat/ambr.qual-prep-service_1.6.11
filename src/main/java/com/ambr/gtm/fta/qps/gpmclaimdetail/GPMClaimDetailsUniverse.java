@@ -177,12 +177,11 @@ public class GPMClaimDetailsUniverse
 		
 		aPerfTracker.start();
 		
+		this.waitUntilAvailable();
 		if (this.localPartition != null) {
 			return this.localPartition.getClaimDetails(theProdSrcIvaKey);
 		}
 		else {
-		
-			this.waitUntilAvailable();
 			for (SubordinateServiceReference aServiceRef : this.serviceMgr.getServiceReferences()) {
 				try {
 					GetGPMClaimDetailsFromPartitionClientAPI	aAPI = new GetGPMClaimDetailsFromPartitionClientAPI(aServiceRef);
@@ -522,6 +521,7 @@ public class GPMClaimDetailsUniverse
 		if (this.localPartition != null) {
 			MessageFormatter.info(logger, "startup", "Local Partition enabled");
 			this.localPartition.load(new JdbcTemplate(this.dataSrc));
+			this.status = UniverseStatusEnum.AVAILABLE;
 			return;
 		}
 		

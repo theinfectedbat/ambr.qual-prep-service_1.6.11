@@ -199,6 +199,8 @@ public class PartnerDetailUniversePartition
 		this.ptnrDetailTable.clear();
 		this.ptnrDetailTable = new HashMap<>();
 		
+		this.rowCount = 0;
+		
 		aPerfTracker.start();
 		try {
 			try {

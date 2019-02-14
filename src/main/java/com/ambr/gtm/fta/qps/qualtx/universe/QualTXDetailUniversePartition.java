@@ -226,6 +226,9 @@ public class QualTXDetailUniversePartition
 		this.qualTXDetailTable.clear();
 		this.qualTXDetailTable = new HashMap<>();
 		
+		this.rowCount = 0;
+		this.qualTXCount = 0;
+		
 		aPerfTracker.start();
 		try {
 			try {

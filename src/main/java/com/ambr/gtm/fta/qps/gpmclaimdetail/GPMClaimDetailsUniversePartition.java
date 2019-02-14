@@ -212,6 +212,8 @@ public class GPMClaimDetailsUniversePartition
 
 		this.claimDetailByProdSrcIVAKeyTable.clear();
 		this.claimDetailByProdSrcIVAKeyTable = new HashMap<>();
+		this.claimDetailCount = 0;
+		this.rowCount = 0;
 		
 		aPerfTracker.start();
 		try {
