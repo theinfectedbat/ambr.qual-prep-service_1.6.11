@@ -15,6 +15,7 @@ import com.ambr.gtm.fta.qps.gpmclass.GPMClassification;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVA;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAContainerCache;
 import com.ambr.gtm.fta.qps.gpmsrciva.GPMSourceIVAProductContainer;
+import com.ambr.gtm.fta.qps.gpmsrciva.STPDecisionEnum;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTX;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXBusinessLogicProcessor;
 import com.ambr.gtm.fta.qps.qualtx.engine.QualTXDataExtension;
@@ -24,6 +25,7 @@ import com.ambr.gtm.fta.qts.QTXWorkHS;
 import com.ambr.gtm.fta.qts.RequalificationWorkCodes;
 import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.fta.trade.client.TradeQualtxClient;
+import com.ambr.gtm.utils.legacy.rdbms.de.DataExtensionConfiguration;
 
 public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 {
@@ -119,7 +121,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		//TODO how to match price records to determine insert/update/delete
 		//TODO need to create (or load) QualTXPrice records for matching purposes
 		//TODO need to keep QualTXPrice records up to date with changes so following work items targeting the same qualtx in memory will have access to them.
-		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PRC_CHG) == true)
+		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PRC_CHG) == true || work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COST_ELEMENT) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
 			
@@ -194,6 +196,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			qualtx.value = (isTransactionValueExist) ? transactionValue : 0.0;
 			qualtx.cost = (isNetValueExist) ? netValue : 0.0;
 			qtxBusinessLogicProcessor.populateRollupPriceDetails(bom, qualtx, "ALL");
+
 		}
 
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PROD_TXT_DE) == true)
@@ -358,9 +361,8 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				{
 					workPackage.setLockId(TradeQualtxClient.acquireLock(workPackage.work.company_code,
 					 	workPackage.work.userId,
-					 	workPackage.work.details.qualtx_key,
-					 	false));
-				}
+					 	workPackage.work.details.qualtx_key));
+				} 
 				// Do all business logic
 				this.doWork(workPackage); 
 			}

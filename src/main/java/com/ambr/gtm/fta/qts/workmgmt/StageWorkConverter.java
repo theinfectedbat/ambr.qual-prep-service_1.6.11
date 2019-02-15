@@ -288,6 +288,25 @@ public class StageWorkConverter
 
 			for (int index = 0; index < theHeaderReasonCodes.length(); index++)
 			{
+				if(ReQualificationReasonCodes.BOM_COST_ELEMENT_CHANGE == theHeaderReasonCodes.optLong(index))
+				{
+					JSONArray theFtaCodes = theBomDtlsObj.optJSONArray("COST_ELEMENT_FTA");
+					QtxStageData stageDatabean = new QtxStageData();
+					if(null == theFtaCodes) continue;
+					
+					for(int ftaIndex = 0; ftaIndex < theFtaCodes.length(); ftaIndex++)
+					{
+						stageDatabean.agreementList = new ArrayList<>();
+						stageDatabean.agreementList.add(theFtaCodes.optString(ftaIndex));
+					}
+					
+					stageDatabean.altKeylist = new ArrayList<>();
+					stageDatabean.altKeylist.add(bomkey);
+					configRequalMap.put(ReQualificationReasonCodes.BOM_COST_ELEMENT_CHANGE, stageDatabean);
+					this.totalStageSize++;
+					continue;
+				}
+				
 				ArrayList<Long> bomKeyList = null;
 				if (bomRequalMap.containsKey(theHeaderReasonCodes.optLong(index)))
 				{
