@@ -223,7 +223,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				// RM_CONSTRUCTION_STATUS as INIT, if a component
 				// unit_cost/qty_per is updated. The Preparation Engine will
 				// need to re-construct the Qual TX Components.
-				if(parentWork.details.analysis_method ==  TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS  && qualtx.hasMakeComponents() &&
+				if(parentWork.details.analysis_method ==  TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS &&
 						(!BOMQualAuditEntity.equal(bomComp.unit_cost, qualtxComp.unit_cost)) || !BOMQualAuditEntity.equal(bomComp.qty_per,qualtxComp.qty_per))
 				 qualtxComp.qualTX.rm_construction_status =  TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 			}
