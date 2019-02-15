@@ -55,7 +55,7 @@ public class ArQtxWorkUtility
 
 	public List<QualTX> getImpactedQtxKeys(Long altKeyBom) throws Exception
 	{
-		String sql = "SELECT ALT_KEY_QUALTX,PROD_SRC_IVA_KEY,PROD_KEY, USER_ID, ORG_CODE from MDI_QUALTX where SRC_KEY = ?";
+		String sql = "SELECT ALT_KEY_QUALTX,PROD_SRC_IVA_KEY,PROD_KEY, USER_ID, ORG_CODE, IS_ACTIVE from MDI_QUALTX where SRC_KEY = ?";
 		
 		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
 		List<QualTX> qualtxList = this.template.query(sql, new Object[] {altKeyBom}, extractor);
@@ -65,10 +65,10 @@ public class ArQtxWorkUtility
 
 	public List<QualTX> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE, CREATED_DATE from MDI_QUALTX WHERE ");
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE, CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
 
 		ArrayList<Object> paramList = new ArrayList<>();
-		if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION)
+		if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION || reasonCode == ReQualificationReasonCodes.BOM_COST_ELEMENT_CHANGE)
 		{   paramList.addAll(altKeyList);
 			sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
 			if (null != ftaList && !ftaList.isEmpty()){
@@ -85,7 +85,7 @@ public class ArQtxWorkUtility
 	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE,CREATED_DATE from MDI_QUALTX WHERE ");
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE,CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
 
 		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE) sql.append(this.getSimpleClause("PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
 		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED) sql.append(this.getSimpleClause("PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
@@ -108,7 +108,7 @@ public class ArQtxWorkUtility
 		StringBuilder sql = new StringBuilder("SELECT DISTINCT COMP.ALT_KEY_COMP AS COMP_QUALTX_KEY, COMP.ORG_CODE, COMP.HS_NUM AS COMP_HS_NUM, COMP.PROD_KEY AS COMP_PROD_KEY, "
 				+ " COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, COMP.PROD_SRC_IVA_KEY AS COMP_PROD_SRC_IVA_KEY, COMP.SUB_PULL_CTRY AS COMP_SUB_PULL_CTRY,"
 				+ " COMP.PROD_CTRY_CMPL_KEY AS COMP_PROD_CTRY_CMPL_KEY, COMP.SRC_KEY AS COMP_KEY, COMP.SRC_ID AS COMP_ID , QUALTX.ALT_KEY_QUALTX, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY,"
-				+ " QUALTX.PROD_SRC_KEY, QUALTX.PROD_CTRY_CMPL_KEY, QUALTX.SRC_KEY AS BOM_KEY, QUALTX.SUB_PULL_CTRY, QUALTX.IVA_CODE as HEADER_IVA_CODE, QUALTX.FTA_CODE as HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT as HEADER_CTRY_OF_IMPORT "
+				+ " QUALTX.PROD_SRC_KEY, QUALTX.PROD_CTRY_CMPL_KEY, QUALTX.IS_ACTIVE AS QUALTX_IS_ACTIVE, QUALTX.SRC_KEY AS BOM_KEY, QUALTX.SUB_PULL_CTRY, QUALTX.IVA_CODE as HEADER_IVA_CODE, QUALTX.FTA_CODE as HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT as HEADER_CTRY_OF_IMPORT "
 				+ " FROM MDI_QUALTX_COMP COMP JOIN MDI_QUALTX QUALTX "
 				+ " ON (QUALTX.ALT_KEY_QUALTX = COMP.ALT_KEY_QUALTX AND ");
 
@@ -163,7 +163,8 @@ public class ArQtxWorkUtility
 		    		qualtx.iva_code = resultSet.getString("HEADER_IVA_CODE");
 		    		qualtx.fta_code = resultSet.getString("HEADER_FTA_CODE");
 		    		qualtx.ctry_of_import = resultSet.getString("HEADER_CTRY_OF_IMPORT");
-		    		qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");	
+		    		qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");
+		    		qualtx.is_active = resultSet.getString("QUALTX_IS_ACTIVE");
 
 		        	qualtxComp.alt_key_qualtx = qualtx.alt_key_qualtx;
 		        	qualtxComp.org_code = qualtx.org_code;
@@ -193,7 +194,7 @@ public class ArQtxWorkUtility
 
 	public List<QualTX> getImpactedQtxCompKeysForNewComp(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT QUALTX.ALT_KEY_QUALTX, QUALTX.ORG_CODE, QUALTX.PROD_SRC_KEY,  QUALTX.SRC_KEY AS BOM_KEY, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY, BOM_COMP.ALT_KEY_COMP  AS COMP_KEY, " + " BOM_COMP.PROD_KEY AS COMP_PROD_KEY, BOM_COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, QUALTX.IVA_CODE AS HEADER_IVA_CODE, QUALTX.FTA_CODE AS HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT AS HEADER_CTRY_OF_IMPORT " + " FROM MDI_QUALTX QUALTX JOIN MDI_BOM_COMP BOM_COMP ON ( QUALTX.SRC_KEY = BOM_COMP.ALT_KEY_BOM AND ");
+		StringBuilder sql = new StringBuilder("SELECT QUALTX.ALT_KEY_QUALTX, QUALTX.IS_ACTIVE AS QUALTX_IS_ACTIVE, QUALTX.ORG_CODE, QUALTX.PROD_SRC_KEY,  QUALTX.SRC_KEY AS BOM_KEY, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY, BOM_COMP.ALT_KEY_COMP  AS COMP_KEY, " + " BOM_COMP.PROD_KEY AS COMP_PROD_KEY, BOM_COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, QUALTX.IVA_CODE AS HEADER_IVA_CODE, QUALTX.FTA_CODE AS HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT AS HEADER_CTRY_OF_IMPORT " + " FROM MDI_QUALTX QUALTX JOIN MDI_BOM_COMP BOM_COMP ON ( QUALTX.SRC_KEY = BOM_COMP.ALT_KEY_BOM AND ");
 
 		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED) sql.append(this.getSimpleClause("BOM_COMP.ALT_KEY_COMP", "=", "OR", altKeyList.size()));
 		
@@ -223,6 +224,7 @@ public class ArQtxWorkUtility
 					qualtx.fta_code = resultSet.getString("HEADER_FTA_CODE");
 					qualtx.ctry_of_import = resultSet.getString("HEADER_CTRY_OF_IMPORT");
 					qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");	
+					qualtx.is_active = resultSet.getString("QUALTX_IS_ACTIVE");	
 
 					qualtxComp.alt_key_qualtx = qualtx.alt_key_qualtx;
 					qualtxComp.org_code = qualtx.org_code;
@@ -255,7 +257,7 @@ public class ArQtxWorkUtility
 	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyBoms) throws Exception
 	{
-		StringBuilder sql  = new StringBuilder("SELECT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE,CREATED_DATE from MDI_QUALTX WHERE ");
+		StringBuilder sql  = new StringBuilder("SELECT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE,CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
 		sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyBoms.size()));
 
 		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
@@ -414,6 +416,7 @@ public class ArQtxWorkUtility
 		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) workCode = RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_PRIORITIZE_QUALIFICATION) workCode = RequalificationWorkCodes.HEADER_CONFIG_CHANGE;
 		else if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION) workCode = RequalificationWorkCodes.BOM_MASS_QUALIFICATION;
+		else if (reasonCode == ReQualificationReasonCodes.BOM_COST_ELEMENT_CHANGE) workCode = RequalificationWorkCodes.BOM_COST_ELEMENT;
 
 		return workCode;
 	}
