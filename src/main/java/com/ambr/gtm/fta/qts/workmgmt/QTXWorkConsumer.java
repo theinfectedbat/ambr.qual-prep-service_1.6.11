@@ -3,6 +3,8 @@ package com.ambr.gtm.fta.qts.workmgmt;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +24,11 @@ import com.ambr.gtm.fta.qps.qualtx.engine.QualTXPrice;
 import com.ambr.gtm.fta.qts.QTXWork;
 import com.ambr.gtm.fta.qts.QTXWorkHS;
 import com.ambr.gtm.fta.qts.RequalificationWorkCodes;
+import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.Env;
+import com.ambr.gtm.fta.qts.util.SubPullConfigContainer;
+import com.ambr.gtm.fta.qts.util.SubPullConfigData;
+import com.ambr.gtm.fta.qts.util.TradeLane;
 import com.ambr.gtm.fta.trade.client.TradeQualtxClient;
 
 public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
@@ -68,7 +74,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		QTXWork work = workPackage.work;
 		QualTX qualtx = workPackage.qualtx;
 		BOM bom = workPackage.bom;
-		
+		QEConfigCache qeConfigCache = ((QTXWorkProducer)(this.producer)).queueUniverse.qeConfigCache;
 		if (qualtx == null)
 		{
 			throw new Exception("Failed to process work item " + workPackage.work.qtx_wid + " qualtx not found (" + workPackage.work.details.qualtx_key + ")");
@@ -291,9 +297,23 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			{
 				logger.debug("Processing work hs " + workHS.qtx_hspull_wid);
 
-				// TODO why isnt TA storing the HS number - avoid unecessary
-				// select
-				if (workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE) == true)
+				int parentHsLength = -1;
+				List<TradeLane> subPullConfig = qeConfigCache.getQEConfig(work.company_code).getSubpullConfigList();
+				if (subPullConfig != null)
+				{
+					Optional<TradeLane> tradeLane = subPullConfig.stream().filter(p -> p.getFtaCode().equalsIgnoreCase(qualtx.fta_code) && p.getCtryOfImport().equalsIgnoreCase(qualtx.ctry_of_import)).findFirst();
+					if (tradeLane.isPresent())
+					{
+						SubPullConfigContainer container = qeConfigCache.getQEConfig(work.company_code).getSubPullConfigContainer();
+						SubPullConfigData subpullConfigDate = container.getTradeLaneData(tradeLane.get());
+						if (subpullConfigDate != null)
+						{
+							String lengthStr = subpullConfigDate.getHeaderHsLength();
+							if (lengthStr != null && !lengthStr.isEmpty()) parentHsLength = Integer.parseInt(lengthStr);
+						}
+					}
+				}
+				if (workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE) == true || workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) == true)
 				{
 					if (workPackage.gpmClassificationProductContainer == null)
 						throw new Exception("GPMClassificationProductContainer not present during HS pull for work " + workHS.qtx_wid + ":" + workHS.qtx_hspull_wid);
@@ -306,8 +326,9 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 					if (gpmClassification == null) 
 						throw new Exception("Failed to find GPMClassification " + workHS.ctry_cmpl_key + " for work HS " + workHS.qtx_wid + ":" + workHS.qtx_hspull_wid);
 					
-					qualtx.hs_num = gpmClassification.imHS1;
+					qualtx.hs_num= ((parentHsLength != -1 && gpmClassification.imHS1.length() > parentHsLength) ? gpmClassification.imHS1.substring(0, parentHsLength) : gpmClassification.imHS1);
 					qualtx.sub_pull_ctry = gpmClassification.ctryCode;
+					qualtx.prod_ctry_cmpl_key = gpmClassification.cmplKey;
 				}
 
 				if (workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_DELETED) == true)
@@ -315,26 +336,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 					qualtx.hs_num = null;
 					qualtx.sub_pull_ctry = null;
 					qualtx.prod_ctry_cmpl_key = null;
-				}
-
-				// TODO why isnt TA storing the HS number - avoid unecessary
-				// TODO review what is the difference between add and modify?
-				if (workHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) == true)
-				{
-					if (workPackage.gpmClassificationProductContainer == null)
-						throw new Exception("GPMClassificationProductContainer not present during HS pull for work " + workPackage.work.qtx_wid);
-
-					if (workHS.ctry_cmpl_key == null)
-						throw new Exception("Error in attempting to process pull with null ctry cmpl key for work HS " + workHS.qtx_wid + ":" + workHS.qtx_hspull_wid);
-					
-					GPMClassification gpmClassification = workPackage.gpmClassificationProductContainer.getGPMClassificationByCtryCmplKey(workHS.ctry_cmpl_key);
-
-					if (gpmClassification == null) 
-						throw new Exception("Failed to find GPMClassification " + workHS.ctry_cmpl_key + " for work HS " + workHS.qtx_wid + ":" + workHS.qtx_hspull_wid);
-
-					qualtx.hs_num = gpmClassification.imHS1;
-					qualtx.sub_pull_ctry = gpmClassification.ctryCode;
-					qualtx.prod_ctry_cmpl_key = gpmClassification.cmplKey;
 				}
 			}
 		}
@@ -360,7 +361,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 					workPackage.setLockId(TradeQualtxClient.acquireLock(workPackage.work.company_code,
 					 	workPackage.work.userId,
 					 	workPackage.work.details.qualtx_key, false));
-				} 
+				}
 				// Do all business logic
 				this.doWork(workPackage); 
 			}
