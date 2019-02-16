@@ -342,7 +342,7 @@ public class TrackerServiceAPI
 		Integer aAnalysisMethod = theRequest.getAnalysisMethod();
 		Long aTotalComponents = theRequest.getTotalComponents();
 		Integer aStatusOrdinal = theRequest.getStatus();
-		MessageFormatter.info(logger, "updateQtxworkStatus","Received status code [{0}]  For the BOM key : [{1}] qtxkey : [{2}] qtxWorkId: [{3}] "+ aStatusOrdinal, aBOMKey, aQualtxKey, aQualtxWorkId);
+		MessageFormatter.debug(logger, "updateQtxworkStatus","Received status code [{0}]  For the BOM key : [{1}] qtxkey : [{2}] qtxWorkId: [{3}] ", aStatusOrdinal, aBOMKey, aQualtxKey, aQualtxWorkId);
 		if (aBOMKey != null && aQualtxKey != null && aQualtxWorkId != null && aStatusOrdinal != null)
 		{
 			QtxWorkInfo qtxWorkInfo = new QtxWorkInfo();
