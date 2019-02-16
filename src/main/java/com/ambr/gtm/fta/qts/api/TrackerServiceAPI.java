@@ -121,7 +121,7 @@ public class TrackerServiceAPI
 		}
 		else
 		{
-			MessageFormatter.debug(logger,"executeQualification","One or more Mandatory Fields are missing  BOMKey, QualtxKey, Orgcode, userId, and IVAKey " + TrackerClientAPI.POST_QUALIFICATION_WORK);
+			MessageFormatter.info(logger,"executeQualification","One or more Mandatory Fields are missing  BOMKey, QualtxKey, Orgcode, userId, and IVAKey " + TrackerClientAPI.POST_QUALIFICATION_WORK);
 			return new ResponseEntity<String>("One or more Mandatory Fields are missing  BOMKey, QualtxKey, Orgcode, userId, and IVAKey ", HttpStatus.BAD_REQUEST);
 		}
 
@@ -368,7 +368,7 @@ public class TrackerServiceAPI
 		}
 		else
 		{
-			MessageFormatter.debug(logger,"updateQtxworkStatus","One or more Mandatory Fields are missing  BOMKey, QualtxKey, QualtxWorkId and Status in the request" + TrackerClientAPI.QTX_STATUS_UPDATE);
+			MessageFormatter.info(logger,"updateQtxworkStatus","One or more Mandatory Fields are missing  BOMKey, QualtxKey, QualtxWorkId and Status in the request" + TrackerClientAPI.QTX_STATUS_UPDATE);
 			return new ResponseEntity<String>("One or more Mandatory Fields are missing  BOMKey, QualtxKey, QualtxWorkId and Status in the request", HttpStatus.BAD_REQUEST);
 		}
 
