@@ -330,7 +330,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					}
 				}
 				
-				if (compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE) == true)
+				if (compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE) == true || compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) == true)
 				{
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 					if (compWorkPackage.gpmClassificationProductContainer == null)
@@ -346,8 +346,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					
 					qualtxComp.hs_num = ((compHsLength != -1 && gpmClassification.imHS1.length() > compHsLength) ? gpmClassification.imHS1.substring(0, compHsLength) : gpmClassification.imHS1);
 					qualtxComp.sub_pull_ctry = gpmClassification.ctryCode;
-					
-					//qualtxComp.prod_ctry_cmpl_key be will be there already. we are just updating the HS number
+					qualtxComp.prod_ctry_cmpl_key = gpmClassification.cmplKey;
 				}
 				
 				if (compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_DELETED) == true)
@@ -356,26 +355,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					qualtxComp.hs_num = null;
 					qualtxComp.sub_pull_ctry = null;
 					qualtxComp.prod_ctry_cmpl_key = null;
-				}
-				
-				if (compWorkHS.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED) == true)
-				{	
-					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
-
-					if (compWorkPackage.gpmClassificationProductContainer == null)
-						throw new Exception("GPMClassificationProductContainer not present during comp HS pull for work " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_comp_wid);
-
-					if (compWorkHS.ctry_cmpl_key == null)
-						throw new Exception("Error in attempting to process pull with null ctry cmpl key for comp work HS " + compWorkHS.qtx_wid + ":" + compWorkHS.qtx_comp_wid + ":" + compWorkHS.qtx_comp_hspull_wid);
-					
-					GPMClassification gpmClassification = compWorkPackage.gpmClassificationProductContainer.getGPMClassificationByCtryCmplKey(compWorkHS.ctry_cmpl_key);
-					
-					if (gpmClassification == null) 
-						throw new Exception("Failed to find GPMClassification " + compWorkHS.ctry_cmpl_key + " for work HS " + compWorkHS.qtx_wid + ":" + compWorkHS.qtx_comp_wid + ":" + compWorkHS.qtx_comp_hspull_wid);
-
-					qualtxComp.hs_num = ((compHsLength != -1 && gpmClassification.imHS1.length() > compHsLength) ? gpmClassification.imHS1.substring(0, compHsLength) : gpmClassification.imHS1);
-					qualtxComp.sub_pull_ctry = gpmClassification.ctryCode;
-					qualtxComp.prod_ctry_cmpl_key = gpmClassification.cmplKey;
 				}
 			}
 		}
