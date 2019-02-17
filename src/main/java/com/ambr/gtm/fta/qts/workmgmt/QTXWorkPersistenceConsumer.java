@@ -57,9 +57,10 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 		JdbcTemplate template = this.producer.getJdbcTemplate();
 		PlatformTransactionManager txMgr = this.producer.getTransactionManager();
 		TransactionStatus status = txMgr.getTransaction(new DefaultTransactionDefinition());
+		TradeQualtxClient tradeQualtxClient = null;
 		try
 		{
-			TradeQualtxClient tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
+			tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
 
 			Exception failure = workPackage.getFailure();
 
@@ -112,7 +113,7 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			// TD_CONSTRUCTION_STATUS as COMPLETE
 			if (work.details.analysis_method == TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS) qualtx.td_construction_status = TrackerCodes.QualTXContructionStatus.COMPLETED.ordinal();
 
-			txMgr.commit(status);
+			//txMgr.commit(status); TA-83611
 
 			// TODO review further. would be better to notify tracker when
 			// entire work package chain is complete. even better to only post
@@ -142,21 +143,24 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				{
 					producer.getWorkRepository().logError(work.qtx_wid, e);
 
-					txMgr.commit(loggerStatus);
+					//txMgr.commit(loggerStatus);
 				}
 				catch (Exception logException)
 				{
 					logger.error("Exception encountered storing exception during tracker status update " + work.qtx_wid, logException);
-					try
+					/*try
 					{
 						txMgr.rollback(loggerStatus);
 					}
 					catch (Exception rollbackException)
 					{
 						logger.error("Exception encountered during rollback of exception logging for tracker status update " + work.qtx_wid, rollbackException);
-					}
+					}*/
 				}
 			}
+			
+			txMgr.commit(status); //TA-83611
+			
 		}
 		catch (Exception e)
 		{
@@ -176,39 +180,41 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 				this.updateWorkToFailure(workPackage, retry, template);
 
 				txMgr.commit(rollbackStatus);
-
-				try
+				if(!retry)
 				{
-					QtxStatusUpdateRequest request = new QtxStatusUpdateRequest();
-
-					request.setQualtxKey(work.details.qualtx_key);
-					request.setQualtxWorkId(work.qtx_wid);
-					request.setBOMKey(work.bom_key);
-					request.setStatus(TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED.ordinal());
-
-					Env.getSingleton().getTrackerAPI().updateQualtxStatus(request);
-				}
-				catch (Exception exception)
-				{
-					logger.error("Error notifying tracker of status update for work " + work.qtx_wid, exception);
-
-					TransactionStatus loggerStatus = txMgr.getTransaction(new DefaultTransactionDefinition());
 					try
 					{
-						producer.getWorkRepository().logError(work.qtx_wid, exception);
+						QtxStatusUpdateRequest request = new QtxStatusUpdateRequest();
 
-						txMgr.commit(loggerStatus);
+						request.setQualtxKey(work.details.qualtx_key);
+						request.setQualtxWorkId(work.qtx_wid);
+						request.setBOMKey(work.bom_key);
+						request.setStatus(TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED.ordinal());
+
+						Env.getSingleton().getTrackerAPI().updateQualtxStatus(request);
 					}
-					catch (Exception logException)
+					catch (Exception exception)
 					{
-						logger.error("Exception encountered storing exception during tracker status update " + work.qtx_wid, logException);
+						logger.error("Error notifying tracker of status update for work " + work.qtx_wid, exception);
+
+						TransactionStatus loggerStatus = txMgr.getTransaction(new DefaultTransactionDefinition());
 						try
 						{
-							txMgr.rollback(loggerStatus);
+							producer.getWorkRepository().logError(work.qtx_wid, exception);
+
+							txMgr.commit(loggerStatus);
 						}
-						catch (Exception rollbackException)
+						catch (Exception logException)
 						{
-							logger.error("Exception encountered during rollback of exception logging for tracker status update " + work.qtx_wid, rollbackException);
+							logger.error("Exception encountered storing exception during tracker status update " + work.qtx_wid, logException);
+							try
+							{
+								txMgr.rollback(loggerStatus);
+							}
+							catch (Exception rollbackException)
+							{
+								logger.error("Exception encountered during rollback of exception logging for tracker status update " + work.qtx_wid, rollbackException);
+							}
 						}
 					}
 				}
@@ -221,6 +227,15 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			}
 
 			throw e;
+		}
+		finally
+		{
+			Long lockId = workPackage.getLockId();
+			if (lockId != null)
+			{
+				if(tradeQualtxClient ==null) tradeQualtxClient = Env.getSingleton().getTradeQualtxClient();
+				tradeQualtxClient.releaseLock(lockId);
+			}
 		}
 	}
 
