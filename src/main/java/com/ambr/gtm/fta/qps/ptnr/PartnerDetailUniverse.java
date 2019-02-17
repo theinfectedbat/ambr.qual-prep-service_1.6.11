@@ -621,7 +621,12 @@ public class PartnerDetailUniverse
 	
 		while (this.status != UniverseStatusEnum.AVAILABLE) {
 			MessageFormatter.trace(logger, "waitUntilAvailable", "universe status [{0}], waiting", this.status);
-			Thread.sleep(1000);
+			try {
+				Thread.sleep(1000);
+			}
+			catch (Exception e) {
+				MessageFormatter.debug(logger, "waitUntilAvailable", e, "universe status [{0}], error while waiting", this.status);
+			}
 		}
 		
 		MessageFormatter.trace(logger, "waitUntilAvailable", "universe available");
