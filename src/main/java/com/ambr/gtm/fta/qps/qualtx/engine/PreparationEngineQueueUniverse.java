@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.ambr.gtm.fta.qps.bom.BOM;
@@ -147,8 +148,6 @@ public class PreparationEngineQueueUniverse
 		this.cacheRefreshStart = System.currentTimeMillis();
 		this.cacheRefreshComplete = this.cacheRefreshStart;
 	}
-	
-	
 	
 	/**
 	 *************************************************************************************
@@ -396,50 +395,7 @@ public class PreparationEngineQueueUniverse
 			this.refreshCaches();
 		}
 		
-		// Clean up the task queues.  It is necessary to prevent a memory leak
-		
-		TaskQueue<?>[] aTaskQueueList = new TaskQueue<?>[] {
-			this.classificationQueue,
-			this.compIVAPullQueue,
-			this.compQueue,
-			this.tradeLaneQueue,
-			this.bomQueue,
-			this.bomComponentExpansionQueue,
-			this.qualTXComponentExpansionQueue,
-			this.persistenceRetryQueue
-		};
-		
-		for (TaskQueue<?> aQueue : aTaskQueueList) {
-			if (aQueue == null) {continue;}
-			aQueue.shutdown(false);
-		}
-
-		// Clean up the typed persistence queues.  It is necessary to prevent a memory leak
-
-		TypedPersistenceQueue<?>[] aTypedQueueList = new TypedPersistenceQueue<?>[] {
-			this.qualTXQueue,
-			this.qualTXComponentQueue,
-			this.qualTXComponentPriceQueue,
-			this.qualTXPriceQueue,
-			this.qualTXPrepLogQueue
-		};
-
-		for (TypedPersistenceQueue<?> aQueue : aTypedQueueList) {
-			if (aQueue == null) {continue;}
-			aQueue.shutdown(false);
-		}
-
-		// Clean up the data extension persistence queues.  It is necessary to prevent a memory leak
-		
-		DataExtensionPersistenceQueue<?>[] aDataExtQueueList = new DataExtensionPersistenceQueue<?>[] {
-			this.qualTXdataExtQueue,
-			this.qualTXComponentdataExtQueue
-		};
-
-		for (DataExtensionPersistenceQueue<?> aQueue : aDataExtQueueList) {
-			if (aQueue == null) {continue;}
-			aQueue.shutdown(false);
-		}
+		this.shutdown(false);
 		
 		this.classificationQueue = new ClassificationProcessorQueue(this);
 		this.classificationQueue.setQueueParemeters(this.classificationQueueParams);
@@ -1268,6 +1224,22 @@ public class PreparationEngineQueueUniverse
 	/**
 	 *************************************************************************************
 	 * <P>
+	 * This method is invoked by the spring framework subsystem when the bean is being shutdown
+	 * and "cleaned" up.
+	 * </P>
+	 *************************************************************************************
+	 */
+	public void shutdown()
+		throws Exception
+	{
+		MessageFormatter.info(logger, "shutdown", "shutting down Preparation Engine Queue Universe");
+		this.shutdown(true);
+		MessageFormatter.info(logger, "shutdown", "Preparation Engine Queue Universe shutdown complete.");
+	}
+
+	/**
+	 *************************************************************************************
+	 * <P>
 	 * </P>
 	 * 
 	 * @param	theOrderlyFlag
@@ -1278,25 +1250,50 @@ public class PreparationEngineQueueUniverse
 	{
 		MessageFormatter.info(logger, "shutdown", "Initiating shutdown. Orderly [{0}]", theOrderlyFlag);
 	
-		ExecutorService aExecutor = Executors.newFixedThreadPool(5);
+		// Clean up the task queues.  It is necessary to prevent a memory leak
 		
-		Future<?>	aBomFuture = aExecutor.submit(()->							{try {this.bomQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aTradeLaneFuture = aExecutor.submit(()->					{try {this.tradeLaneQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aCompQueueFuture = aExecutor.submit(()->					{try {this.compQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aCompIVAFuture = aExecutor.submit(()->						{try {this.compIVAPullQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aClassFuture = aExecutor.submit(()->						{try {this.classificationQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aBOMComponentExpansionFuture = aExecutor.submit(()->		{try {this.bomComponentExpansionQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aQualTXComponentExpansionFuture  = aExecutor.submit(()->	{try {this.qualTXComponentExpansionQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
-		Future<?>	aPersistenceRetryFuture = aExecutor.submit(()->				{try {this.persistenceRetryQueue.shutdown(theOrderlyFlag);} catch(Exception e){}});
+		TaskQueue<?>[] aTaskQueueList = new TaskQueue<?>[] {
+			this.classificationQueue,
+			this.compIVAPullQueue,
+			this.compQueue,
+			this.tradeLaneQueue,
+			this.bomQueue,
+			this.bomComponentExpansionQueue,
+			this.qualTXComponentExpansionQueue,
+			this.persistenceRetryQueue
+		};
 		
-		aBomFuture.get();
-		aTradeLaneFuture.get();
-		aCompQueueFuture.get();
-		aCompIVAFuture.get();
-		aClassFuture.get();
-		aBOMComponentExpansionFuture.get();
-		aQualTXComponentExpansionFuture.get();
-		aPersistenceRetryFuture.get();
+		for (TaskQueue<?> aQueue : aTaskQueueList) {
+			if (aQueue == null) {continue;}
+			aQueue.shutdown(theOrderlyFlag);
+		}
+
+		// Clean up the typed persistence queues.  It is necessary to prevent a memory leak
+
+		TypedPersistenceQueue<?>[] aTypedQueueList = new TypedPersistenceQueue<?>[] {
+			this.qualTXQueue,
+			this.qualTXComponentQueue,
+			this.qualTXComponentPriceQueue,
+			this.qualTXPriceQueue,
+			this.qualTXPrepLogQueue
+		};
+
+		for (TypedPersistenceQueue<?> aQueue : aTypedQueueList) {
+			if (aQueue == null) {continue;}
+			aQueue.shutdown(theOrderlyFlag);
+		}
+
+		// Clean up the data extension persistence queues.  It is necessary to prevent a memory leak
+		
+		DataExtensionPersistenceQueue<?>[] aDataExtQueueList = new DataExtensionPersistenceQueue<?>[] {
+			this.qualTXdataExtQueue,
+			this.qualTXComponentdataExtQueue
+		};
+
+		for (DataExtensionPersistenceQueue<?> aQueue : aDataExtQueueList) {
+			if (aQueue == null) {continue;}
+			aQueue.shutdown(theOrderlyFlag);
+		}
 		
 		MessageFormatter.info(logger, "shutdown", "Shutdown complete");
 	}

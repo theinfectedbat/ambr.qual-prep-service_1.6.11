@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 
 import com.ambr.gtm.fta.qps.bom.BOM;
 import com.ambr.gtm.fta.qps.bom.BOMMetricSetUniverseContainer;
@@ -98,6 +99,66 @@ public class PreparationEngine
 	}
 	
 	/**
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	private void rawMaterialAndOrIntermediateAnalysis()
+		throws Exception
+	{
+		PerformanceTracker				aPerfTracker = new PerformanceTracker(logger, Level.INFO, "rawMaterialAndOrIntermediateAnalysis");
+		BOM								aBOM;
+		BOMMetricSetUniverseContainer	aBOMSet;
+		BOMUniverse						aBOMUniverse = this.queueUniverse.getBOMUniverse();
+	
+		this.qtxPrepProgressMgr.rawMaterialAndOrIntermediateAnalysisStart();
+		try {
+			aPerfTracker.start();
+			aBOMSet = aBOMUniverse.getPrioritizedBOMSet();
+			for (PrioritizedBOMMetricSet aBOMMetricSet : aBOMSet.metricSetList) {
+				try {
+					if (!this.queueUniverse.request.isBOMEnabled(aBOMMetricSet.metricSet.bomKey)) {
+						MessageFormatter.trace(logger, "rawMaterialAndOrIntermediateAnalysis", "BOM [{0,number,#}]: not enabled for processing.", aBOMMetricSet.metricSet.bomKey);
+						continue;
+					}
+					aBOM = aBOMUniverse.getBOM(aBOMMetricSet.metricSet.bomKey);
+					if (aBOM == null) {
+						MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", null, "BOM [{0,number,#}]: not found in the Universe cache.", aBOMMetricSet.metricSet.bomKey);
+						continue;
+					}
+					this.queueUniverse.processBOMExpansion(aBOM);
+				}
+				catch (Exception e) {
+					MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", e, "BOM [{0,number,#}]: failed to process.", aBOMMetricSet.metricSet.bomKey);
+				}
+			}
+			
+			this.queueUniverse.waitForCompletion();
+		}
+		catch (Exception e)
+		{
+			MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", e, "unexpected error");
+			throw e;
+		}
+		finally {
+			this.qtxPrepProgressMgr.rawMaterialAndOrIntermediateAnalysisComplete();
+	
+			aPerfTracker.stop("BOMs [{0}]; BOM Components [{1}]; QTXs [{2}]; QTX Components [{3}]; Classifications [{4}]; IVA Pulls [{5}]", 
+				new Object[] {
+					this.queueUniverse.getBOMCount(), 
+					this.queueUniverse.getBOMComponent(),
+					this.queueUniverse.tradeLaneQueue.getCompletedWorkCount(),
+					this.queueUniverse.compQueue.getCompletedWorkCount(),
+					this.queueUniverse.classificationQueue.getCompletedWorkCount(),
+					this.queueUniverse.compIVAPullQueue.getCompletedWorkCount()
+				}
+			);
+		}
+	
+	}
+
+	/**
      *************************************************************************************
      * <P>
      * </P>
@@ -159,62 +220,14 @@ public class PreparationEngine
 	}
 
 	/**
-     *************************************************************************************
-     * <P>
-     * </P>
-     *************************************************************************************
-     */
-	private void rawMaterialAndOrIntermediateAnalysis()
+	 *************************************************************************************
+	 * <P>
+	 * </P>
+	 *************************************************************************************
+	 */
+	public void shutdown()
 		throws Exception
 	{
-		PerformanceTracker				aPerfTracker = new PerformanceTracker(logger, Level.INFO, "rawMaterialAndOrIntermediateAnalysis");
-		BOM								aBOM;
-		BOMMetricSetUniverseContainer	aBOMSet;
-		BOMUniverse						aBOMUniverse = this.queueUniverse.getBOMUniverse();
-	
-		this.qtxPrepProgressMgr.rawMaterialAndOrIntermediateAnalysisStart();
-		try {
-			aPerfTracker.start();
-			aBOMSet = aBOMUniverse.getPrioritizedBOMSet();
-			for (PrioritizedBOMMetricSet aBOMMetricSet : aBOMSet.metricSetList) {
-				try {
-					if (!this.queueUniverse.request.isBOMEnabled(aBOMMetricSet.metricSet.bomKey)) {
-						MessageFormatter.trace(logger, "rawMaterialAndOrIntermediateAnalysis", "BOM [{0,number,#}]: not enabled for processing.", aBOMMetricSet.metricSet.bomKey);
-						continue;
-					}
-					aBOM = aBOMUniverse.getBOM(aBOMMetricSet.metricSet.bomKey);
-					if (aBOM == null) {
-						MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", null, "BOM [{0,number,#}]: not found in the Universe cache.", aBOMMetricSet.metricSet.bomKey);
-						continue;
-					}
-					this.queueUniverse.processBOMExpansion(aBOM);
-				}
-				catch (Exception e) {
-					MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", e, "BOM [{0,number,#}]: failed to process.", aBOMMetricSet.metricSet.bomKey);
-				}
-			}
-			
-			this.queueUniverse.waitForCompletion();
-		}
-		catch (Exception e)
-		{
-			MessageFormatter.error(logger, "rawMaterialAndOrIntermediateAnalysis", e, "unexpected error");
-			throw e;
-		}
-		finally {
-			this.qtxPrepProgressMgr.rawMaterialAndOrIntermediateAnalysisComplete();
-	
-			aPerfTracker.stop("BOMs [{0}]; BOM Components [{1}]; QTXs [{2}]; QTX Components [{3}]; Classifications [{4}]; IVA Pulls [{5}]", 
-				new Object[] {
-					this.queueUniverse.getBOMCount(), 
-					this.queueUniverse.getBOMComponent(),
-					this.queueUniverse.tradeLaneQueue.getCompletedWorkCount(),
-					this.queueUniverse.compQueue.getCompletedWorkCount(),
-					this.queueUniverse.classificationQueue.getCompletedWorkCount(),
-					this.queueUniverse.compIVAPullQueue.getCompletedWorkCount()
-				}
-			);
-		}
-	
+		MessageFormatter.info(logger, "shutdown", "shutting down Preparation Engine");
 	}
 }
