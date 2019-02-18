@@ -516,9 +516,11 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				{
 					isPriceTypeExist = true;
 					deleteCompPriceList.remove(qualtxCompPrice);
-					if (bomCompPrice.getValue("flexfield_num1") != qualtxCompPrice.price)
+					Object aBomCompPriceValue=bomCompPrice.getValue("flexfield_num1");
+					if (aBomCompPriceValue !=null && aBomCompPriceValue != qualtxCompPrice.price)
 					{
-						qualtxCompPrice.price =  ((Integer)bomCompPrice.getValue("flexfield_num1")).doubleValue();
+						if(aBomCompPriceValue instanceof Number)
+						qualtxCompPrice.price =  ((Number)aBomCompPriceValue).doubleValue();
 					}
 					if (!bomCompPrice.getValue("flexfield_var2").equals(qualtxCompPrice.currency_code))
 					{
