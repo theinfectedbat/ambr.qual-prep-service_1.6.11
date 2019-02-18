@@ -24,6 +24,7 @@ import com.ambr.gtm.fta.qps.qualtx.engine.QualTXPrice;
 import com.ambr.gtm.fta.qts.QTXWork;
 import com.ambr.gtm.fta.qts.QTXWorkHS;
 import com.ambr.gtm.fta.qts.RequalificationWorkCodes;
+import com.ambr.gtm.fta.qts.TrackerCodes;
 import com.ambr.gtm.fta.qts.config.QEConfigCache;
 import com.ambr.gtm.fta.qts.util.Env;
 import com.ambr.gtm.fta.qts.util.SubPullConfigContainer;
@@ -92,6 +93,12 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		{
 			qualtx.is_active = "N";
 			return;
+		}
+		
+		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.RAW_MATERIAL_CHG) == true)
+		{
+			qualtx.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+			qualtx.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 		}
 		
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_HDR_CHG) == true)
