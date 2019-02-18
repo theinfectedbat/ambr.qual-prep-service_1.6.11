@@ -95,7 +95,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			return;
 		}
 		
-		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.RAW_MATERIAL_CHG) == true)
+		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.SUB_BOM_CHG) == true)
 		{
 			qualtx.rm_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();
 			qualtx.in_construction_status = TrackerCodes.QualTXContructionStatus.INIT.ordinal();

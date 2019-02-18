@@ -462,7 +462,7 @@ public class StageWorkConverter
 					theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
 					if(isRawMaterialComp)
 					{
-						theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.RAW_MATERIAL_CHG);
+						theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
 						continue;
 					}
 					
@@ -523,7 +523,7 @@ public class StageWorkConverter
 					theQtxWork = this.utility.createQtxWorkObj(qualtx, 0, bomConsolMap, qualtx.src_key);
 					if(isRawMaterialComp)
 					{
-						theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.RAW_MATERIAL_CHG);
+						theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
 						continue;
 					}
 					theQtxCompWork = this.utility.createQtxCompWorkObj(qualtx, qualtxComp, workReasonCode, theQtxWork.qtx_wid);
@@ -816,7 +816,7 @@ public class StageWorkConverter
 				theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
 				if(isRawMaterialComp)
 				{
-					theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.RAW_MATERIAL_CHG);
+					theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
 					continue;
 				}
 				theQtxCompList = theQtxWork.compWorkList;
@@ -862,7 +862,7 @@ public class StageWorkConverter
 				theQtxWork = this.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtxComp.prod_key);
 				if(isRawMaterialComp)
 				{
-					theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.RAW_MATERIAL_CHG);
+					theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
 					continue;
 				}
 				theQtxCompWork = this.createQtxCompWorkObj(qualtx, qualtxComp, 0, theQtxWork.qtx_wid);
@@ -982,7 +982,7 @@ public class StageWorkConverter
 				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
 				 if(isRawMaterialComp)
 				 {
-					 theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.RAW_MATERIAL_CHG);
+					 theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
 					 continue;
 				 }
 				theQtxCompList = theQtxWork.compWorkList;
@@ -1072,7 +1072,7 @@ public class StageWorkConverter
 				}
 				if(isRawMaterialComp)
 				 {
-					 theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.RAW_MATERIAL_CHG);
+					 theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
 					 continue;
 				 }
 				theQtxCompWork = this.createQtxCompWorkObj(qualtx, qualtxComp, 0, theQtxWork.qtx_wid);
