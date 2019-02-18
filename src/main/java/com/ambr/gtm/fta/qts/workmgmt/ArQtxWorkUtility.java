@@ -304,10 +304,10 @@ public class ArQtxWorkUtility
 		{
 			qtxConsolWork = bomConsolMap.get(key);
 			
-			if(qtxConsolWork == null ) //TODO work arround
+			if(qtxConsolWork == null ) 
 			{
-				logger.error("@@@@@@ArQtxWorkUtility: qtxConsolWork, qualtx:BOM key= "+qualtx.src_key +": BOM ID="+ qualtx.src_id+ " and  key : "+key + "reasonCode:"+reasonCode + "bomConsolMap key set"+bomConsolMap.keySet());
-				work.priority = 1; //TODO Need to remove the default priority 
+				logger.debug("ArQtxWorkUtility: qtxConsolWork, qualtx:BOM key= "+qualtx.src_key +": and  key : "+key + "reasonCode:"+reasonCode + "bomConsolMap key set"+bomConsolMap.keySet());
+				work.priority = 70;  
 				qtxConsolWork = new QTXConsolWork();
 				qtxConsolWork.time_stamp =  new Timestamp(System.currentTimeMillis());
 				qtxConsolWork.user_id = (qualtx.last_modified_by == null) ? "SYSTEM_ADMIN" : qualtx.last_modified_by;
