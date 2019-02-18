@@ -150,8 +150,9 @@ public class ConservativeSourceLogic
 						if(fallsInTraceList)
 						{
 							Object tracedValue = aClaimDetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
-							if(tracedValue != null)
-								aTracedValueFromClaimDtls =(Double)tracedValue;
+							if(tracedValue != null && tracedValue instanceof Number) {
+								aTracedValueFromClaimDtls =((Number)tracedValue).doubleValue();
+							}
 						}
 					}
 					if(aYesDecisionTracedValue == null || aYesDecisionTracedValue.doubleValue() < aTracedValueFromClaimDtls)
