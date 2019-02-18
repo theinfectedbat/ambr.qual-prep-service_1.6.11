@@ -306,7 +306,7 @@ public class ArQtxWorkUtility
 			
 			if(qtxConsolWork == null ) 
 			{
-				logger.info("ArQtxWorkUtility: qtxConsolWork, qualtx:BOM key= "+qualtx.src_key +": and  key : "+key + "reasonCode:"+reasonCode + "bomConsolMap key set"+bomConsolMap.keySet());
+				logger.debug("ArQtxWorkUtility: qtxConsolWork, qualtx:BOM key= "+qualtx.src_key +": and  key : "+key + "reasonCode:"+reasonCode + "bomConsolMap key set"+bomConsolMap.keySet());
 				work.priority = 70;  
 				qtxConsolWork = new QTXConsolWork();
 				qtxConsolWork.time_stamp =  new Timestamp(System.currentTimeMillis());
