@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
+import java.lang.Double;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -514,13 +514,15 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			{
 				if (bomCompPrice.getValue("flexfield_var1").equals(qualtxCompPrice.price_type))
 				{
+					Double aBomCompPriceDoubleValue=0.0;
 					isPriceTypeExist = true;
 					deleteCompPriceList.remove(qualtxCompPrice);
 					Object aBomCompPriceValue=bomCompPrice.getValue("flexfield_num1");
-					if (aBomCompPriceValue !=null && aBomCompPriceValue != qualtxCompPrice.price)
+					if(aBomCompPriceValue !=null && aBomCompPriceValue instanceof Number)
+					 aBomCompPriceDoubleValue  =  ((Number)aBomCompPriceValue).doubleValue();
+					if (aBomCompPriceDoubleValue != qualtxCompPrice.price.doubleValue())
 					{
-						if(aBomCompPriceValue instanceof Number)
-						qualtxCompPrice.price =  ((Number)aBomCompPriceValue).doubleValue();
+						qualtxCompPrice.price =  aBomCompPriceDoubleValue;
 					}
 					if (!bomCompPrice.getValue("flexfield_var2").equals(qualtxCompPrice.currency_code))
 					{
