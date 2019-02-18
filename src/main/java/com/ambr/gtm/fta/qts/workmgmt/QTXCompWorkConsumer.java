@@ -282,23 +282,25 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.qualTX = qualtx;
 			int cooSource = qualtxComp.coo_source;
 			List<String> propertyValue = getCOODeterminationHierarchy(qualtx);
-			
+			String coo = null;
 			if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo = qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
 			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_MANUFACTURER_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo = qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
 			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.GPM_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo = qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
 			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.STP_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo =qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
+			
+			qualtxComp.ctry_of_origin = coo;
 		}
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
 		{
