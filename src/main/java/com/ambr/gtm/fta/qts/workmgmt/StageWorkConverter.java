@@ -417,6 +417,7 @@ public class StageWorkConverter
 			QTXCompWorkIVA theQtxCompIvaWork = null;
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
+			boolean isRawMaterialComp = false;
 
 		    isValQualtx = isValidQualtx(qualtx, true, bestTime);
 		    if(!isValQualtx) 
@@ -454,18 +455,22 @@ public class StageWorkConverter
 				}
 				QualTXComponent qualtxComp = qualtx.compList.get(0);	//based on sql there will always be a single QualTXComponent
 				
-			    isValQualtx = isValidQualtxComp(qualtxComp);
-			    if(!isValQualtx) 
-			    	continue;
+				isRawMaterialComp = isRawMaterialQualtxComp(qualtxComp);
 			    
 			    if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 				{
 					theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
+					if(isRawMaterialComp)
+					{
+						theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
+						continue;
+					}
+					
 					theQtxCompList = theQtxWork.compWorkList;
 
 					for (QTXCompWork compWork : theQtxCompList)
 					{
-						if (compWork.bom_comp_key == qualtxComp.src_key)
+						if (compWork.bom_comp_key.longValue() == qualtxComp.src_key.longValue())
 						{
 							isNewComp = false;
 							if (reasonCode == ReQualificationReasonCodes.BOM_COMP_SRC_CHG)
@@ -515,8 +520,12 @@ public class StageWorkConverter
 				}
 				else
 				{
-					//logger.error("@@@@ createArQtxBomCompBean 2=qualtx.src_key= " +qualtx.src_key + " qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" workReasonCode="+workReasonCode+ " bomConsolMap"+bomConsolMap.keySet());
 					theQtxWork = this.utility.createQtxWorkObj(qualtx, 0, bomConsolMap, qualtx.src_key);
+					if(isRawMaterialComp)
+					{
+						theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
+						continue;
+					}
 					theQtxCompWork = this.utility.createQtxCompWorkObj(qualtx, qualtxComp, workReasonCode, theQtxWork.qtx_wid);
 					theQtxCompWork.time_stamp = theQtxWork.time_stamp;
 					theQtxCompWork.status.time_stamp = theQtxWork.time_stamp;
@@ -750,7 +759,7 @@ public class StageWorkConverter
 			boolean isNewComp = false;
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
-
+			boolean isRawMaterialComp = false;
 		    isValQualtx = isValidQualtx(qualtx, false, bestTime);
 		    if(!isValQualtx) 
 		    	continue;
@@ -782,7 +791,7 @@ public class StageWorkConverter
 
 			QualTXComponent qualtxComp = qualtx.compList.get(0);	//There will always be one QualTXComponent present (as defined by sql that pulled this data
 			
-			if(!isValidQualtxComp(qualtxComp)) continue;
+			isRawMaterialComp = isRawMaterialQualtxComp(qualtxComp);
 			if(workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED )
 		    {
 		    	String	criticalIndicator = qualtxComp.critical_indicator == null ? "" : qualtxComp.critical_indicator;
@@ -805,11 +814,16 @@ public class StageWorkConverter
 			if (consolidatedWork.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = consolidatedWork.get(qualtx.alt_key_qualtx);
+				if(isRawMaterialComp)
+				{
+					theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
+					continue;
+				}
 				theQtxCompList = theQtxWork.compWorkList;
 
 				for (QTXCompWork compWork : theQtxCompList)
 				{
-					if (compWork.qualtx_comp_key == qualtxComp.alt_key_comp)
+					if (compWork.qualtx_comp_key.longValue() == qualtxComp.alt_key_comp)
 					{
 						isNewComp = false;
 						if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED)
@@ -845,8 +859,12 @@ public class StageWorkConverter
 			}
 			else
 			{
-				//logger.error("@@@@ buildQtxForNewCtryCmpl=qualtx.src_key= " +qualtx.src_key + "qualtxComp.prod_key= "+qualtxComp.prod_key+" qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtxComp.prod_key);
+				if(isRawMaterialComp)
+				{
+					theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
+					continue;
+				}
 				theQtxCompWork = this.createQtxCompWorkObj(qualtx, qualtxComp, 0, theQtxWork.qtx_wid);
 				theQtxCompWork.time_stamp = theQtxWork.time_stamp;
 				theQtxCompWork.status.time_stamp = theQtxWork.time_stamp;
@@ -896,7 +914,6 @@ public class StageWorkConverter
 			}
 			else
 			{
-				//logger.error("@@@@ buildheaderProdQtxWorkBean=qualtx.src_key= " +qualtx.src_key + " qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtx.prod_key);
 
 				if (null != bomConsolMap)
@@ -934,12 +951,12 @@ public class StageWorkConverter
 			boolean isNewComp = false;
 			List<QTXCompWork> theQtxCompList = null;
 			boolean isValQualtx = false;
-
+			boolean isRawMaterialComp = false;
 		    isValQualtx = isValidQualtx(qualtx, false, bestTime);
 		    if(!isValQualtx) 
 		    	continue;
 
-		    if(!isValidQualtxComp(qualtxComp)) continue;
+		    isRawMaterialComp = isRawMaterialQualtxComp(qualtxComp);
 		    if(workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_CHANGE || workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_DELETED || workCode == RequalificationWorkCodes.GPM_CTRY_CMPL_ADDED )
 		    {
 		    	String	criticalIndicator = qualtxComp.critical_indicator == null ? "" : qualtxComp.critical_indicator;
@@ -963,11 +980,16 @@ public class StageWorkConverter
 			if (qtxWorkList.containsKey(qualtx.alt_key_qualtx))
 			{
 				theQtxWork = qtxWorkList.get(qualtx.alt_key_qualtx);
+				 if(isRawMaterialComp)
+				 {
+					 theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
+					 continue;
+				 }
 				theQtxCompList = theQtxWork.compWorkList;
 
 				for (QTXCompWork compWork : theQtxCompList)
 				{
-					if (compWork.bom_comp_key == qualtxComp.src_key)
+					if (compWork.bom_comp_key.longValue() == qualtxComp.src_key.longValue())
 					{
 						isNewComp = false;
 						if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE || reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED)
@@ -1042,13 +1064,17 @@ public class StageWorkConverter
 			}
 			else
 			{
-				//logger.error("@@@@ buildCompProdQtxWorkBean=qualtx.src_key= " +qualtx.src_key + " qualtxComp.prod_key " +qualtxComp.prod_key+ "qualtxComp.src_key =" +qualtxComp.src_key+" qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" prodConsolMap"+prodConsolMap.keySet());
 				theQtxWork = this.createQtxWorkObj(qualtx, 0, prodConsolMap, qualtxComp.prod_key);
 				if (null != bomConsolMap)
 				{
 					QTXConsolWork qtxConsolWork = bomConsolMap.get(qualtx.src_key);
 					if (null != qtxConsolWork) theQtxWork.priority = qtxConsolWork.priority;
 				}
+				if(isRawMaterialComp)
+				 {
+					 theQtxWork.details.setReasonCodeFlag(RequalificationWorkCodes.SUB_BOM_CHG);
+					 continue;
+				 }
 				theQtxCompWork = this.createQtxCompWorkObj(qualtx, qualtxComp, 0, theQtxWork.qtx_wid);
 				theQtxCompWork.time_stamp = theQtxWork.time_stamp;
 				theQtxCompWork.status.time_stamp = theQtxWork.time_stamp;
@@ -1126,14 +1152,14 @@ public class StageWorkConverter
 		return true;
 	}
 
-	private boolean isValidQualtxComp(QualTXComponent qualtxComp)
+	private boolean isRawMaterialQualtxComp(QualTXComponent qualtxComp)
 	{
-		boolean isValid = true;
+		boolean isValid = false;
 		
 		if(qualtxComp != null && qualtxComp.src_id != null)
 		{
 			if((qualtxComp.src_id).contains("~")) 
-				isValid = false;
+				isValid = true;
 		}
 		
 		return isValid;
