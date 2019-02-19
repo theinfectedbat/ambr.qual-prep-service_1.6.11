@@ -197,7 +197,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 			else
 			{
-
+				
 				qualtxComp.cost = bomComp.extended_cost;
 				qualtxComp.src_key = bomComp.alt_key_comp;
 				qualtxComp.weight_uom = bomComp.weight_uom;
@@ -211,21 +211,25 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				qualtxComp.seller_key = bomComp.seller_key;
 				qualtxComp.net_weight = bomComp.net_weight;
 				qualtxComp.unit_weight = bomComp.unit_weight;
-				qualtxComp.qty_per = bomComp.qty_per;
+				
 				qualtxComp.essential_character = bomComp.essential_character;
-				if(null != bomComp.unit_cost)
-					qualtxComp.unit_cost = bomComp.unit_cost;
 				qualtxComp.qualTX = qualtx;  
 				qualtxComp.unit_weight = bomComp.unit_weight;
 				qualtxComp.gross_weight = bomComp.net_weight == null? bomComp.unit_weight:bomComp.net_weight;
 				qualtxComp.weight = bomComp.net_weight == null? bomComp.unit_weight:bomComp.net_weight;
-				// //if the current analysis method is Top-Down mark the
-				// RM_CONSTRUCTION_STATUS as INIT, if a component
-				// unit_cost/qty_per is updated. The Preparation Engine will
-				// need to re-construct the Qual TX Components.
-				if(parentWork.details.analysis_method ==  TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS &&
-						(!BOMQualAuditEntity.equal(bomComp.unit_cost, qualtxComp.unit_cost)) || !BOMQualAuditEntity.equal(bomComp.qty_per,qualtxComp.qty_per))
-				 qualtxComp.qualTX.rm_construction_status =  TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+				boolean isExpansionRequired = false;
+				if(!BOMQualAuditEntity.equal(bomComp.unit_cost, qualtxComp.unit_cost) || !BOMQualAuditEntity.equal(bomComp.qty_per,qualtxComp.qty_per))
+				{
+					isExpansionRequired = true;
+				}
+				qualtxComp.qty_per = bomComp.qty_per;
+				if(null != bomComp.unit_cost)
+					qualtxComp.unit_cost = bomComp.unit_cost;
+				if(isExpansionRequired)
+				{
+					qualtxComp.qualTX.rm_construction_status =  TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+					qualtxComp.qualTX.in_construction_status =  TrackerCodes.QualTXContructionStatus.INIT.ordinal();
+				}
 			}
 			
 			aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
