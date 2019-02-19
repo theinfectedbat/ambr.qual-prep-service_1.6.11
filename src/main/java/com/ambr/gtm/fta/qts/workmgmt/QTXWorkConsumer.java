@@ -92,6 +92,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		if(work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_MASS_QUALIFICATION) == true)
 		{
 			qualtx.is_active = "N";
+			workPackage.isReadyForQualification = false;
 			return;
 		}
 		
