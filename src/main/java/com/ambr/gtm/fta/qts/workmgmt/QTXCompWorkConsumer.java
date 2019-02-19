@@ -522,7 +522,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					Object aBomCompPriceValue=bomCompPrice.getValue("flexfield_num1");
 					if(aBomCompPriceValue !=null && aBomCompPriceValue instanceof Number)
 					 aBomCompPriceDoubleValue  =  ((Number)aBomCompPriceValue).doubleValue();
-					if (aBomCompPriceDoubleValue != qualtxCompPrice.price.doubleValue())
+					if (aBomCompPriceValue != null && aBomCompPriceDoubleValue != qualtxCompPrice.price.doubleValue())
 					{
 						qualtxCompPrice.price =  aBomCompPriceDoubleValue;
 					}
