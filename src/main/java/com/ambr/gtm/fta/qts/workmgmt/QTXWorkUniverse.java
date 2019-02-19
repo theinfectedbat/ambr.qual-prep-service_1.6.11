@@ -604,6 +604,7 @@ public class QTXWorkUniverse
 		for (CompWorkPackage compWorkPackage : compWorkList)
 		{
 			compWorkPackage.qualtxComp = qualtxComp;
+			checkForGPMClassificationResourceCompWorkRequirements(compWorkPackage);
 		}
 	}
 	
@@ -1047,6 +1048,18 @@ public class QTXWorkUniverse
 		
 		return rowsAffected;
 	}
+	
+	private void checkForGPMClassificationResourceCompWorkRequirements(CompWorkPackage compWorkPackage)
+	{
+		if (compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) ||
+				compWorkPackage.compWork.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG))
+		{
+			this.addGPMClassificationResourceCompRequirement(compWorkPackage, compWorkPackage.compWork.entity_key);
+		}
+	}
+
 	
 //	private String getProducerSQL()
 //	{
