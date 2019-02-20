@@ -210,34 +210,6 @@ public class QTXStageProducer extends QTXProducer
 		return rowsAffected;
 	}
 
-	//TODO API needs to include searching by a specific org_code (or company_code)
-	//TODO only allow one company code request to be run at a time, different company codes can run concurrently
-//	private List<QTXStage> loadStageWork(long bestTime) throws SQLException
-//	{
-//		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadStageWork");
-//		List<QTXStage> stageList = null;
-//		
-//		tracker.start();
-//		
-//		try
-//		{
-//			SimpleDataLoaderResultSetExtractor<QTXStage> extractor = new SimpleDataLoaderResultSetExtractor<QTXStage>(QTXStage.class);
-//
-//			extractor.setMaxRows(this.readAhead);
-//			
-//			stageList = this.template.query("select ar_qtx_stage.qtx_sid, ar_qtx_stage.user_id, ar_qtx_stage_data.data, ar_qtx_stage.time_stamp, ar_qtx_stage.priority from ar_qtx_stage left join ar_qtx_stage_data on ar_qtx_stage.qtx_sid=ar_qtx_stage_data.qtx_sid where ar_qtx_stage.time_stamp<=? and status=? order by ar_qtx_stage.time_stamp", new Object[]{new java.sql.Timestamp(bestTime), QTXStageStatus.INIT.ordinal()}, extractor);
-//			
-//			logger.debug("QTXStageProducer records found = " + stageList.size());
-//		}
-//		finally
-//		{
-//			tracker.stop("QTXStageProducer records = {0}" , new Object[]{(stageList != null) ? stageList.size() : "ERROR"});
-//		}
-//		
-//		return stageList;
-//	}
-
-
 	//TODO setup API call to send in one shot
 	//TODO API should consider local vs remote configuration
 	public void updateTrackerStatus(Collection<QTXWork> workList)

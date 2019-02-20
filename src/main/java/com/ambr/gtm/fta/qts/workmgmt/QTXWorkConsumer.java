@@ -57,15 +57,12 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 		super(workPackage);
 	}
 
-	// TODO Property lock b/w TA lock in primary lock vs altkey
-
 	/*
 	 * NOTE!!!!!
 	 * Any changes to reason codes or logic within the handling of a reason code
 	 * requires a review of QTXWorkStaging as it will change the requirements as to when BOM/Prod/IVA resource data
 	 * is collected from cache
 	 */
-	//TODO there could be multiple work items loaded into memory that target the same qualtx.  these will be processed serially.  need to keep the qualtx up to date so following work items will have accurate info when generating audit
 	public void doWork(WorkPackage workPackage) throws Exception
 	{
 		//An error occurred while staging the data for this WorkPackage (usually resource data failed to pull)
@@ -120,19 +117,11 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 				qualtx.include_for_trace_value = "N";
 				qualtx.target_roo_id = null;
 			}
-			
 			qualtx.prod_family = bom.prod_family;
-			
-		  //TODO : Updating the effective period can impact the future effective dates, need to handle dates change seperately.  
-		  //qualtx.effective_from = bom.effective_from;
-		  //qualtx.effective_to = bom.effective_to;
 			qualtx.cost = bom.cost;
 			qualtx.value = bom.price;
 		}
 
-		//TODO how to match price records to determine insert/update/delete
-		//TODO need to create (or load) QualTXPrice records for matching purposes
-		//TODO need to keep QualTXPrice records up to date with changes so following work items targeting the same qualtx in memory will have access to them.
 		if (work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_PRC_CHG) == true || work.details.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COST_ELEMENT) == true)
 		{
 			if (bom == null) throw new Exception("BOM resource not present (" + work.bom_key + ") for work item " + work.qtx_wid);
@@ -284,19 +273,6 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			qualtx.qualified_flg = "";
 			workPackage.deleteBOMQual = true;
 			qualtx.is_active = "N";
-			/*if (gpmSourceIVA != null)
-			{
-				if (STPDecisionEnum.M.equals(gpmSourceIVA.systemDecision))
-				{
-					qualtx.is_active = "Y";
-				}
-				else if (STPDecisionEnum.I.equals(gpmSourceIVA.systemDecision))
-				{
-					qualtx.is_active = "N";
-					workPackage.deleteBOMQual = true;
-				}
-			}*/
-
 		}
 
 		if (work.workHSList != null)
