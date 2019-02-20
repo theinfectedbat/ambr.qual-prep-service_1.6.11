@@ -230,7 +230,7 @@ public class TrackerLoader
 
 	public void reloadTracker(JdbcTemplate aTemplate,Set<QtxWorkTracker> reloadWorkTrackerList) throws Exception
 	{
-		int aReloadSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_RELOAD_SIZE_LIMIT, "1000"));
+		int aReloadSize = Integer.valueOf(this.propertyResolver.getPropertyValue(QTSProperties.TRACKER_RELOAD_SIZE_LIMIT, "10000"));
 		Set<Long> aReloadWorkIdSet = new HashSet<>();
 		Set<Long> aReloadQtxKeySet = new HashSet<>();
 		for (QtxWorkTracker aQtxTracker : reloadWorkTrackerList)
