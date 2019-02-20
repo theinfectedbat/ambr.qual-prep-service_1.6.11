@@ -106,8 +106,14 @@ public class ConservativeSourceLogic
 				if ((claimdetailsContainer != null) && (claimdetailsContainer.getPrimaryClaimDetails() != null)) 
 				{
 					Object cumulationValue = claimdetailsContainer.getPrimaryClaimDetails().getValue(flexFieldMap.get("CUMULATION_VALUE"));
-					if(cumulationValue != null)
-						aClaimDetailCumulationValue = (Double)cumulationValue;
+					if (cumulationValue != null)
+					{
+						if (cumulationValue instanceof Number)
+						{
+							aClaimDetailCumulationValue = ((Number) cumulationValue).doubleValue();
+						}
+					}
+
 				}
 				if (aNoDecisionCumulationValue == null || aNoDecisionCumulationValue.doubleValue() > aClaimDetailCumulationValue)
 				{
@@ -150,8 +156,9 @@ public class ConservativeSourceLogic
 						if(fallsInTraceList)
 						{
 							Object tracedValue = aClaimDetails.claimDetailsValue.get(flexFieldMap.get("TRACED_VALUE"));
-							if(tracedValue != null)
-								aTracedValueFromClaimDtls =(Double)tracedValue;
+							if(tracedValue != null && tracedValue instanceof Number) {
+								aTracedValueFromClaimDtls =((Number)tracedValue).doubleValue();
+							}
 						}
 					}
 					if(aYesDecisionTracedValue == null || aYesDecisionTracedValue.doubleValue() < aTracedValueFromClaimDtls)

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
+import java.lang.Double;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -283,23 +283,25 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.qualTX = qualtx;
 			int cooSource = qualtxComp.coo_source;
 			List<String> propertyValue = getCOODeterminationHierarchy(qualtx);
-			
+			String coo = null;
 			if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo = qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
 			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_COM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.BOM_COMP_MANUFACTURER_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo = qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
 			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_GPM_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.GPM_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo = qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
 			else if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_STP_COO_CHG) && propertyValue.indexOf(RequalificationWorkCodes.STP_COO) <= cooSource)
 			{
-				qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
+				coo =qtxBusinessLogicProcessor.determineComponentCOO.determineCOOForComponentSource(qualtxComp, bomComp, aGPMSourceIVAContainerCache.getSourceIVABySource(qualtxComp.prod_src_key), compWorkPackage.gpmClassificationProductContainer, qtxBusinessLogicProcessor.propertySheetManager);
 			}
+			
+			qualtxComp.ctry_of_origin = coo;
 		}
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE))
 		{
@@ -394,11 +396,13 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_TRACE_VALUE_CHANGE))
 				{
 					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = aClaimsDetailCache.getClaimDetails(compWorkIVA.iva_key);
+					if(null != claimdetailsContainer){
 					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
 					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(qualtx.org_code, qualtx.fta_code, qtxBusinessLogicProcessor.propertySheetManager);
 					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
 					setTracedValue(qualtxComp, aClaimDetails, flexFieldMap); //TA-82724
 					qualtxComp.traced_value_currency =(String) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
+					}
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE))
 				{
@@ -493,11 +497,15 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			{
 				if (bomCompPrice.getValue("flexfield_var1").equals(qualtxCompPrice.price_type))
 				{
+					Double aBomCompPriceDoubleValue=0.0;
 					isPriceTypeExist = true;
 					deleteCompPriceList.remove(qualtxCompPrice);
-					if (bomCompPrice.getValue("flexfield_num1") != qualtxCompPrice.price)
+					Object aBomCompPriceValue=bomCompPrice.getValue("flexfield_num1");
+					if(aBomCompPriceValue !=null && aBomCompPriceValue instanceof Number)
+					 aBomCompPriceDoubleValue  =  ((Number)aBomCompPriceValue).doubleValue();
+					if (aBomCompPriceValue != null && aBomCompPriceDoubleValue != qualtxCompPrice.price.doubleValue())
 					{
-						qualtxCompPrice.price =  ((Integer)bomCompPrice.getValue("flexfield_num1")).doubleValue();
+						qualtxCompPrice.price =  aBomCompPriceDoubleValue;
 					}
 					if (!bomCompPrice.getValue("flexfield_var2").equals(qualtxCompPrice.currency_code))
 					{

@@ -269,6 +269,9 @@ public class CumulationComputationRule
 				{
 					if(flexFieldName != null)
 						qualTXCompDetails.setValue(flexFieldName, aQualTXComp.ctry_of_origin);
+					flexFieldName = qualtxCOmpDtlflexFieldMap.get("CUMULATION_RULE_APPLIED");
+					if(flexFieldName != null)
+						qualTXCompDetails.setValue(flexFieldName, aQualTXComp.cumulation_rule_applied);
 					return;
 				}
 				GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
@@ -276,6 +279,9 @@ public class CumulationComputationRule
 				{
 					if(flexFieldName != null)
 						qualTXCompDetails.setValue(flexFieldName, aQualTXComp.ctry_of_origin);
+					flexFieldName = qualtxCOmpDtlflexFieldMap.get("CUMULATION_RULE_APPLIED");
+					if(flexFieldName != null)
+						qualTXCompDetails.setValue(flexFieldName, aQualTXComp.cumulation_rule_applied);
 					return;
 				}
 

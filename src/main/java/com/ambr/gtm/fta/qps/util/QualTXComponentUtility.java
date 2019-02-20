@@ -497,7 +497,6 @@ public class QualTXComponentUtility
 				if(gpmClaimDetails.claimDetailsValue.get("group_name").equals(groupName))
 				{
 					gpmNonOriginatingClaimDetails.add(gpmClaimDetails);
-					break;
 				}
 			}
 
