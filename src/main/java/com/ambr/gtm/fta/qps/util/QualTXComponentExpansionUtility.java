@@ -124,7 +124,7 @@ public class QualTXComponentExpansionUtility
 			{
 				//MAKE component from the Top-Down approach should not be disturbed.
 				uniqueComponents.put(aUniqueCompKey.getKey(), aQualTXComp);
-				boolean isFlattened = this.flattenSubBOM(aQualTXComp.sub_bom_key, uniqueComponents, true);
+				boolean isFlattened = this.flattenSubBOM(aQualTXComp.sub_bom_key, uniqueComponents, true, aQualTXComp.qty_per );
 				if(!isFlattened)
 				{
 					aQualTXComp.intermediate_ind = "Y";
@@ -178,7 +178,7 @@ public class QualTXComponentExpansionUtility
 			{
 				//MAKE component from the Top-Down approach should not be disturbed.
 				uniqueComponents.put(aUniqueCompKey.getKey(), aQualTXComp);
-				this.flattenSubBOM(aQualTXComp.sub_bom_key, uniqueComponents, false);
+				this.flattenSubBOM(aQualTXComp.sub_bom_key, uniqueComponents, false, aQualTXComp.qty_per);
 			}
 		}	
 		
@@ -223,7 +223,7 @@ public class QualTXComponentExpansionUtility
 	}
 
 
-	private boolean flattenSubBOM(Long theSubBOMKey, HashMap<String, QualTXComponent> theUniqueComponents, boolean checkForRVCFlag) throws Exception
+	private boolean flattenSubBOM(Long theSubBOMKey, HashMap<String, QualTXComponent> theUniqueComponents, boolean checkForRVCFlag, Double theSubBomQtyPer) throws Exception
 	{
 		UniqueComponent aUniqueCompKey = null;
 		String qualifiedFlag = null;
@@ -264,7 +264,7 @@ public class QualTXComponentExpansionUtility
 					{
 						if (this.isRawMaterialApproach)
 						{
-							existingQualTXComp.rm_qty_per = (existingQualTXComp.rm_qty_per != null ? existingQualTXComp.rm_qty_per : 0) + aSubBOMComp.qty_per;
+							existingQualTXComp.rm_qty_per = (existingQualTXComp.rm_qty_per != null ? existingQualTXComp.rm_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 							existingQualTXComp.rm_cost = aSubBOMComp.unit_cost * existingQualTXComp.rm_qty_per;
 							existingQualTXComp.rm_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
 							existingQualTXComp.rm_traced_value = ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
@@ -272,7 +272,7 @@ public class QualTXComponentExpansionUtility
 						}
 						else if (isIntermediateApproach)
 						{
-							existingQualTXComp.in_qty_per = (existingQualTXComp.in_qty_per != null ? existingQualTXComp.in_qty_per : 0) + aSubBOMComp.qty_per;
+							existingQualTXComp.in_qty_per = (existingQualTXComp.in_qty_per != null ? existingQualTXComp.in_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 							existingQualTXComp.in_cost = aSubBOMComp.unit_cost * existingQualTXComp.in_qty_per;
 							existingQualTXComp.in_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
 							existingQualTXComp.in_traced_value = ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
@@ -289,7 +289,7 @@ public class QualTXComponentExpansionUtility
 							QualTXComponent existingRawMaterialQualTXComp = this.rawMaterialComponentList.get(aUniqueCompKey.getKey());
 							if (existingRawMaterialQualTXComp != null)
 							{
-								existingRawMaterialQualTXComp.rm_qty_per = aSubBOMComp.qty_per;
+								existingRawMaterialQualTXComp.rm_qty_per = aSubBOMComp.qty_per * theSubBomQtyPer;
 								existingRawMaterialQualTXComp.rm_cost = existingRawMaterialQualTXComp.unit_cost * existingRawMaterialQualTXComp.rm_qty_per;
 								theUniqueComponents.put(aUniqueCompKey.getKey(), existingRawMaterialQualTXComp);
 								continue;
@@ -300,7 +300,7 @@ public class QualTXComponentExpansionUtility
 							QualTXComponent existingIntermediateQualTXComp = this.intermediateMaterialComponentList.get(aUniqueCompKey.getKey());
 							if (existingIntermediateQualTXComp != null)
 							{
-								existingIntermediateQualTXComp.in_qty_per = aSubBOMComp.qty_per;
+								existingIntermediateQualTXComp.in_qty_per = aSubBOMComp.qty_per * theSubBomQtyPer;
 								existingIntermediateQualTXComp.in_cost = existingIntermediateQualTXComp.unit_cost * existingIntermediateQualTXComp.in_qty_per;
 								theUniqueComponents.put(aUniqueCompKey.getKey(), existingIntermediateQualTXComp);
 								continue;
@@ -308,7 +308,7 @@ public class QualTXComponentExpansionUtility
 						}
 						// Create the component if it already does not exist and
 						// pull Basic Info, Ctry Cmpl & IVA data.
-						if(!subBOMCompAlreadyInQualtxComp(aSubBOMComp, theUniqueComponents)){
+						if(!subBOMCompAlreadyInQualtxComp(aSubBOMComp, theUniqueComponents, theSubBomQtyPer)){
 							QualTXComponent aNewQualTXComp = this.qualTX.createComponent();
 							QualTXComponentUtility aQualTXComponentUtility = new QualTXComponentUtility(aNewQualTXComp, aSubBOMComp, this.claimDetailsCache, this.ivaCache, this.gpmClassCache, this.dataExtCfgRepos, this.statusTracker);
 							aQualTXComponentUtility.setQualTXBusinessLogicProcessor(qualTXBusinessLogicProcessor);
@@ -317,7 +317,7 @@ public class QualTXComponentExpansionUtility
 							if (this.isRawMaterialApproach)
 							{
 								aNewQualTXComp.raw_material_ind = "Y";
-								aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per;
+								aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per * theSubBomQtyPer;
 								aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
 								aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
 								aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
@@ -327,7 +327,7 @@ public class QualTXComponentExpansionUtility
 							if (this.isIntermediateApproach)
 							{
 								aNewQualTXComp.intermediate_ind = "Y";
-								aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per;
+								aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per * theSubBomQtyPer;
 								aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
 								aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
 								aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
@@ -340,7 +340,7 @@ public class QualTXComponentExpansionUtility
 				}
 				else
 				{
-					this.flattenSubBOM(aSubBOMComp.sub_bom_key, theUniqueComponents, !passedViaRVCSatisfied);
+					this.flattenSubBOM(aSubBOMComp.sub_bom_key, theUniqueComponents, !passedViaRVCSatisfied, aSubBOMComp.qty_per);
 				}
 			}
 		}
@@ -351,7 +351,7 @@ public class QualTXComponentExpansionUtility
 		return true;
 	}
 
-	private boolean subBOMCompAlreadyInQualtxComp(BOMComponent aSubBOMComp, HashMap<String, QualTXComponent> theUniqueComponents) throws Exception
+	private boolean subBOMCompAlreadyInQualtxComp(BOMComponent aSubBOMComp, HashMap<String, QualTXComponent> theUniqueComponents, Double theSubBomQtyPer) throws Exception
 	{
 		if(this.qualTX.compList == null || this.qualTX.compList.isEmpty()) return false;
 	
@@ -363,7 +363,7 @@ public class QualTXComponentExpansionUtility
 				aUniqueCompKey = new UniqueComponent(aSubBOMComp.prod_key, aSubBOMComp.prod_src_key, aSubBOMComp.unit_cost);
 				if(this.isRawMaterialApproach)
 				{	
-					qualTXComponent.rm_qty_per = (qualTXComponent.rm_qty_per != null ? qualTXComponent.rm_qty_per : 0) + aSubBOMComp.qty_per;
+					qualTXComponent.rm_qty_per = (qualTXComponent.rm_qty_per != null ? qualTXComponent.rm_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 					qualTXComponent.rm_cost = aSubBOMComp.unit_cost * qualTXComponent.rm_qty_per;
 					qualTXComponent.rm_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
 					qualTXComponent.rm_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
@@ -372,7 +372,7 @@ public class QualTXComponentExpansionUtility
 				}
 				if(this.isIntermediateApproach)
 				{
-					qualTXComponent.in_qty_per = (qualTXComponent.in_qty_per != null ? qualTXComponent.in_qty_per : 0) + aSubBOMComp.qty_per;
+					qualTXComponent.in_qty_per = (qualTXComponent.in_qty_per != null ? qualTXComponent.in_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 					qualTXComponent.in_cost = aSubBOMComp.unit_cost * qualTXComponent.in_qty_per;
 					qualTXComponent.in_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
 					qualTXComponent.in_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
