@@ -36,12 +36,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 		super(workPackage);
 	}
 
-	// TODO time_stamp, how to handle updating status columns. should all
-	// records for all work items under one ar_qtx_work get the same time_stamp
-	// (yes)
-	// TODO what about time_stamp on ar_qtx_work/details - these are never
-	// updated, could be kept in sync with ar_qtx_work_status record but that is
-	// 1-2 more update statements to execute.
 	public void doWork(WorkPackage workPackage) throws Exception
 	{
 		workPackage = workPackage.getRootPackage();
@@ -49,9 +43,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 		QTXWork work = workPackage.work;
 		QualTX qualtx = workPackage.qualtx;
 
-		// TODO review this further - should not be in a state where a qualtx is
-		// not loaded. this should be caught in staging and set this work type
-		// to error
 		logger.debug("Persisting work item " + work.qtx_wid + " alt qualtx key " + ((qualtx != null) ? qualtx.alt_key_qualtx : "NOT_FOUND"));
 
 		JdbcTemplate template = this.producer.getJdbcTemplate();
@@ -68,13 +59,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 
 			workPackage.entityMgr.save(work.userId, false);
 
-			// TODO create a new Timestamp and use for all records in a
-			// modified/created state
-			// TODO make sure parent records are updated accordingly in the case
-			// where only the child is modified
-			// TODO set on all modified pojo classes
-			// TODO placeholder to make Audit API call (convert
-			// workPackage.entityMgr.get... to BOMQualAuditEntity record
 			BOMQualAuditEntity audit = QualTXUtility.buildAudit(workPackage.qualtx.alt_key_qualtx, workPackage.work.company_code, workPackage.work.userId, workPackage.entityMgr,"TD");
 			tradeQualtxClient.doRecordLevelAudit(audit);
 
@@ -167,8 +151,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 			{
 				boolean retry = ExceptionUtils.hasCause(e, LockException.class);
 
-				// TODO go through entire structure and log all errors (work and
-				// compwork items)
 				producer.getWorkRepository().logError(work.qtx_wid, e);
 
 				this.updateWorkToFailure(workPackage, retry, template);
@@ -244,8 +226,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 
 			producer.getWorkRepository().updateWorkStatus(workList, (retry) ? TrackerCodes.QualtxStatus.RETRY : TrackerCodes.QualtxStatus.QUALTX_PREP_FAILED);
 
-			// TODO wrap all of the common table updates into batch update
-			// statements
 			producer.getWorkRepository().updateWorkHSStatus(next.work.workHSList, (retry) ? TrackerCodes.QualtxHSPullStatus.RETRY : TrackerCodes.QualtxHSPullStatus.ERROR);
 
 			producer.getWorkRepository().updateCompWorkStatus(next.work.compWorkList, (retry) ? TrackerCodes.QualtxCompStatus.RETRY : TrackerCodes.QualtxCompStatus.ERROR);
@@ -262,8 +242,6 @@ public class QTXWorkPersistenceConsumer extends QTXConsumer<WorkPackage>
 
 	private void updateWorkToSuccess(WorkPackage workPackage, JdbcTemplate template) throws Exception
 	{
-		// TODO wrap all of the common table updates into batch update
-		// statements
 		WorkPackage next = workPackage;
 		while (next != null)
 		{

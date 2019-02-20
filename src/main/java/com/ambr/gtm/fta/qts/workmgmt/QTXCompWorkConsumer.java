@@ -97,7 +97,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 		this.jdbcTemplate = jdbcTemplate;
 	}
 	
-	//TODO what if bomcomp is removed then added, merged into one work item.  based on logic below the add will execute then the remove.  consolidation logic might have to detect this and skip the add.
 	private void doWork(CompWorkPackage compWorkPackage) throws Exception
 	{
 		//An error occurred while staging the data for this WorkPackage (usually resource data failed to pull)
@@ -197,7 +196,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}
 			else
 			{
-				
 				qualtxComp.cost = bomComp.extended_cost;
 				qualtxComp.src_key = bomComp.alt_key_comp;
 				qualtxComp.weight_uom = bomComp.weight_uom;
@@ -261,7 +259,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			qualtxComp.deList.removeAll(deleteQualtxYarnDetailsDE);
 		}
 
-		//TODO load existing price records add/remove/update price records as needed
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.COMP_PRC_CHG) == true)
 		{
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
@@ -379,10 +376,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_FINAL_DECISION_CHANGE))
 				{
 					if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
-					//if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + work.bom_key + ")");
-					
-					//Long prodSourceKey = (qualtxComp != null) ? qualtxComp.prod_src_key : ((bomComp.prod_src_key > 0) ? new Long(bomComp.prod_src_key) : null);
-					
 					Long prodSourceKey =  qualtxComp.prod_src_key;
 					
 					if (prodSourceKey == null)
@@ -391,21 +384,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 					if (compWorkPackage.gpmSourceIVAProductContainer == null)
 						throw new Exception("GPMSourceIVAProductContainer not present during comp IVA pull for work " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_comp_wid);
 					//TA-83212 & TA-82799
-					/*GPMSourceIVAProductContainer	aContainer =  aGPMSourceIVAContainerCache.getSourceIVAByProduct(qualtxComp.prod_key);
-					aContainer.indexByProdSourceKey();
-					GPMSourceIVA gpmSourceIVA = aContainer.getGPMSourceIVA(prodSourceKey, compWorkIVA.iva_key);
-			
-					//GPMSourceIVA gpmSourceIVA = compWorkPackage.gpmSourceIVAProductContainer.getGPMSourceIVA(prodSourceKey, compWorkIVA.iva_key);
-					
-					if(gpmSourceIVA != null)
-					{
-						String aQualified= (gpmSourceIVA.finalDecision != null && "Y".equals( gpmSourceIVA.finalDecision.name()) ? "QUALIFIED" : "NOT_QUALIFIED");
-						qualtxComp.qualified_flg = (gpmSourceIVA.finalDecision == null)? "" : aQualified;
-						//qualtxComp.prev_year_qual_applied = "";
-					}else
-					{
-						logger.error("GPM SROURCE IVA NOT FOUND, Failed to update the iva decision " + compWorkPackage.compWork.qtx_wid + ":" + compWorkPackage.compWork.qtx_wid);
-					}*/
 					aQualTXComponentUtilityforComp = new QualTXComponentUtility(qualtxComp, bomComp, aClaimsDetailCache, aGPMSourceIVAContainerCache, gpmClassCache, aDataExtensionConfigurationRepository, null);
 					aQualTXComponentUtilityforComp.setQualTXBusinessLogicProcessor(this.qtxBusinessLogicProcessor);
 					aQualTXComponentUtilityforComp.setBOMUniverse(bomUniverse);
@@ -488,7 +466,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			}			
 		}
 		
-		//TODO move all of this logic to QTXPersistenceConsumer.  use one date to update all records modified in qualtx hierarchy.
 		Timestamp currentDate = new Timestamp(System.currentTimeMillis());
 		if (work.isReasonCodeFlagSet(RequalificationWorkCodes.BOM_COMP_ADDED) && qualtxComp != null)
 		{

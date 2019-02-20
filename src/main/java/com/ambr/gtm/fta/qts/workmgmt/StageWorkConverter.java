@@ -73,7 +73,6 @@ public class StageWorkConverter
 		this.batchSize = batchSize;
 	}
 	
-	//TODO discuss "created by" following sql doesnt select user that created work record (submitted_by_user_id.  most logic is using mdi_qualtx.last_modified_by
 	public long generateWorkFromStagedData(QTXStage stageData) throws Exception
 	{
 		if (stageData.batch_id == null || stageData.batch_id.isEmpty())
@@ -88,10 +87,6 @@ public class StageWorkConverter
 			{
 				processContentRequalWork(stageData, workData);
 			}
-			else if (workData.opt("MASS_QUALIFICATION") != null)
-			{
-				//processConfigRequalWork(stageData, workData, configRequalMap, bomConsolMap);
-			}
 			else
 			{
 				processBomUpdateWork(stageData, workData);
@@ -105,7 +100,6 @@ public class StageWorkConverter
 			{
 				processMassRequalWork(stageData, workData);
 			}
-			//TODO what happens in else?
 		}
 		
 		return this.totalStageSize;
@@ -177,40 +171,6 @@ public class StageWorkConverter
 		return consolidatedWork;
 	}
 	
-//	private List<QTXStage> processMassQualificationWorks(List<QTXStage> stageList) throws Exception
-//	{
-//		List<QTXStage> stageWorkListMassQual = new ArrayList<>();
-//		List<QTXStage> stageWorkListQual = new ArrayList<>();
-//		Map<Long, QtxStageData> configRequalMap = new HashMap<>();
-//
-//		for (QTXStage stageWork : stageList)
-//		{
-//			if (stageWork.batch_id == null || stageWork.batch_id.isEmpty())
-//			{
-//				stageWorkListQual.add(stageWork);
-//			}
-//			else
-//			{
-//				stageWorkListMassQual.add(stageWork);
-//			}
-//		}
-//
-//		for (QTXStage stageData : stageWorkListMassQual)
-//		{
-//			JSONObject workData = new JSONObject(stageData.data);
-//
-//			if (workData.opt("MASS_QUALIFICATION") != null)
-//			{
-//				processMassRequalWork(stageData, workData);
-//			}
-//			//TODO what happens in else?
-//		}
-//
-//		processMassQualificationWork(configRequalMap);
-//
-//		return stageWorkListQual;
-//	}
-
 	private void getConsolidatedQualtxForBomUpdate(Map.Entry<Long, ArrayList<Long>> entry, Map<Long, QTXWork> consolidatedWork, Timestamp bestTime) throws Exception
 	{
 		long reasonCode = 0;
@@ -253,8 +213,7 @@ public class StageWorkConverter
 		QualTX thequaltx = entry.getValue();
 
 		if (consolidatedWork.containsKey(qualKey)) return;
-
-		//logger.error("@@@@ getConsolidatedQualtxForContentUpdate=qualtx.src_key= " +thequaltx.src_key + " qualtx.alt_key_qualtx="+thequaltx.alt_key_qualtx+" bomConsolMap"+bomConsolMap.keySet());
+		
 		QTXWork theQtxWork = this.utility.createQtxWorkObj(thequaltx, 0, bomConsolMap, thequaltx.src_key);
 		theQtxWork.setWorkStatus(QualtxStatus.READY_FOR_QUALIFICATION);
 		consolidatedWork.put(thequaltx.alt_key_qualtx, theQtxWork);
@@ -435,8 +394,6 @@ public class StageWorkConverter
 				}
 				else
 				{
-
-					//logger.error("@@@@ createArQtxBomCompBean=qualtx.src_key= " +qualtx.src_key + " qualtx.alt_key_qualtx="+qualtx.alt_key_qualtx+" workReasonCode="+workReasonCode+ " bomConsolMap"+bomConsolMap.keySet());
 					theQtxWork = this.utility.createQtxWorkObj(qualtx, workReasonCode, bomConsolMap, qualtx.src_key);
 				}
 
@@ -453,7 +410,7 @@ public class StageWorkConverter
 					logger.info("Data issue qualtx =" +qualtx.alt_key_qualtx);
 					continue;
 				}
-				QualTXComponent qualtxComp = qualtx.compList.get(0);	//based on sql there will always be a single QualTXComponent
+				QualTXComponent qualtxComp = qualtx.compList.get(0);	
 				
 				isRawMaterialComp = isRawMaterialQualtxComp(qualtxComp);
 			    
@@ -1302,149 +1259,4 @@ public class StageWorkConverter
 		this.totalWorkSize++;
 		return this.utility.createQtxHSWorkObj(qualtx, reasonCode, workId);
 	}
-	
-//	public void init(int threads, int readAhead, int fetchSize, int batchSize, int sleepInterval, MDIQualTxRepository qualTxRepository, QTXWorkRepository workRepository, UniversalObjectIDGenerator idGenerator, BOMUniverse bomUniverse, QEConfigCache qeConfigCache) throws WorkManagementException
-//	{
-//		super.init(threads, readAhead, fetchSize, batchSize, sleepInterval, qualTxRepository, workRepository, idGenerator);
-//		
-//		this.utility = new ArQtxWorkUtility(this.getWorkRepository(), this.template, bomUniverse, qeConfigCache);
-//		this.qeConfigCache = qeConfigCache;
-//	}
-	
-//	public void setAPI(GetCacheRefreshInformationClientAPI cacheRefreshInformationClientAPI, TrackerClientAPI trackerClientAPI)
-//	{
-//		this.cacheRefreshInformationClientAPI = cacheRefreshInformationClientAPI;
-//		this.trackerClientAPI = trackerClientAPI;
-//	}
-
-//	@Override
-//	protected void findWork() throws Exception
-//	{
-//	}
-	
-//	private int updateStageRecordsStatus(List<QTXStage> stageList, QTXStageStatus status) throws SQLException
-//	{
-//		String sql = "update ar_qtx_stage set status=?,time_stamp=? where qtx_sid=?"; //Double check the time-stamp updation
-//		
-//		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "updateWorkRecordsToPending");
-//		int rowsAffected = 0;
-//		
-//		tracker.start();
-//		try
-//		{
-//			int updateMatrix[][] = template.batchUpdate(sql, stageList, this.batchSize, new ParameterizedPreparedStatementSetter<QTXStage>() {
-//					private Timestamp now = new Timestamp(System.currentTimeMillis());
-//					
-//					@Override
-//					public void setValues(PreparedStatement ps, QTXStage argument) throws SQLException {
-//						ps.setInt(1, status.ordinal());
-//						ps.setTimestamp(2, this.now);
-//						ps.setLong(3, argument.qtx_sid);
-//					}
-//				  });
-//			
-//			for (int updateList[] : updateMatrix)
-//			{
-//				for (int updateCount : updateList)
-//					rowsAffected = rowsAffected + updateCount;
-//			}
-//		}
-//		finally
-//		{
-//			tracker.stop("ar_qtx_stage records affected = {0}" , new Object[]{rowsAffected});
-//		}
-//		
-//		return rowsAffected;
-//	}
-
-//	//TODO API needs to include searching by a specific org_code (or company_code)
-//	//TODO only allow one company code request to be run at a time, different company codes can run concurrently
-//	private List<QTXStage> loadStageWork(long bestTime) throws SQLException
-//	{
-//		PerformanceTracker tracker = new PerformanceTracker(logger, Level.INFO, "loadStageWork");
-//		List<QTXStage> stageList = null;
-//		
-//		tracker.start();
-//		
-//		try
-//		{
-//			SimpleDataLoaderResultSetExtractor<QTXStage> extractor = new SimpleDataLoaderResultSetExtractor<QTXStage>(QTXStage.class);
-//			
-//			stageList = this.template.query("select ar_qtx_stage.qtx_sid, ar_qtx_stage.user_id, ar_qtx_stage_data.data, ar_qtx_stage.time_stamp, ar_qtx_stage.priority, ar_qtx_stage.batch_id from ar_qtx_stage left join ar_qtx_stage_data on ar_qtx_stage.qtx_sid=ar_qtx_stage_data.qtx_sid where ar_qtx_stage.time_stamp<=?  and status=? order by ar_qtx_stage.time_stamp", new Object[]{new java.sql.Timestamp(bestTime), QTXStageStatus.INIT.ordinal()}, extractor);
-//			
-//			logger.debug("QTXStageProducer records found = " + stageList.size());
-//		}
-//		finally
-//		{
-//			tracker.stop("QTXStageProducer records = {0}" , new Object[]{(stageList != null) ? stageList.size() : "ERROR"});
-//		}
-//		
-//		return stageList;
-//	}
-//	this.getConsolidatedQualtxForBomUpdate(bomRequalMap, consolidatedWork, bomConsolMap, bestTime);
-//	this.getConsolidatedQualtxForProdUpdate(prodRequalMap, consolidatedWork, newCtryCmpMap, prodConsolMap, bestTime);
-//	this.getConsolidatedQualtxForContentUpdate(contentRequalList, consolidatedWork, bomConsolMap, bestTime);
-//
-//	return consolidatedWork;
-//}
-
-//public void executeFindWork() throws Exception
-//{
-//	CacheRefreshInformation cacheInfo = this.cacheRefreshInformationClientAPI.execute();
-//	Timestamp bestTime = new Timestamp(cacheInfo.cacheLoadStart);
-//	List<QTXStage> stageWorkListQual = new ArrayList<>();
-//	logger.debug("QTXStageProducer: Requalification loading work as of " + bestTime);
-//
-//	List<QTXStage> stageList = null;
-//	TransactionStatus tranStatus = this.txMgr.getTransaction(new DefaultTransactionDefinition());
-//
-//	try
-//	{
-//
-//		stageList = this.loadStageWork(cacheInfo.cacheLoadStart);
-//
-//		stageWorkListQual = processMassQualificationWorks(stageList);
-//
-//		this.txMgr.commit(tranStatus);
-//
-//	}catch(Exception e)
-//	{
-//		logger.error("Failed to expand work stage data - issuing rollback", e);
-//
-//		this.txMgr.rollback(tranStatus);
-//
-//		throw new Exception("Failed to expand work stage data - issuing rollback", e);
-//
-//	}
-//	
-//	TransactionStatus status = this.txMgr.getTransaction(new DefaultTransactionDefinition());
-//	try
-//	{			
-//		Map<Long, QTXWork> consolidatedWork = this.generateWorkFromStagedData(stageWorkListQual, bestTime);
-//		
-//		logger.debug("generation complete");
-//
-//		this.updateStageRecordsStatus(stageList, QTXStageStatus.COMPLETED);
-//		
-//		logger.debug("stage updated to complete staged work = " + consolidatedWork.values());
-//		
-//		this.getWorkRepository().storeWork(consolidatedWork.values());
-//
-//		logger.debug("work stored");
-//		
-//		this.txMgr.commit(status);
-//		
-//		logger.debug("transaction commited");
-//
-//		this.updateTrackerStatus(consolidatedWork.values());
-//	}
-//	catch (Exception e)
-//	{
-//		logger.error("Failed to process work stage data - issuing rollback", e);
-//		
-//		this.txMgr.rollback(status);
-//		
-//		throw new Exception("Failed to process work stage data - issuing rollback", e);
-//	}
-//}
 }
