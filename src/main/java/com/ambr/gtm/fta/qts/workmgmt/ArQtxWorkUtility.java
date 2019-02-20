@@ -289,7 +289,7 @@ public class ArQtxWorkUtility
 		if(bomUniverse == null )
 		{
 			logger.error("ArQtxWorkUtility: bomUniverse is not initalized properly, qualtx "+qualtx + " and the key : "+key);
-			work.priority = 70; 
+			return null;
 		}
 
 		work.bom_key = qualtx.src_key;
