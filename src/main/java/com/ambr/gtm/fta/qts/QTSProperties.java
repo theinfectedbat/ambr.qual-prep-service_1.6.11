@@ -16,5 +16,6 @@ public class QTSProperties
 	public static final String	LOAD_FTA_CTRY_DG_USING_TA_SERVICE	= "com.ambr.gtm.fta.qts.FTACtryConfigCache.load_using_service";
 	public static final String	LOAD_QE_CONFIG_CACHE				= "com.ambr.gtm.fta.qts.config.QEConfigCache.load_required";
 	public static final String	TRADE_SERVICE_CLIENT_KEY			= "com.ambr.gtm.fta.trade.client.TradeQualtxClient.service_client_key";
+	public static final String	TRACKER_RELOAD_SIZE_LIMIT			= "com.ambr.gtm.fta.qts.trackerLoader.reloadSize";
 }
 
