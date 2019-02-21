@@ -44,6 +44,7 @@ public class ArQtxWorkUtility
 	private JdbcTemplate template;
 	private BOMUniverse bomUniverse;
 	private QEConfigCache qeConfigCache;
+	private int clauseSize  ;
 	
 	public ArQtxWorkUtility(QTXWorkRepository workRepository, JdbcTemplate template, BOMUniverse bomUniverse, QEConfigCache qeConfigCache)
 	{
@@ -51,6 +52,7 @@ public class ArQtxWorkUtility
 		this.template = template;
 		this.bomUniverse = bomUniverse;
 		this.qeConfigCache = qeConfigCache;
+		this.clauseSize=workRepository.getClauseSize();
 	}
 
 	public List<QualTX> getImpactedQtxKeys(Long altKeyBom) throws Exception
@@ -65,203 +67,283 @@ public class ArQtxWorkUtility
 
 	public List<QualTX> getImpactedQtxKeysForMass(ArrayList<Long> altKeyList, long reasonCode, ArrayList<String> ftaList) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE, CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
 
-		ArrayList<Object> paramList = new ArrayList<>();
-		if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION || reasonCode == ReQualificationReasonCodes.BOM_COST_ELEMENT_CHANGE)
-		{   paramList.addAll(altKeyList);
-			sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyList.size()));
-			if (null != ftaList && !ftaList.isEmpty()){
-				sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
-				paramList.addAll(ftaList);
+		List<QualTX> qualtxList = new ArrayList<>();
+		for (int i = 0; i < altKeyList.size(); i = i + clauseSize) 
+		{
+			StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE, CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
+			ArrayList<Long> clauseSizeList = new ArrayList<Long>();
+			for (int j = 0; j < clauseSize; j++) 
+			{
+				int counter = i + j;
+				if (counter < altKeyList.size())
+					clauseSizeList.add(altKeyList.get(counter));
+				else
+					break;
 			}
+			
+			ArrayList<Object> paramList = new ArrayList<>();
+			if (reasonCode == ReQualificationReasonCodes.BOM_MASS_QUALIFICATION || reasonCode == ReQualificationReasonCodes.BOM_COST_ELEMENT_CHANGE)
+			{   paramList.addAll(clauseSizeList);
+				sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", clauseSizeList.size()));
+				if (null != ftaList && !ftaList.isEmpty()){
+					sql.append(" AND " + this.getSimpleClause("FTA_CODE", "=", "OR", ftaList.size()));
+					paramList.addAll(ftaList);
+				}
+			}
+			
+			SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
+			qualtxList.addAll( this.template.query(sql.toString(), paramList.toArray(), extractor));
 		}
-		
-		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
-		List<QualTX> qualtxList = this.template.query(sql.toString(), paramList.toArray(), extractor);
 		
 		return qualtxList;
 	}
 	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE,CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
+		
+		List<QualTX> qualtxList = new ArrayList<>();
+		
+		for (int i = 0; i < altKeyList.size(); i = i + clauseSize) 
+		{
+			StringBuilder sql = new StringBuilder("SELECT DISTINCT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY,PROD_KEY,PROD_SRC_KEY,PROD_CTRY_CMPL_KEY,SRC_KEY,SUB_PULL_CTRY,HS_NUM, ORG_CODE, IVA_CODE, CTRY_OF_IMPORT, FTA_CODE,CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
+			ArrayList<Long> clauseSizeList = new ArrayList<Long>();
+			for (int j = 0; j < clauseSize; j++) 
+			{
+				int counter = i + j;
+				if (counter < altKeyList.size())
+					clauseSizeList.add(altKeyList.get(counter));
+				else
+					break;
+			}
+			
+			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE) sql.append(this.getSimpleClause("PROD_CTRY_CMPL_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED) sql.append(this.getSimpleClause("PROD_CTRY_CMPL_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE) sql.append(this.getSimpleClause("PROD_SRC_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_SRC_DELETED) sql.append(this.getSimpleClause("PROD_SRC_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG) sql.append(this.getSimpleClause("ALT_KEY_QUALTX", "=", "OR", clauseSizeList.size()));
+			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
 
-		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE) sql.append(this.getSimpleClause("PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED) sql.append(this.getSimpleClause("PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE) sql.append(this.getSimpleClause("PROD_SRC_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_SRC_DELETED) sql.append(this.getSimpleClause("PROD_SRC_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.BOM_QUAL_MPQ_CHG) sql.append(this.getSimpleClause("ALT_KEY_QUALTX", "=", "OR", altKeyList.size()));
-		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-
-		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
-		List<QualTX> qualtxList = this.template.query(sql.toString(), altKeyList.toArray(), extractor);
-
+			SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
+			qualtxList.addAll( this.template.query(sql.toString(), clauseSizeList.toArray(), extractor));
+		}
+		
 		return qualtxList;
 	}
 
 	public List<QualTX> getImpactedQtxCompKeys(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT DISTINCT COMP.ALT_KEY_COMP AS COMP_QUALTX_KEY, COMP.ORG_CODE, COMP.HS_NUM AS COMP_HS_NUM, COMP.PROD_KEY AS COMP_PROD_KEY, "
-				+ " COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, COMP.PROD_SRC_IVA_KEY AS COMP_PROD_SRC_IVA_KEY, COMP.SUB_PULL_CTRY AS COMP_SUB_PULL_CTRY,"
-				+ " COMP.PROD_CTRY_CMPL_KEY AS COMP_PROD_CTRY_CMPL_KEY, COMP.SRC_KEY AS COMP_KEY, COMP.SRC_ID AS COMP_ID , QUALTX.ALT_KEY_QUALTX, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY,"
-				+ " QUALTX.PROD_SRC_KEY, QUALTX.PROD_CTRY_CMPL_KEY, QUALTX.IS_ACTIVE AS QUALTX_IS_ACTIVE, QUALTX.SRC_KEY AS BOM_KEY, QUALTX.SUB_PULL_CTRY, QUALTX.IVA_CODE as HEADER_IVA_CODE, QUALTX.FTA_CODE as HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT as HEADER_CTRY_OF_IMPORT "
-				+ " FROM MDI_QUALTX_COMP COMP JOIN MDI_QUALTX QUALTX "
-				+ " ON (QUALTX.ALT_KEY_QUALTX = COMP.ALT_KEY_QUALTX AND ");
-
-		if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED) sql.append(this.getSimpleClause("COMP.PROD_CTRY_CMPL_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_DELETED) sql.append(this.getSimpleClause("COMP.PROD_SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_ADDED) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_MODIFIED) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_DELETED) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_YARN_DTLS_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_SRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_FINAL_DECISION_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_CUMULATION_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_TRACE_VALUE_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", altKeyList.size()));
-		else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", altKeyList.size()));
-		if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
-		sql.append(")");
-		
 		List<QualTX> list = new ArrayList<QualTX>();
-			
-		logger.debug("getImpactedQtxCompKeys reason code " + reasonCode + " key size " + altKeyList.size());
 		
-		this.template.query(sql.toString(), altKeyList.toArray(), new RowCallbackHandler() {
-	        @Override
-	        public void processRow(ResultSet resultSet) throws SQLException {
-	        	try
-	        	{
-		        	QualTX qualtx = new QualTX();
-		        	QualTXComponent qualtxComp = new QualTXComponent();
-		        	
-		        	qualtx.org_code = resultSet.getString("ORG_CODE");
-		        	qualtx.alt_key_qualtx =  DataLoader.getLong(resultSet, "ALT_KEY_QUALTX");
-	
-		        	qualtx.prod_src_iva_key = DataLoader.getLong(resultSet, "PROD_SRC_IVA_KEY");
-		    		qualtx.prod_key =  DataLoader.getLong(resultSet, "PROD_KEY");
-		    		qualtx.prod_src_key =  DataLoader.getLong(resultSet, "PROD_SRC_KEY");
-		    		qualtx.prod_ctry_cmpl_key =  DataLoader.getLong(resultSet, "PROD_CTRY_CMPL_KEY");
-		    		qualtx.src_key =  DataLoader.getLong(resultSet, "BOM_KEY");
-		    		qualtx.sub_pull_ctry = resultSet.getString("SUB_PULL_CTRY");
-		    		qualtx.iva_code = resultSet.getString("HEADER_IVA_CODE");
-		    		qualtx.fta_code = resultSet.getString("HEADER_FTA_CODE");
-		    		qualtx.ctry_of_import = resultSet.getString("HEADER_CTRY_OF_IMPORT");
-		    		qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");
-		    		qualtx.is_active = resultSet.getString("QUALTX_IS_ACTIVE");
+		for (int i = 0; i < altKeyList.size(); i = i + clauseSize) 
+		{
+			StringBuilder sql = new StringBuilder("SELECT DISTINCT COMP.ALT_KEY_COMP AS COMP_QUALTX_KEY, COMP.ORG_CODE, COMP.HS_NUM AS COMP_HS_NUM, COMP.PROD_KEY AS COMP_PROD_KEY, "
+					+ " COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, COMP.PROD_SRC_IVA_KEY AS COMP_PROD_SRC_IVA_KEY, COMP.SUB_PULL_CTRY AS COMP_SUB_PULL_CTRY,"
+					+ " COMP.PROD_CTRY_CMPL_KEY AS COMP_PROD_CTRY_CMPL_KEY, COMP.SRC_KEY AS COMP_KEY, COMP.SRC_ID AS COMP_ID , QUALTX.ALT_KEY_QUALTX, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY,"
+					+ " QUALTX.PROD_SRC_KEY, QUALTX.PROD_CTRY_CMPL_KEY, QUALTX.IS_ACTIVE AS QUALTX_IS_ACTIVE, QUALTX.SRC_KEY AS BOM_KEY, QUALTX.SUB_PULL_CTRY, QUALTX.IVA_CODE as HEADER_IVA_CODE, QUALTX.FTA_CODE as HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT as HEADER_CTRY_OF_IMPORT "
+					+ " FROM MDI_QUALTX_COMP COMP JOIN MDI_QUALTX QUALTX "
+					+ " ON (QUALTX.ALT_KEY_QUALTX = COMP.ALT_KEY_QUALTX AND ");
+			
+			ArrayList<Long> clauseSizeList = new ArrayList<Long>();
+			for (int j = 0; j < clauseSize; j++) 
+			{
+				int counter = i + j;
+				if (counter < altKeyList.size())
+					clauseSizeList.add(altKeyList.get(counter));
+				else
+					break;
+			}
+			
+			if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_CTRY_CMPL_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_ADDED) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_CTRY_CMPL_DELETED) sql.append(this.getSimpleClause("COMP.PROD_CTRY_CMPL_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_IVA_AND_CLAIM_DTLS_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_IVA_DELETED) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_DELETED) sql.append(this.getSimpleClause("COMP.PROD_SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_SRC_ADDED) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_MODIFIED) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_DELETED) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_YARN_DTLS_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_SRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_FINAL_DECISION_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_CUMULATION_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_TRACE_VALUE_CHANGE) sql.append(this.getSimpleClause("COMP.PROD_SRC_IVA_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PRC_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_COM_COO_CHG) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.STP_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.GPM_COO_CHG) sql.append(this.getSimpleClause("COMP.PROD_KEY", "=", "OR", clauseSizeList.size()));
+			else if (reasonCode == ReQualificationReasonCodes.BOM_COMP_PREV_YEAR_QUAL_CHANGE) sql.append(this.getSimpleClause("COMP.SRC_KEY", "=", "OR", clauseSizeList.size()));
+			if (reasonCode != ReQualificationReasonCodes.GPM_IVA_CHANGE_M_I) sql.append(" AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null)");
+			sql.append(")");
+			
+			logger.debug("getImpactedQtxCompKeys reason code " + reasonCode + " key size " + clauseSizeList.size());
+			
+			this.template.query(sql.toString(), clauseSizeList.toArray(), new RowCallbackHandler() {
+		        @Override
+		        public void processRow(ResultSet resultSet) throws SQLException {
+		        	try
+		        	{
+			        	QualTX qualtx = new QualTX();
+			        	QualTXComponent qualtxComp = new QualTXComponent();
+			        	
+			        	qualtx.org_code = resultSet.getString("ORG_CODE");
+			        	qualtx.alt_key_qualtx =  DataLoader.getLong(resultSet, "ALT_KEY_QUALTX");
+		
+			        	qualtx.prod_src_iva_key = DataLoader.getLong(resultSet, "PROD_SRC_IVA_KEY");
+			    		qualtx.prod_key =  DataLoader.getLong(resultSet, "PROD_KEY");
+			    		qualtx.prod_src_key =  DataLoader.getLong(resultSet, "PROD_SRC_KEY");
+			    		qualtx.prod_ctry_cmpl_key =  DataLoader.getLong(resultSet, "PROD_CTRY_CMPL_KEY");
+			    		qualtx.src_key =  DataLoader.getLong(resultSet, "BOM_KEY");
+			    		qualtx.sub_pull_ctry = resultSet.getString("SUB_PULL_CTRY");
+			    		qualtx.iva_code = resultSet.getString("HEADER_IVA_CODE");
+			    		qualtx.fta_code = resultSet.getString("HEADER_FTA_CODE");
+			    		qualtx.ctry_of_import = resultSet.getString("HEADER_CTRY_OF_IMPORT");
+			    		qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");
+			    		qualtx.is_active = resultSet.getString("QUALTX_IS_ACTIVE");
 
-		        	qualtxComp.alt_key_qualtx = qualtx.alt_key_qualtx;
-		        	qualtxComp.org_code = qualtx.org_code;
-		    		qualtxComp.alt_key_comp = DataLoader.getLong(resultSet, "COMP_QUALTX_KEY");
-		    		
-		    		qualtxComp.hs_num = resultSet.getString("COMP_HS_NUM");
-		    		qualtxComp.prod_key =  DataLoader.getLong(resultSet, "COMP_PROD_KEY");
-		    		qualtxComp.prod_src_key =  DataLoader.getLong(resultSet, "COMP_PROD_SRC_KEY");
-		    		qualtxComp.prod_src_iva_key =  DataLoader.getLong(resultSet, "COMP_PROD_SRC_IVA_KEY");
-		    		qualtxComp.sub_pull_ctry = resultSet.getString("COMP_SUB_PULL_CTRY");
-		    		qualtxComp.prod_ctry_cmpl_key =  DataLoader.getLong(resultSet, "COMP_PROD_CTRY_CMPL_KEY");
-		    		qualtxComp.src_key =  DataLoader.getLong(resultSet, "COMP_KEY");
-		    		qualtxComp.src_id = resultSet.getString("COMP_ID");
-		    		qualtx.compList.add(qualtxComp);
-		    		
-		    		list.add(qualtx);
-	        	}
-	        	catch (Exception e)
-	        	{
-	        		throw new SQLException("Failed to load record", e);
-	        	}
-	        }
-	    });
+			        	qualtxComp.alt_key_qualtx = qualtx.alt_key_qualtx;
+			        	qualtxComp.org_code = qualtx.org_code;
+			    		qualtxComp.alt_key_comp = DataLoader.getLong(resultSet, "COMP_QUALTX_KEY");
+			    		
+			    		qualtxComp.hs_num = resultSet.getString("COMP_HS_NUM");
+			    		qualtxComp.prod_key =  DataLoader.getLong(resultSet, "COMP_PROD_KEY");
+			    		qualtxComp.prod_src_key =  DataLoader.getLong(resultSet, "COMP_PROD_SRC_KEY");
+			    		qualtxComp.prod_src_iva_key =  DataLoader.getLong(resultSet, "COMP_PROD_SRC_IVA_KEY");
+			    		qualtxComp.sub_pull_ctry = resultSet.getString("COMP_SUB_PULL_CTRY");
+			    		qualtxComp.prod_ctry_cmpl_key =  DataLoader.getLong(resultSet, "COMP_PROD_CTRY_CMPL_KEY");
+			    		qualtxComp.src_key =  DataLoader.getLong(resultSet, "COMP_KEY");
+			    		qualtxComp.src_id = resultSet.getString("COMP_ID");
+			    		qualtx.compList.add(qualtxComp);
+			    		
+			    		list.add(qualtx);
+		        	}
+		        	catch (Exception e)
+		        	{
+		        		throw new SQLException("Failed to load record", e);
+		        	}
+		        }
+		    });
+		}
 		
 		return list;
 	}
 
 	public List<QualTX> getImpactedQtxCompKeysForNewComp(ArrayList<Long> altKeyList, long reasonCode) throws Exception
 	{
-		StringBuilder sql = new StringBuilder("SELECT QUALTX.ALT_KEY_QUALTX, QUALTX.IS_ACTIVE AS QUALTX_IS_ACTIVE, QUALTX.ORG_CODE, QUALTX.PROD_SRC_KEY,  QUALTX.SRC_KEY AS BOM_KEY, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY, BOM_COMP.ALT_KEY_COMP  AS COMP_KEY, " + " BOM_COMP.PROD_KEY AS COMP_PROD_KEY, BOM_COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, QUALTX.IVA_CODE AS HEADER_IVA_CODE, QUALTX.FTA_CODE AS HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT AS HEADER_CTRY_OF_IMPORT " + " FROM MDI_QUALTX QUALTX JOIN MDI_BOM_COMP BOM_COMP ON ( QUALTX.SRC_KEY = BOM_COMP.ALT_KEY_BOM AND ");
-
-		if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED) sql.append(this.getSimpleClause("BOM_COMP.ALT_KEY_COMP", "=", "OR", altKeyList.size()));
 		
-		sql.append(")");
 		List<QualTX> list = new ArrayList<QualTX>();
-
-		logger.debug("getImpactedQtxCompKeysForNewComp  key size " + altKeyList.size());
-
-		this.template.query(sql.toString(), altKeyList.toArray(), new RowCallbackHandler()
+		for (int i = 0; i < altKeyList.size(); i = i + clauseSize) 
 		{
-			@Override
-			public void processRow(ResultSet resultSet) throws SQLException
+			StringBuilder sql = new StringBuilder("SELECT QUALTX.ALT_KEY_QUALTX, QUALTX.IS_ACTIVE AS QUALTX_IS_ACTIVE, QUALTX.ORG_CODE, QUALTX.PROD_SRC_KEY,  QUALTX.SRC_KEY AS BOM_KEY, QUALTX.PROD_SRC_IVA_KEY, QUALTX.PROD_KEY, BOM_COMP.ALT_KEY_COMP  AS COMP_KEY, " + " BOM_COMP.PROD_KEY AS COMP_PROD_KEY, BOM_COMP.PROD_SRC_KEY AS COMP_PROD_SRC_KEY, QUALTX.IVA_CODE AS HEADER_IVA_CODE, QUALTX.FTA_CODE AS HEADER_FTA_CODE, QUALTX.CREATED_DATE AS QUALTX_CREATED_DATE, QUALTX.CTRY_OF_IMPORT AS HEADER_CTRY_OF_IMPORT " + " FROM MDI_QUALTX QUALTX JOIN MDI_BOM_COMP BOM_COMP ON ( QUALTX.SRC_KEY = BOM_COMP.ALT_KEY_BOM AND ");
+			ArrayList<Long> clauseSizeList = new ArrayList<Long>();
+			for (int j = 0; j < clauseSize; j++) 
 			{
-				try
-				{
-					QualTX qualtx = new QualTX();
-					QualTXComponent qualtxComp = new QualTXComponent();
-
-					qualtx.org_code = resultSet.getString("ORG_CODE");
-					qualtx.alt_key_qualtx = DataLoader.getLong(resultSet, "ALT_KEY_QUALTX");
-
-					qualtx.prod_src_iva_key = DataLoader.getLong(resultSet, "PROD_SRC_IVA_KEY");
-					qualtx.prod_key = DataLoader.getLong(resultSet, "PROD_KEY");
-					qualtx.prod_src_key = DataLoader.getLong(resultSet, "PROD_SRC_KEY");
-					qualtx.src_key = DataLoader.getLong(resultSet, "BOM_KEY");
-					qualtx.iva_code = resultSet.getString("HEADER_IVA_CODE");
-					qualtx.fta_code = resultSet.getString("HEADER_FTA_CODE");
-					qualtx.ctry_of_import = resultSet.getString("HEADER_CTRY_OF_IMPORT");
-					qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");	
-					qualtx.is_active = resultSet.getString("QUALTX_IS_ACTIVE");	
-
-					qualtxComp.alt_key_qualtx = qualtx.alt_key_qualtx;
-					qualtxComp.org_code = qualtx.org_code;
-					qualtxComp.prod_key = DataLoader.getLong(resultSet, "COMP_PROD_KEY");
-					qualtxComp.prod_src_key = DataLoader.getLong(resultSet, "COMP_PROD_SRC_KEY");
-					qualtxComp.src_key = DataLoader.getLong(resultSet, "COMP_KEY");
-
-					qualtx.compList.add(qualtxComp);
-
-					list.add(qualtx);
-				}
-				catch (Exception e)
-				{
-					throw new SQLException("Failed to load record", e);
-				}
+				int counter = i + j;
+				if (counter < altKeyList.size())
+					clauseSizeList.add(altKeyList.get(counter));
+				else
+					break;
 			}
-		});
+			
+			if (reasonCode == ReQualificationReasonCodes.BOM_COMP_ADDED) sql.append(this.getSimpleClause("BOM_COMP.ALT_KEY_COMP", "=", "OR", clauseSizeList.size()));
+			sql.append(")");
 
+			logger.debug("getImpactedQtxCompKeysForNewComp  key size " + clauseSizeList.size());
+
+			this.template.query(sql.toString(), clauseSizeList.toArray(), new RowCallbackHandler()
+			{
+				@Override
+				public void processRow(ResultSet resultSet) throws SQLException
+				{
+					try
+					{
+						QualTX qualtx = new QualTX();
+						QualTXComponent qualtxComp = new QualTXComponent();
+
+						qualtx.org_code = resultSet.getString("ORG_CODE");
+						qualtx.alt_key_qualtx = DataLoader.getLong(resultSet, "ALT_KEY_QUALTX");
+
+						qualtx.prod_src_iva_key = DataLoader.getLong(resultSet, "PROD_SRC_IVA_KEY");
+						qualtx.prod_key = DataLoader.getLong(resultSet, "PROD_KEY");
+						qualtx.prod_src_key = DataLoader.getLong(resultSet, "PROD_SRC_KEY");
+						qualtx.src_key = DataLoader.getLong(resultSet, "BOM_KEY");
+						qualtx.iva_code = resultSet.getString("HEADER_IVA_CODE");
+						qualtx.fta_code = resultSet.getString("HEADER_FTA_CODE");
+						qualtx.ctry_of_import = resultSet.getString("HEADER_CTRY_OF_IMPORT");
+						qualtx.created_date = resultSet.getTimestamp("QUALTX_CREATED_DATE");	
+						qualtx.is_active = resultSet.getString("QUALTX_IS_ACTIVE");	
+
+						qualtxComp.alt_key_qualtx = qualtx.alt_key_qualtx;
+						qualtxComp.org_code = qualtx.org_code;
+						qualtxComp.prod_key = DataLoader.getLong(resultSet, "COMP_PROD_KEY");
+						qualtxComp.prod_src_key = DataLoader.getLong(resultSet, "COMP_PROD_SRC_KEY");
+						qualtxComp.src_key = DataLoader.getLong(resultSet, "COMP_KEY");
+
+						qualtx.compList.add(qualtxComp);
+
+						list.add(qualtx);
+					}
+					catch (Exception e)
+					{
+						throw new SQLException("Failed to load record", e);
+					}
+				}
+			});
+		}
+		
 		return list;
 	}
 
 	public List<QualTXComponent> getImpactedQtxCompKeys(ArrayList<Long> altKeyCompList) throws Exception
 	{
-		String sql = "SELECT alt_key_qualtx, ALT_KEY_COMP, ORG_CODE, PROD_KEY, PROD_SRC_KEY, PROD_SRC_IVA_KEY,SUB_PULL_CTRY,PROD_KEY,PROD_CTRY_CMPL_KEY from MDI_QUALTX_COMP where " + this.getSimpleClause("SRC_KEY", "=", "OR", altKeyCompList.size()) + " AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null) ";
-		SimpleDataLoaderResultSetExtractor<QualTXComponent> extractor = new SimpleDataLoaderResultSetExtractor<QualTXComponent>(QualTXComponent.class);
-		List<QualTXComponent> qualtxComponentList = this.template.query(sql.toString(), altKeyCompList.toArray(), extractor);
-
+		List<QualTXComponent> qualtxComponentList = new ArrayList<>();
+		for (int i = 0; i < altKeyCompList.size(); i = i + clauseSize) 
+		{
+			ArrayList<Long> clauseSizeList = new ArrayList<Long>();
+			for (int j = 0; j < clauseSize; j++) 
+			{
+				int counter = i + j;
+				if (counter < altKeyCompList.size())
+					clauseSizeList.add(altKeyCompList.get(counter));
+				else
+					break;
+			}
+			
+			String sql = "SELECT alt_key_qualtx, ALT_KEY_COMP, ORG_CODE, PROD_KEY, PROD_SRC_KEY, PROD_SRC_IVA_KEY,SUB_PULL_CTRY,PROD_KEY,PROD_CTRY_CMPL_KEY from MDI_QUALTX_COMP where " + this.getSimpleClause("SRC_KEY", "=", "OR", clauseSizeList.size()) + " AND (COMP.IS_ACTIVE = 'Y' OR COMP.IS_ACTIVE is null) ";
+			SimpleDataLoaderResultSetExtractor<QualTXComponent> extractor = new SimpleDataLoaderResultSetExtractor<QualTXComponent>(QualTXComponent.class);
+			qualtxComponentList.addAll(this.template.query(sql.toString(), clauseSizeList.toArray(), extractor));
+		}
 		return qualtxComponentList;
 	}
 	
 	public List<QualTX> getImpactedQtxKeys(ArrayList<Long> altKeyBoms) throws Exception
 	{
-		StringBuilder sql  = new StringBuilder("SELECT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE,CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
-		sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", altKeyBoms.size()));
+		List<QualTX> qualtxList = new ArrayList<QualTX>();
+		for (int i = 0; i < altKeyBoms.size(); i = i + clauseSize) 
+		{
+			StringBuilder sql = new StringBuilder("SELECT ALT_KEY_QUALTX, PROD_SRC_IVA_KEY, PROD_KEY, SRC_KEY, IVA_CODE, CTRY_OF_IMPORT, ORG_CODE, FTA_CODE,CREATED_DATE, IS_ACTIVE from MDI_QUALTX WHERE ");
+			ArrayList<Long> clauseSizeList = new ArrayList<Long>();
+			for (int j = 0; j < clauseSize; j++) 
+			{
+				int counter = i + j;
+				if (counter < altKeyBoms.size())
+					clauseSizeList.add(altKeyBoms.get(counter));
+				else
+					break;
+			}
+			sql.append(this.getSimpleClause("SRC_KEY", "=", "OR", clauseSizeList.size()));
 
-		SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
-		List<QualTX> qualtxList = this.template.query(sql.toString(), altKeyBoms.toArray(), extractor);
+			SimpleDataLoaderResultSetExtractor<QualTX> extractor = new SimpleDataLoaderResultSetExtractor<QualTX>(QualTX.class);
+			qualtxList.addAll(this.template.query(sql.toString(), clauseSizeList.toArray(), extractor));
+		}
 
 		return qualtxList;
 	}

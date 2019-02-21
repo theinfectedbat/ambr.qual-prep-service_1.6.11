@@ -815,8 +815,9 @@ public class ApplicationConfiguration
 	public QTXWorkRepository beanQTXWorkRepository(UniversalObjectIDGenerator idGenerator, @Autowired DataSource dataSrc) throws NumberFormatException, Exception
 	{
 		int batchSize = Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkRepository.class.getName() + ".batch_size", "1000"));
+		int clause_limit = Integer.parseInt(this.propertyResolver.getPropertyValue(QTXWorkRepository.class.getName() + ".clause_limit", "10000"));
 		
-		QTXWorkRepository workRepository = new QTXWorkRepository(idGenerator, new JdbcTemplate(dataSrc), batchSize);
+		QTXWorkRepository workRepository = new QTXWorkRepository(idGenerator, new JdbcTemplate(dataSrc), batchSize, clause_limit);
 		
 		return workRepository;
 	}
