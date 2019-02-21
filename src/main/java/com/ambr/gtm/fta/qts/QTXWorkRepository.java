@@ -27,12 +27,14 @@ public class QTXWorkRepository
 	private JdbcTemplate template;
 	
 	private int commitSize;
+	private int clauseLimit;
 	
-	public QTXWorkRepository(UniversalObjectIDGenerator idGenerator, JdbcTemplate template, int commitSize)
+	public QTXWorkRepository(UniversalObjectIDGenerator idGenerator, JdbcTemplate template, int commitSize, int clauseLimit)
 	{
 		this.idGenerator = idGenerator;
 		this.template = template;
 		this.commitSize = commitSize;
+		this.clauseLimit = clauseLimit;
 	}
 	
 	private long getNextSequence() throws Exception
@@ -797,6 +799,11 @@ public class QTXWorkRepository
 		{
 			throw new RepositoryException("Failed to bulk update status", e);
 		}
+	}
+	
+	public int getClauseSize()
+	{
+		return this.clauseLimit;
 	}
 	
 //	public ArrayList<QTXWorkHS> loadWorkHS(long wid, Connection connection) throws RepositoryException
