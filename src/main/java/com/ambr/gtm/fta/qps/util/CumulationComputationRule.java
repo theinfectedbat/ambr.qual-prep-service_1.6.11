@@ -395,18 +395,18 @@ public class CumulationComputationRule
 				|| "".equals(aQualTXComp.qualTX.analysis_method))
 		{
 			String analysisMethod =  this.qeConfigCache.getQEConfig(aQualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
-			if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+			if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod) && aQualTXComp.qty_per != null)
 				aQtyPer = aQualTXComp.qty_per;
-			else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+			else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod) && aQualTXComp.rm_qty_per != null)
 				aQtyPer = aQualTXComp.rm_qty_per;
-			else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+			else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod) && aQualTXComp.in_qty_per != null)
 				aQtyPer = aQualTXComp.in_qty_per;
 		}
-		else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+		else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method) && aQualTXComp.qty_per != null)
 			aQtyPer = aQualTXComp.qty_per;
-		else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+		else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method) &&  aQualTXComp.rm_qty_per != null)
 			aQtyPer = aQualTXComp.rm_qty_per;
-		else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+		else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method) &&  aQualTXComp.in_qty_per != null)
 			aQtyPer = aQualTXComp.in_qty_per;
 		
 		double cumulationValue = claimCumulationValue * aQtyPer;
