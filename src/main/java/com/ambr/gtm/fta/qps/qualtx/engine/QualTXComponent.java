@@ -402,8 +402,6 @@ public class QualTXComponent
 			aTracedResponseIdValue = (String) aClaimDetails.getValue(aTracedResponseId);
 
 		
-		if(aCampIdValue != null || aresponseIdValue != null || aTracedCampIdValue != null || aTracedResponseIdValue != null)
-		{
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 			if (qualTXCompDetails == null)
 			{
@@ -423,7 +421,6 @@ public class QualTXComponent
 			qualTXCompDetails.setValue("FLEXFIELD_VAR14", aTracedCampIdValue);
 			qualTXCompDetails.setValue("FLEXFIELD_VAR15", aTracedResponseIdValue);
 
-		}
 
 		String aLogicalColumnName = flexFieldMap.get("TRACED_VALUE");
 		if(aLogicalColumnName != null)
@@ -431,6 +428,9 @@ public class QualTXComponent
 			aValue = aClaimDetails.getValue(aLogicalColumnName);
 			if (aValue != null)
 				this.traced_value = ((Number)aValue).doubleValue();
+			else
+			    this.traced_value = null;
+			
 		}
 		
 		aLogicalColumnName = flexFieldMap.get("TRACED_VALUE_CURRENCY");
@@ -439,6 +439,8 @@ public class QualTXComponent
 			aValue = aClaimDetails.getValue(aLogicalColumnName);
 			if(aValue != null)
 				this.traced_value_currency = (String)aValue;
+			else
+				this.traced_value_currency = null;
 		}
 		
 		aLogicalColumnName = flexFieldMap.get("CUMULATION_VALUE");
@@ -447,6 +449,8 @@ public class QualTXComponent
 			aValue = aClaimDetails.getValue(aLogicalColumnName);
 			if (aValue != null)
 				this.cumulation_value = ((Number)aValue).doubleValue();
+			else
+				this.cumulation_value = null;
 		}
 		aLogicalColumnName = flexFieldMap.get("CUMULATION_CURRENCY");
 		if(aLogicalColumnName != null)
@@ -454,6 +458,8 @@ public class QualTXComponent
 			aValue = aClaimDetails.getValue(aLogicalColumnName);
 			if (aValue != null)
 				this.cumulation_currency = (String)aValue;
+			else
+				this.cumulation_currency = null;
 		}
 		
 		
@@ -463,6 +469,8 @@ public class QualTXComponent
 			aValue = aClaimDetails.getValue(aLogicalColumnName);
 			if (aValue != null)
 				this.rvc = (String)aValue;
+			else
+				this.rvc = null;
 		}
 	}
 }
