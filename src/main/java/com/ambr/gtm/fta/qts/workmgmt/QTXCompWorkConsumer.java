@@ -397,11 +397,7 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 				{
 					GPMClaimDetailsSourceIVAContainer claimdetailsContainer = aClaimsDetailCache.getClaimDetails(compWorkIVA.iva_key);
 					if(null != claimdetailsContainer){
-					GPMClaimDetails aClaimDetails = claimdetailsContainer.getPrimaryClaimDetails();
-					String ftaCodeGroup = QualTXUtility.determineFTAGroupCode(qualtx.org_code, qualtx.fta_code, qtxBusinessLogicProcessor.propertySheetManager);
-					Map<String,String> flexFieldMap = getFeildMapping("STP", ftaCodeGroup);
-					setTracedValue(qualtxComp, aClaimDetails, flexFieldMap); //TA-82724
-					qualtxComp.traced_value_currency =(String) aClaimDetails.getValue(flexFieldMap.get("TRACED_VALUE_CURRENCY"));
+						qualtxComp.setClaimDetails(claimdetailsContainer, this.repos);
 					}
 				}
 				if (compWorkIVA.isReasonCodeFlagSet(RequalificationWorkCodes.GPM_COMP_CUMULATION_CHANGE))
