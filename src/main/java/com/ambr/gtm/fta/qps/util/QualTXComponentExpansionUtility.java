@@ -106,7 +106,7 @@ public class QualTXComponentExpansionUtility
 				{
 					existingQualTXComp.in_qty_per = (existingQualTXComp.in_qty_per != null ? existingQualTXComp.in_qty_per : 0) + aQualTXComp.qty_per;
 					existingQualTXComp.in_cost = aQualTXComp.unit_cost *  existingQualTXComp.in_qty_per;
-					existingQualTXComp.in_cumulation_value = ((aQualTXComp.cumulation_value == null ? 0 : aQualTXComp.cumulation_value)/aQualTXComp.qty_per) *  existingQualTXComp.in_qty_per;
+					existingQualTXComp.in_cumulation_value = ((aQualTXComp.td_cumulation_value == null ? 0 : aQualTXComp.td_cumulation_value)/aQualTXComp.qty_per) *  existingQualTXComp.in_qty_per;
 					existingQualTXComp.in_traced_value =  ((aQualTXComp.traced_value == null ? 0 : aQualTXComp.traced_value)/aQualTXComp.qty_per) *  existingQualTXComp.in_qty_per;
 					existingQualTXComp.intermediate_ind = "Y";
 				}
@@ -115,7 +115,7 @@ public class QualTXComponentExpansionUtility
 					aQualTXComp.intermediate_ind = "Y";
 					aQualTXComp.in_qty_per = aQualTXComp.qty_per;
 					aQualTXComp.in_cost = aQualTXComp.cost;
-					aQualTXComp.in_cumulation_value = aQualTXComp.cumulation_value;
+					aQualTXComp.in_cumulation_value = aQualTXComp.td_cumulation_value;
 					aQualTXComp.in_traced_value = aQualTXComp.traced_value;
 					uniqueComponents.put(aUniqueCompKey.getKey(), aQualTXComp);
 				}
@@ -130,7 +130,7 @@ public class QualTXComponentExpansionUtility
 					aQualTXComp.intermediate_ind = "Y";
 					aQualTXComp.in_qty_per = aQualTXComp.qty_per;
 					aQualTXComp.in_cost = aQualTXComp.cost;
-					aQualTXComp.in_cumulation_value = aQualTXComp.cumulation_value;
+					aQualTXComp.in_cumulation_value = aQualTXComp.td_cumulation_value;
 					aQualTXComp.in_traced_value = aQualTXComp.traced_value;
 				}
 			}
@@ -160,7 +160,7 @@ public class QualTXComponentExpansionUtility
 				{
 					existingQualTXComp.rm_qty_per = (existingQualTXComp.rm_qty_per != null ? existingQualTXComp.rm_qty_per : 0) + aQualTXComp.qty_per;
 					existingQualTXComp.rm_cost = aQualTXComp.unit_cost *  existingQualTXComp.rm_qty_per;
-					existingQualTXComp.rm_cumulation_value = ((aQualTXComp.cumulation_value == null ? 0 : aQualTXComp.cumulation_value)/aQualTXComp.qty_per) *  existingQualTXComp.rm_qty_per;
+					existingQualTXComp.rm_cumulation_value = ((aQualTXComp.td_cumulation_value == null ? 0 : aQualTXComp.td_cumulation_value)/aQualTXComp.qty_per) *  existingQualTXComp.rm_qty_per;
 					existingQualTXComp.rm_traced_value =  ((aQualTXComp.traced_value == null ? 0 : aQualTXComp.traced_value)/aQualTXComp.qty_per) *  existingQualTXComp.rm_qty_per;
 					existingQualTXComp.raw_material_ind = "Y";
 				}
@@ -169,7 +169,7 @@ public class QualTXComponentExpansionUtility
 					aQualTXComp.raw_material_ind = "Y";
 					aQualTXComp.rm_qty_per = aQualTXComp.qty_per;
 					aQualTXComp.rm_cost = aQualTXComp.cost;
-					aQualTXComp.rm_cumulation_value = aQualTXComp.cumulation_value;
+					aQualTXComp.rm_cumulation_value = aQualTXComp.td_cumulation_value;
 					aQualTXComp.rm_traced_value = aQualTXComp.traced_value;
 					uniqueComponents.put(aUniqueCompKey.getKey(), aQualTXComp);
 				}
@@ -266,7 +266,7 @@ public class QualTXComponentExpansionUtility
 						{
 							existingQualTXComp.rm_qty_per = (existingQualTXComp.rm_qty_per != null ? existingQualTXComp.rm_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 							existingQualTXComp.rm_cost = aSubBOMComp.unit_cost * existingQualTXComp.rm_qty_per;
-							existingQualTXComp.rm_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
+							existingQualTXComp.rm_cumulation_value = ((existingQualTXComp.td_cumulation_value == null ? 0 : existingQualTXComp.td_cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
 							existingQualTXComp.rm_traced_value = ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value) / existingQualTXComp.qty_per) * existingQualTXComp.rm_qty_per;
 							existingQualTXComp.raw_material_ind = "Y";
 						}
@@ -274,7 +274,7 @@ public class QualTXComponentExpansionUtility
 						{
 							existingQualTXComp.in_qty_per = (existingQualTXComp.in_qty_per != null ? existingQualTXComp.in_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 							existingQualTXComp.in_cost = aSubBOMComp.unit_cost * existingQualTXComp.in_qty_per;
-							existingQualTXComp.in_cumulation_value = ((existingQualTXComp.cumulation_value == null ? 0 : existingQualTXComp.cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
+							existingQualTXComp.in_cumulation_value = ((existingQualTXComp.td_cumulation_value == null ? 0 : existingQualTXComp.td_cumulation_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
 							existingQualTXComp.in_traced_value = ((existingQualTXComp.traced_value == null ? 0 : existingQualTXComp.traced_value) / existingQualTXComp.qty_per) * existingQualTXComp.in_qty_per;
 							existingQualTXComp.intermediate_ind = "Y";
 						}
@@ -291,7 +291,7 @@ public class QualTXComponentExpansionUtility
 							{
 								existingRawMaterialQualTXComp.rm_qty_per = aSubBOMComp.qty_per * theSubBomQtyPer;
 								existingRawMaterialQualTXComp.rm_cost = existingRawMaterialQualTXComp.unit_cost * existingRawMaterialQualTXComp.rm_qty_per;
-								existingRawMaterialQualTXComp.rm_cumulation_value = ((existingRawMaterialQualTXComp.cumulation_value == null ? 0 : existingRawMaterialQualTXComp.cumulation_value) / existingRawMaterialQualTXComp.qty_per) * existingRawMaterialQualTXComp.rm_qty_per;
+								existingRawMaterialQualTXComp.rm_cumulation_value = ((existingRawMaterialQualTXComp.td_cumulation_value == null ? 0 : existingRawMaterialQualTXComp.td_cumulation_value) / existingRawMaterialQualTXComp.qty_per) * existingRawMaterialQualTXComp.rm_qty_per;
 								existingRawMaterialQualTXComp.rm_traced_value = ((existingRawMaterialQualTXComp.traced_value == null ? 0 : existingRawMaterialQualTXComp.traced_value) / existingRawMaterialQualTXComp.qty_per) * existingRawMaterialQualTXComp.rm_qty_per;
 								
 								theUniqueComponents.put(aUniqueCompKey.getKey(), existingRawMaterialQualTXComp);
@@ -305,7 +305,7 @@ public class QualTXComponentExpansionUtility
 							{
 								existingIntermediateQualTXComp.in_qty_per = aSubBOMComp.qty_per * theSubBomQtyPer;
 								existingIntermediateQualTXComp.in_cost = existingIntermediateQualTXComp.unit_cost * existingIntermediateQualTXComp.in_qty_per;
-								existingIntermediateQualTXComp.in_cumulation_value = ((existingIntermediateQualTXComp.cumulation_value == null ? 0 : existingIntermediateQualTXComp.cumulation_value) / existingIntermediateQualTXComp.qty_per) * existingIntermediateQualTXComp.in_qty_per;
+								existingIntermediateQualTXComp.in_cumulation_value = ((existingIntermediateQualTXComp.td_cumulation_value == null ? 0 : existingIntermediateQualTXComp.td_cumulation_value) / existingIntermediateQualTXComp.qty_per) * existingIntermediateQualTXComp.in_qty_per;
 								existingIntermediateQualTXComp.in_traced_value = ((existingIntermediateQualTXComp.traced_value == null ? 0 : existingIntermediateQualTXComp.traced_value) / existingIntermediateQualTXComp.qty_per) * existingIntermediateQualTXComp.in_qty_per;
 								theUniqueComponents.put(aUniqueCompKey.getKey(), existingIntermediateQualTXComp);
 								continue;
@@ -324,7 +324,7 @@ public class QualTXComponentExpansionUtility
 								aNewQualTXComp.raw_material_ind = "Y";
 								aNewQualTXComp.rm_qty_per = aNewQualTXComp.qty_per * theSubBomQtyPer;
 								aNewQualTXComp.rm_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.rm_qty_per;
-								aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.cumulation_value;
+								aNewQualTXComp.rm_cumulation_value = aNewQualTXComp.td_cumulation_value;
 								aNewQualTXComp.rm_traced_value = aNewQualTXComp.traced_value;
 	
 							}
@@ -334,7 +334,7 @@ public class QualTXComponentExpansionUtility
 								aNewQualTXComp.intermediate_ind = "Y";
 								aNewQualTXComp.in_qty_per = aNewQualTXComp.qty_per * theSubBomQtyPer;
 								aNewQualTXComp.in_cost = aNewQualTXComp.unit_cost * aNewQualTXComp.in_qty_per;
-								aNewQualTXComp.in_cumulation_value = aNewQualTXComp.cumulation_value;
+								aNewQualTXComp.in_cumulation_value = aNewQualTXComp.td_cumulation_value;
 								aNewQualTXComp.in_traced_value = aNewQualTXComp.traced_value;
 							}
 							aNewQualTXComp.src_id = aSubBOM.bom_id + "~" + MessageFormat.format("{0,number,#}", aSubBOMComp.comp_num);
@@ -370,7 +370,7 @@ public class QualTXComponentExpansionUtility
 				{	
 					qualTXComponent.rm_qty_per = (qualTXComponent.rm_qty_per != null ? qualTXComponent.rm_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 					qualTXComponent.rm_cost = aSubBOMComp.unit_cost * qualTXComponent.rm_qty_per;
-					qualTXComponent.rm_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
+					qualTXComponent.rm_cumulation_value = ((qualTXComponent.td_cumulation_value == null ? 0 : qualTXComponent.td_cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
 					qualTXComponent.rm_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.rm_qty_per;
 					qualTXComponent.raw_material_ind = "Y";
 					theUniqueComponents.put(aUniqueCompKey.getKey(), qualTXComponent);
@@ -379,7 +379,7 @@ public class QualTXComponentExpansionUtility
 				{
 					qualTXComponent.in_qty_per = (qualTXComponent.in_qty_per != null ? qualTXComponent.in_qty_per : 0) + (aSubBOMComp.qty_per * theSubBomQtyPer);
 					qualTXComponent.in_cost = aSubBOMComp.unit_cost * qualTXComponent.in_qty_per;
-					qualTXComponent.in_cumulation_value = ((qualTXComponent.cumulation_value == null ? 0 : qualTXComponent.cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
+					qualTXComponent.in_cumulation_value = ((qualTXComponent.td_cumulation_value == null ? 0 : qualTXComponent.td_cumulation_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
 					qualTXComponent.in_traced_value = ((qualTXComponent.traced_value == null ? 0 : qualTXComponent.traced_value) / qualTXComponent.qty_per) * qualTXComponent.in_qty_per;
 					qualTXComponent.intermediate_ind = "Y";
 					theUniqueComponents.put(aUniqueCompKey.getKey(), qualTXComponent);

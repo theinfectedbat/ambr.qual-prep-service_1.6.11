@@ -60,14 +60,20 @@ public class CumulationComputationRule
 			throws Exception
 	{
 
-
+		boolean cumulationConfigExists = true;
 		CumulationRule cumulationrule = getCumulationRdcByCOIAndCOMConfig(aQualTXComp.org_code,aQualTXComp.qualTX.fta_code,aQualTXComp.qualTX.ctry_of_import,aQualTXComp.qualTX.ctry_of_manufacture);
 		if(cumulationrule == null)
 		{
 			MessageFormatter.debug(logger, "applyCumulationForComponent", "There is no Cumulation Configuration for Org Code [{0}] for FTA [{1}], COI[{2}], COM[{3}]", 
 					aQualTXComp.org_code, aQualTXComp.qualTX.fta_code, aQualTXComp.qualTX.ctry_of_import, aQualTXComp.qualTX.ctry_of_manufacture);
-			return;
+			cumulationConfigExists = false;
 		}
+		if(!cumulationConfigExists)
+		{
+				setCumulationValueBasedOnAnalysisMethod(aQualTXComp);
+				return ;
+		}
+		
 		try {
 			long cumulative_fta_iva_key = 0;
 			boolean contextualFTAHasYDecision = "QUALIFIED".equalsIgnoreCase(aQualTXComp.qualified_flg);
@@ -321,48 +327,9 @@ public class CumulationComputationRule
 					qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_CTRY_LIST"), cumulationCtryList);
 
 				qualTXCompDetails.setValue(qualtxCOmpDtlflexFieldMap.get("CUMULATION_RULE_APPLIED"), aQualTXComp.cumulation_rule_applied);
-
-				Double cumulationValue = calculateCumulationValue	(aQualTXComp, aClaimDetails);
-
-				if(cumulationValue != null){
-					if(aQualTXComp.qualTX.analysis_method == null 
-							|| "".equals(aQualTXComp.qualTX.analysis_method))
-					{
-						String analysisMethod =  this.qeConfigCache.getQEConfig(aQualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
-						if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
-							aQualTXComp.td_cumulation_value = cumulationValue;
-						else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
-							aQualTXComp.rm_cumulation_value = cumulationValue;
-						else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
-							aQualTXComp.in_cumulation_value = cumulationValue;
-					}
-					else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
-						aQualTXComp.td_cumulation_value = cumulationValue;
-					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
-						aQualTXComp.rm_cumulation_value = cumulationValue;
-					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
-						aQualTXComp.in_cumulation_value = cumulationValue;
-				}
 			}
-			else if(aQualTXComp.cumulation_value != null && aQualTXComp.cumulation_value.doubleValue() > 0){
-				if(aQualTXComp.qualTX.analysis_method == null 
-						|| "".equals(aQualTXComp.qualTX.analysis_method))
-				{
-					String analysisMethod =  this.qeConfigCache.getQEConfig(aQualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
-					if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
-						aQualTXComp.td_cumulation_value = aQualTXComp.cumulation_value;
-					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
-						aQualTXComp.rm_cumulation_value = aQualTXComp.cumulation_value;
-					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
-						aQualTXComp.in_cumulation_value = aQualTXComp.cumulation_value;
-				}
-				else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
-					aQualTXComp.td_cumulation_value = aQualTXComp.cumulation_value;
-				else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
-					aQualTXComp.rm_cumulation_value = aQualTXComp.cumulation_value;
-				else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
-					aQualTXComp.in_cumulation_value = aQualTXComp.cumulation_value;
-			}
+			setCumulationValueBasedOnAnalysisMethod(aQualTXComp);
+			
 		}
 		catch(Exception exec) {
 			MessageFormatter.error(logger, "applyCumulationForComponent", exec, "There is an exception while processing cumulation for Qualtx Compoent [{0,number,#}] Org Code [{0}] for FTA [{1}], COI[{2}], COM[{3}]", 
@@ -371,7 +338,7 @@ public class CumulationComputationRule
 		}
 	}	
 	
-	public Double	calculateCumulationValue	(QualTXComponent aQualTXComp, GPMClaimDetails claimdetails)
+	public Double	calculateCumulationValue(QualTXComponent aQualTXComp)
 	throws Exception{
 		Double convertedCumulationValue = 0.0;
 		String headerCurrencyCode = aQualTXComp.qualTX.currency_code; 
@@ -379,11 +346,9 @@ public class CumulationComputationRule
 		Double value = aQualTXComp.cumulation_value;
 		String cumulationCurrency = aQualTXComp.cumulation_currency;
 		
-		if(!"Y".equalsIgnoreCase(aQualTXComp.cumulation_rule_applied) 
-				&& null == value 
+		if((null == value || "".equals(value))
 				&&  null == cumulationCurrency
 				&& (headerCurrencyCode == null || headerCurrencyCode.isEmpty()))
-			
 				return convertedCumulationValue;
 		if(value == null || "".equals(value))
 			return convertedCumulationValue;
@@ -491,5 +456,32 @@ public class CumulationComputationRule
 		String groupName = MessageFormat.format("{0}{1}{2}", deName, GroupNameSpecification.SEPARATOR, ftaCodeGroup);
 		DataExtensionConfiguration	aCfg = this.dataRepos.getDataExtensionConfiguration(groupName);
 		return aCfg.getFlexColumnMapping();
+	}
+	
+	private Double setCumulationValueBasedOnAnalysisMethod(QualTXComponent aQualTXComp)
+			throws Exception {
+		Double cumulationValue = null;
+		if(aQualTXComp.cumulation_value != null){
+			
+			cumulationValue = calculateCumulationValue(aQualTXComp);
+				if(aQualTXComp.qualTX.analysis_method == null 
+						|| "".equals(aQualTXComp.qualTX.analysis_method))
+				{
+					String analysisMethod =  this.qeConfigCache.getQEConfig(aQualTXComp.org_code).getAnalysisConfig().getAnalysisMethod();
+					if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(analysisMethod))
+						aQualTXComp.td_cumulation_value = cumulationValue;
+					else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(analysisMethod))
+						aQualTXComp.rm_cumulation_value = cumulationValue;
+					else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(analysisMethod))
+						aQualTXComp.in_cumulation_value = cumulationValue;
+				}
+				else if(TrackerCodes.AnalysisMethod.TOP_DOWN_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+					aQualTXComp.td_cumulation_value = cumulationValue;
+				else if(TrackerCodes.AnalysisMethod.RAW_MATERIAL_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+					aQualTXComp.rm_cumulation_value = cumulationValue;
+				else if(TrackerCodes.AnalysisMethod.INTERMEDIATE_ANALYSIS.name().equals(aQualTXComp.qualTX.analysis_method))
+					aQualTXComp.in_cumulation_value = cumulationValue;
+			}
+			return cumulationValue;
 	}
 }
