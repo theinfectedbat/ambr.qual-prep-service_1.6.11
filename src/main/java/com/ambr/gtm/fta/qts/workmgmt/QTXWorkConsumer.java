@@ -110,6 +110,7 @@ public class QTXWorkConsumer extends QTXConsumer<WorkPackage>
 			qualtx.area_uom = bom.area_uom;
 			qualtx.direct_processing_cost = bom.direct_processing_cost;
 			qualtx.assembly_type = bom.assembly_type;
+			qualtx.rvc_restricted = TrackerCodes.AssemblyType.INTERMEDIATE.name().equals(qualtx.assembly_type) ? "Y" : "";
 			
 			//Logic for re-setting include for traced value flag if product family changes from AUTOMOBILES to something else.
 			if("AUTOMOBILES".equalsIgnoreCase(qualtx.prod_family) && !"AUTOMOBILES".equalsIgnoreCase(bom.prod_family))
