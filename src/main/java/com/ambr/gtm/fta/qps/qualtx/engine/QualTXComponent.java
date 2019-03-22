@@ -101,7 +101,7 @@ public class QualTXComponent
 	@Column(name = "td_traced_value") 			public Double	td_traced_value;
 	@Column(name = "td_cumulation_value") 		public Double	td_cumulation_value;
 	@Column(name = "rvc") 						public String	rvc;
-
+	@Column(name = "prod_id") 					public String	prod_id;
 	
 	@OneToMany(targetEntity = QualTXComponentDataExtension.class) public ArrayList<QualTXComponentDataExtension>	deList;
 	@OneToMany(targetEntity = QualTXComponentPrice.class) public ArrayList<QualTXComponentPrice>			priceList;
