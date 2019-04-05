@@ -348,6 +348,7 @@ public class QualTXComponent
 		GroupNameSpecification		aGroupNameSpec;
 		
 		if (theClaimDetailsContainer == null) {
+			setClaimValue(theRepos, null, null, null, null, true);
 			return;
 		}
 		
@@ -362,25 +363,11 @@ public class QualTXComponent
 		if (!aGroupNameSpec.groupName.equalsIgnoreCase(aGroupName)) {
 			return;
 		}
-		
-		ArrayList<QualTXComponentDataExtension> aQualTXDataExts = this.deList;
+		System.out.println("needToCreateProducer " );
 		String groupName = MessageFormat.format("{0}{1}{2}", "STP", GroupNameSpecification.SEPARATOR, aFtaCode);
 		DataExtensionConfiguration	aCfg = theRepos.getDataExtensionConfiguration(groupName);
 		Map<String, String> flexFieldMap = aCfg.getFlexColumnMapping();
 		
-		QualTXComponentDataExtension qualTXCompDetails = null;
-		
-		if (aQualTXDataExts != null && !aQualTXDataExts.isEmpty())
-		{
-			for (QualTXComponentDataExtension qualTXCompDe : aQualTXDataExts)
-			{
-				if (qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
-				{
-					qualTXCompDetails = qualTXCompDe;
-					break;
-				}
-			}
-		}
 		
 		String aCampId = flexFieldMap.get("CAMPAIGN_ID");
 		String aresponseId = flexFieldMap.get("RESPONSE_ID");
@@ -401,25 +388,7 @@ public class QualTXComponent
 		if(aTracedResponseId != null &&  aClaimDetails.getValue(aTracedResponseId) != null)
 			aTracedResponseIdValue = (String) aClaimDetails.getValue(aTracedResponseId);
 
-		
-			Timestamp now = new Timestamp(System.currentTimeMillis());
-			if (qualTXCompDetails == null)
-			{
-				qualTXCompDetails = this.createDataExtension("QUALTX:COMP_DTLS", theRepos, null);
-				qualTXCompDetails.setValue("CREATED_DATE", now);
-			}
-			else
-			{
-
-				qualTXCompDetails.setValue("LAST_MODIFIED_DATE", now);
-
-			}
-
-			qualTXCompDetails.setValue("LAST_MODIFIED_BY", this.last_modified_by);
-			qualTXCompDetails.setValue("FLEXFIELD_VAR12", aCampIdValue);
-			qualTXCompDetails.setValue("FLEXFIELD_VAR13", aresponseIdValue);
-			qualTXCompDetails.setValue("FLEXFIELD_VAR14", aTracedCampIdValue);
-			qualTXCompDetails.setValue("FLEXFIELD_VAR15", aTracedResponseIdValue);
+		setClaimValue(theRepos, aCampIdValue, aresponseIdValue, aTracedCampIdValue, aTracedResponseIdValue, false);
 
 
 		String aLogicalColumnName = flexFieldMap.get("TRACED_VALUE");
@@ -472,5 +441,60 @@ public class QualTXComponent
 			else
 				this.rvc = null;
 		}
+	}
+	
+	private void setClaimValue(DataExtensionConfigurationRepository theRepos, String aCampIdValue , String aresponseIdValue, String aTracedCampIdValue, String aTracedResponseIdValue, boolean isClaimNotExist) throws Exception
+	{
+		ArrayList<QualTXComponentDataExtension> aQualTXDataExts = this.deList;
+
+		QualTXComponentDataExtension qualTXCompDetails = null;
+		
+
+		if (aQualTXDataExts != null && !aQualTXDataExts.isEmpty())
+		{
+			for (QualTXComponentDataExtension qualTXCompDe : aQualTXDataExts)
+			{
+				if (qualTXCompDe.group_name.contains("QUALTX:COMP_DTLS"))
+				{
+					qualTXCompDetails = qualTXCompDe;
+					break;
+				}
+			}
+		}
+
+		Timestamp now = new Timestamp(System.currentTimeMillis());
+		if (qualTXCompDetails == null)
+		{
+			qualTXCompDetails = this.createDataExtension("QUALTX:COMP_DTLS", theRepos, null);
+			qualTXCompDetails.setValue("CREATED_DATE", now);
+		}
+		else
+		{
+
+			qualTXCompDetails.setValue("LAST_MODIFIED_DATE", now);
+
+		}
+
+		qualTXCompDetails.setValue("LAST_MODIFIED_BY", this.last_modified_by);
+		qualTXCompDetails.setValue("FLEXFIELD_VAR12", aCampIdValue);
+		qualTXCompDetails.setValue("FLEXFIELD_VAR13", aresponseIdValue);
+		qualTXCompDetails.setValue("FLEXFIELD_VAR14", aTracedCampIdValue);
+		qualTXCompDetails.setValue("FLEXFIELD_VAR15", aTracedResponseIdValue);
+		
+		//if GPM Claim detail is not exist then reseting the Qualtx comp claim detail. 
+		if(isClaimNotExist){
+			
+		qualTXCompDetails.setValue("FLEXFIELD_VAR16", null);
+		qualTXCompDetails.setValue("FLEXFIELD_VAR17", null);
+		qualTXCompDetails.setValue("FLEXFIELD_VAR10", null);
+		
+		 this.traced_value = null;
+		 this.traced_value_currency = null;
+		 this.cumulation_value = null;
+		 this.cumulation_currency = null;
+		 this.rvc = null;
+
+		}
+
 	}
 }
