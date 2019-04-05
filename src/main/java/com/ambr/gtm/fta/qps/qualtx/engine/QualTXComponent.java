@@ -363,7 +363,6 @@ public class QualTXComponent
 		if (!aGroupNameSpec.groupName.equalsIgnoreCase(aGroupName)) {
 			return;
 		}
-		System.out.println("needToCreateProducer " );
 		String groupName = MessageFormat.format("{0}{1}{2}", "STP", GroupNameSpecification.SEPARATOR, aFtaCode);
 		DataExtensionConfiguration	aCfg = theRepos.getDataExtensionConfiguration(groupName);
 		Map<String, String> flexFieldMap = aCfg.getFlexColumnMapping();
