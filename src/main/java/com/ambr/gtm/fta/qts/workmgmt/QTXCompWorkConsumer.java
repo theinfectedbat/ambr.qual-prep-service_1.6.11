@@ -124,6 +124,9 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			return;
 		}
 		
+		parentWorkPackage.entityMgr.getLoader().setIgnoreParentRecordMissingException(true);
+		parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_DE");
+		
 		GPMClaimDetailsCache aClaimsDetailCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.gpmClaimDetailsCache;
 		GPMSourceIVAContainerCache aGPMSourceIVAContainerCache = ((QTXCompWorkProducer)(this.producer)).queueUniverse.ivaCache;
 		
@@ -241,8 +244,6 @@ public class QTXCompWorkConsumer extends QTXConsumer<CompWorkPackage>
 			if (qualtxComp == null) throw new Exception("Qualtx component " + work.qualtx_comp_key + " not found on qualtx " + parentWork.details.qualtx_key);
 			if (bomComp == null) throw new Exception("BOMComponent (" + work.bom_comp_key + ") not found on BOM(" + parentWorkPackage.bom.alt_key_bom + ")");
 			qualtxComp.qualTX = qualtx;
-			parentWorkPackage.entityMgr.getLoader().setIgnoreParentRecordMissingException(true);
-			parentWorkPackage.entityMgr.loadTable("MDI_QUALTX_COMP_DE");
 			ArrayList<BOMComponentDataExtension> bomCompYarnDetailsList = bomComp.getDataExtensionByGroupName("IMPL_BOM_PROD_FAMILY:TEXTILES");
 
 			Set<QualTXComponentDataExtension> qualtxYarnDtlsCompDEs = new HashSet<>(); 
